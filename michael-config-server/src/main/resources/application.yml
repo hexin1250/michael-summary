@@ -1,0 +1,20 @@
+server:
+   port: 7700
+
+spring:
+   cloud:
+      config:
+         server:
+            git:
+               uri: https://github.com/hexin1250/application-config
+               skipSslValidation: true
+               timeout: 4
+               force-pull: true
+   application:
+      name: config
+
+eureka:
+   client:
+      region: default
+      registryFetchIntervalSeconds: 5
+      defaultZone: http://localhost:7777/eureka/
