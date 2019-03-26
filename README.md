@@ -7,7 +7,7 @@ Include all demo projects.
 |Spring Boot|2.1.1.RELEASE|
 |Spring Cloud|Greenwich.SR1|
 
-## michael-config-server
+## [michael-config-server](https://github.com/hexin1250/michael-summary/tree/master/michael-config-server)
 start config server, so that other processes can read config files from here.
 
 ## michael-eureka
