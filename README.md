@@ -1,7 +1,7 @@
 # michael-summary
 Include all demo projects.
 
---|:--:
+|:--:|:--:|
 Spring Boot Version|2.1.1.RELEASE
 Spring Cloud Version|Greenwich.SR1
 
