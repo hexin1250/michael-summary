@@ -1,9 +1,11 @@
 # michael-summary
+---
 Include all demo projects.
 
-|:--:|:--:|
-|Spring Boot Version|2.1.1.RELEASE|
-|Spring Cloud Version|Greenwich.SR1|
+|Spring Plugin|Version|
+|:---|:---|
+|Spring Boot|2.1.1.RELEASE|
+|Spring Cloud|Greenwich.SR1|
 
 ## michael-config-server
 start config server, so that other processes can read config files from here.
