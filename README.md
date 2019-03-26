@@ -10,7 +10,7 @@ Include all demo projects.
 ## [michael-config-server](https://github.com/hexin1250/michael-summary/tree/master/michael-config-server)
 start config server, so that other processes can read config files from here.
 
-## michael-eureka
+## [michael-eureka](https://github.com/hexin1250/michael-summary/tree/master/michael-eureka)
 start eureka server
 
 ## michael-service
