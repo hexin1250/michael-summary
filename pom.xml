@@ -40,5 +40,6 @@
 		<module>michael-service</module>
 		<module>michael-web-client</module>
 		<module>michael-book-service</module>
+		<module>michael-ribbon</module>
 	</modules>
 </project>

@@ -1,0 +1,18 @@
+spring:
+   application:
+      name: ribbon
+
+server:
+   port: 8085
+
+eureka:
+   client:
+      serviceUrl:
+         defaultZone: http://localhost:7777/eureka/
+
+hello-service:
+   ribbon:
+      eureka:
+         enabled: false
+      listOfServers: localhost:8085,localhost:8086,localhost:8087
+      ServerListRefreshInterval: 15000
