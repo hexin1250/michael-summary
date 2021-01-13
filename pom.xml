@@ -36,6 +36,7 @@
 		<module>michael-config-server</module>
 		<module>michael-eureka</module>
 		<module>michael-gateway</module>
+		<module>michael-investment</module>
 		<module>michael-security-web</module>
 		<module>michael-service</module>
 		<module>michael-web-client</module>
