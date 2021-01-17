@@ -10,7 +10,7 @@ create table timeseries (
 	down_limit numeric(10,4),
 	volume numeric(38,10) NOT NULL,
 	freq varchar(10) NOT NULL,
-	trade_date date not null,
+	trade_date date NOT null,
 	trade_ts timestamp NOT NULL,
 	is_main_future varchar(1),
 	PRIMARY KEY (id)
