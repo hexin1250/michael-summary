@@ -12,6 +12,7 @@ import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 
 import michael.slf4j.investment.etl.FutureLoader;
+import michael.slf4j.investment.util.TradeUtil;
 
 public class FutureTask implements Runnable {
 	private static final Logger log = Logger.getLogger(FutureTask.class);
@@ -31,7 +32,7 @@ public class FutureTask implements Runnable {
 	public void run() {
 		try {
 			String content = getContent(httpClient, security);
-			if(content.length() > 0) {
+			if(content.length() > 0 && TradeUtil.isTradingTime()) {
 				futureLoader.load(security, content);
 			}
 		} catch (IOException e) {

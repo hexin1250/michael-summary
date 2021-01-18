@@ -26,7 +26,7 @@ public class FutureLoader {
 	
 	public boolean load(String security, String content) {
 		TimeseriesModel m = generateModel(security, content);
-		if(previousMap.get(security) == null || !m.equals(previousMap.get(security))) {
+		if(previousMap.get(security) == null || (!m.equals(previousMap.get(security)) && TradeUtil.isTradingTime()) || (m.equals(previousMap.get(security)) && TradeUtil.isCompleteMunite())) {
 			log.info("load[" + security + "] successful.");
 			previousMap.put(security, m);
 			timeseriesRepository.save(m);
