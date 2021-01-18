@@ -53,7 +53,7 @@ public class FutureLoader {
 		if(sell1.compareTo(new BigDecimal(0)) == 0) {
 			m.setUpLimit(new BigDecimal(parts[8]));
 		}
-		m.setFreq("1M");
+		m.setFreq("1MI");
 		m.setTradeDate(new Date(TradeUtil.getTradeDate()));
 		m.setTradeTs(new Timestamp(System.currentTimeMillis()));
 		return m;
