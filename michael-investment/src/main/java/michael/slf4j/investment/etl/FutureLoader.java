@@ -18,15 +18,16 @@ import michael.slf4j.investment.util.TradeUtil;
 @Controller
 public class FutureLoader {
 	private static final Logger log = Logger.getLogger(FutureTask.class);
-	
+
 	@Autowired
 	private TimeseriesRepository timeseriesRepository;
-	
+
 	private Map<String, TimeseriesModel> previousMap = new ConcurrentHashMap<>();
-	
+
 	public boolean load(String security, String content) {
 		TimeseriesModel m = generateModel(security, content);
-		if(previousMap.get(security) == null || (!m.equals(previousMap.get(security)) && TradeUtil.isTradingTime()) || (m.equals(previousMap.get(security)) && TradeUtil.isCompleteMunite())) {
+		if (previousMap.get(security) == null || (TradeUtil.isTradingTime() && (!m.equals(previousMap.get(security))
+				|| (m.equals(previousMap.get(security)) && TradeUtil.isCompleteMunite())))) {
 			log.info("load[" + security + "] successful.");
 			previousMap.put(security, m);
 			timeseriesRepository.save(m);
@@ -34,7 +35,7 @@ public class FutureLoader {
 		}
 		return false;
 	}
-	
+
 	private TimeseriesModel generateModel(String security, String content) {
 		String[] parts = content.split(",");
 		TimeseriesModel m = new TimeseriesModel();
@@ -47,10 +48,10 @@ public class FutureLoader {
 		m.setVolume(new BigDecimal(parts[14]));
 		BigDecimal buy1 = new BigDecimal(parts[6]);
 		BigDecimal sell1 = new BigDecimal(parts[7]);
-		if(buy1.compareTo(new BigDecimal(0)) == 0) {
+		if (buy1.compareTo(new BigDecimal(0)) == 0) {
 			m.setDownLimit(new BigDecimal(parts[8]));
 		}
-		if(sell1.compareTo(new BigDecimal(0)) == 0) {
+		if (sell1.compareTo(new BigDecimal(0)) == 0) {
 			m.setUpLimit(new BigDecimal(parts[8]));
 		}
 		m.setFreq("1MI");
