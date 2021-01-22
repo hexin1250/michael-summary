@@ -39,7 +39,7 @@ public class LoadFutureData {
 		Class.forName(driverClass);
 
 		String dirName = "src/main/data/I";
-		String url = "jdbc:mysql://localhost:3306/investment?useUnicode=true;characterEncoding=utf-8";
+		String url = "jdbc:mysql://localhost:3306/investment?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai";
 		String user = "springuser";
 		String password = "springuser";
 		int count = 0;
