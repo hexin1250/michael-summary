@@ -1,11 +1,14 @@
 package michael.slf4j.investment.taskmanager;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -28,6 +31,8 @@ public class TaskManager {
 	private Map<String, Boolean> recordMap = new ConcurrentHashMap<>();
 	private CloseableHttpClient httpClient = HttpClientBuilder.create().build();
 	
+	public Map<String, ScheduledFuture<?>> futureMap = new ConcurrentHashMap<>();
+	
 	public boolean scheduleTask(String variety) {
 		if(recordMap.get(variety) == null || !recordMap.get(variety)) {
 			recordMap.put(variety, true);
@@ -37,10 +42,24 @@ public class TaskManager {
 		List<String> list = FutureContract.getFutureContracts(variety);
 		for (String security : list) {
 			FutureTask task = new FutureTask(futureLoader, httpClient, security);
-			service.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS);
+			futureMap.put(security, service.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS));
 		}
 		log.info("schedule tasks have been set for [" + variety + "].");
 		return true;
+	}
+	
+	public void cancelTasks() {
+		Iterator<Entry<String, ScheduledFuture<?>>> it = futureMap.entrySet().iterator();
+		while(it.hasNext()) {
+			Entry<String, ScheduledFuture<?>> entry = it.next();
+			ScheduledFuture<?> future = entry.getValue();
+			future.cancel(false);
+			while(!future.isDone()) {
+				continue;
+			}
+			it.remove();
+		}
+		recordMap.clear();
 	}
 	
 	public void close() {

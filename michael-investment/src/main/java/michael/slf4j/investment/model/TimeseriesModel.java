@@ -176,5 +176,23 @@ public class TimeseriesModel implements Comparator<TimeseriesModel> {
 		return tm.getSecurityName().equals(getSecurityName()) && tm.getClose().compareTo(getClose()) == 0
 				&& tm.getVolume().compareTo(getVolume()) == 0;
 	}
+	
+	public TimeseriesModel copy() {
+		TimeseriesModel ret = new TimeseriesModel();
+		ret.setClose(getClose());
+		ret.setDownLimit(getDownLimit());
+		ret.setFreq(getFreq());
+		ret.setHigh(getHigh());
+		ret.setIsMainFuture(getIsMainFuture());
+		ret.setLow(getLow());
+		ret.setOpen(getOpen());
+		ret.setSecurity(getSecurity());
+		ret.setSecurityName(getSecurityName());
+		ret.setTradeDate(getTradeDate());
+		ret.setTradeTs(getTradeTs());
+		ret.setUpLimit(getUpLimit());
+		ret.setVolume(getVolume());
+		return ret;
+	}
 
 }

@@ -26,8 +26,12 @@ public class FutureLoader {
 
 	public boolean load(String security, String content) {
 		TimeseriesModel m = generateModel(security, content);
-		if (previousMap.get(security) == null || (TradeUtil.isTradingTime() && (!m.equals(previousMap.get(security))
-				|| (m.equals(previousMap.get(security)) && TradeUtil.isCompleteMunite())))) {
+		if (TradeUtil.isCompleteMunite()) {
+			TimeseriesModel freqTM = m.copy();
+			freqTM.setFreq("1MI");
+			timeseriesRepository.save(freqTM);
+		}
+		if (previousMap.get(security) == null || (TradeUtil.isTradingTime() && !m.equals(previousMap.get(security)))) {
 			log.info("load[" + security + "] successful.");
 			previousMap.put(security, m);
 			timeseriesRepository.save(m);
@@ -54,7 +58,7 @@ public class FutureLoader {
 		if (sell1.compareTo(new BigDecimal(0)) == 0) {
 			m.setUpLimit(new BigDecimal(parts[8]));
 		}
-		m.setFreq("1MI");
+		m.setFreq("TICK");
 		m.setTradeDate(new Date(TradeUtil.getTradeDate()));
 		m.setTradeTs(new Timestamp(System.currentTimeMillis()));
 		return m;
