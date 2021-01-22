@@ -1,5 +1,8 @@
 package michael.slf4j.investment.controller;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -19,13 +22,32 @@ public class TaskManagerController {
 	private TaskManager taskManager;
 	
 	@GetMapping(path = "/task")
-	public @ResponseBody String schedule(@RequestParam(defaultValue="I") String variety) {
-		boolean result = taskManager.scheduleTask(variety);
-		if(result) {
-			return "successful";
-		} else {
-			return "already scheduled";
-		}
+	public @ResponseBody String schedule(@RequestParam(defaultValue="I") String varieties) {
+		String[] parts = varieties.split(",");
+		String ret = Arrays.stream(parts).map(variety -> {
+			StringBuffer sb = new StringBuffer();
+			boolean result = taskManager.scheduleTask(variety);
+			if(result) {
+				sb.append("Successful to subscribe [" + variety + "]");
+			} else {
+				sb.append("Already subscribe [" + variety + "]");
+			}
+			return sb.toString();
+		}).collect(Collectors.joining("<br>"));
+		return ret;
+	}
+	
+	@GetMapping(path = "/cancelAllTasks")
+	public @ResponseBody String cancelAllTasks() {
+		taskManager.cancelTasks();
+		log.info("Cancel All Tasks.");
+		return "Cancel All Tasks.";
+	}
+	
+	@GetMapping(path = "/showTasks")
+	public @ResponseBody String showTasks() {
+		String tasks = taskManager.futureMap.keySet().stream().collect(Collectors.joining("<br>"));
+		return tasks;
 	}
 	
 	@GetMapping(path = "/isTradingTime")
