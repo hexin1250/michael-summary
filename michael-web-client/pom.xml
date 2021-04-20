@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>michael-web-client</artifactId>
-	<packaging>jar</packaging>
+	<packaging>pom</packaging>
 
 	<name>michael-web-client</name>
 	<url>http://maven.apache.org</url>
