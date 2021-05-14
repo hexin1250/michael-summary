@@ -1,0 +1,19 @@
+server:
+   port: 1601
+spring:
+   application:
+      name: "investment"
+   datasource:
+      driverClassName: com.mysql.cj.jdbc.Driver
+      url: "jdbc:mysql://localhost:3306/investment?useUnicode=true;characterEncoding=utf-8"
+      username: springuser
+      password: springuser
+   main:
+      allow-bean-definition-overriding: true
+   jpa:
+      hibernate:
+         ddl-auto: update
+      properties:
+         hibernate:
+            jdbc:
+               time_zone: "Asia/Shanghai"
