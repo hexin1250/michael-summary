@@ -100,6 +100,9 @@ public class LoadFutureData {
 							String mainFuture = parts[1];
 							for (int i = 2; i < parts.length; i++) {
 								String[] futureParts = parts[i].split(",");
+								if("nan".equalsIgnoreCase(futureParts[1])) {
+									continue;
+								}
 								TimeseriesModel tm = new TimeseriesModel();
 								String security = PREFIX + futureParts[0].substring(futureParts[0].length() - 4, futureParts[0].length());
 								tm.setSecurity(security);
