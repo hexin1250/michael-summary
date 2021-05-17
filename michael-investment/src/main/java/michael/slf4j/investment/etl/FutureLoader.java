@@ -1,7 +1,6 @@
 package michael.slf4j.investment.etl;
 
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,6 +43,7 @@ public class FutureLoader {
 		String[] parts = content.split(",");
 		TimeseriesModel m = new TimeseriesModel();
 		m.setSecurity(security);
+		m.setVariety(security.replaceAll("[\\d]+", ""));
 		m.setSecurityName(parts[0]);
 		m.setOpen(new BigDecimal(parts[2]));
 		m.setHigh(new BigDecimal(parts[3]));
@@ -59,7 +59,8 @@ public class FutureLoader {
 			m.setUpLimit(new BigDecimal(parts[8]));
 		}
 		m.setFreq("TICK");
-		m.setTradeDate(new Date(TradeUtil.getTradeDate()));
+		
+		m.setTradeDate(TradeUtil.getDateStr(TradeUtil.getTradeDate()));
 		m.setTradeTs(new Timestamp(System.currentTimeMillis()));
 		return m;
 	}

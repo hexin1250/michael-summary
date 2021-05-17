@@ -23,4 +23,10 @@ public class TimeseriesController {
 		List<TimeseriesModel> list = timeseriesRepository.findBySecurity(security);
 		return "size:" + list.size();
 	}
+	
+	@GetMapping(path = "/listTradeDate")
+	public @ResponseBody List<String> getAllTradeDate() {
+		List<String> list = timeseriesRepository.findAllTradeDate();
+		return list;
+	}
 }

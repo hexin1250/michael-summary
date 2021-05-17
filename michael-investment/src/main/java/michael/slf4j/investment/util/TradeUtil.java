@@ -4,6 +4,7 @@ import java.sql.Date;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 public class TradeUtil {
 	private static LocalTime[][] periods = new LocalTime[][] {
@@ -15,6 +16,15 @@ public class TradeUtil {
 	
 	public static long getTradeDate() {
 		LocalDateTime ld = LocalDateTime.now();
+		return getTradeDate(ld);
+	}
+	
+	public static long getTradeDate(Date date) {
+	    LocalDateTime localDateTime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+	    return getTradeDate(localDateTime);
+	}
+	
+	private static long getTradeDate(LocalDateTime ld) {
 		int hour = ld.getHour();
 		if (hour > 20) {
 			int dw = ld.getDayOfWeek().getValue();
@@ -48,4 +58,15 @@ public class TradeUtil {
 		LocalTime ldt = LocalTime.now();
 		return ldt.getSecond() == 0;
 	}
+	
+	public static String getDateStr(Date tradeDate) {
+		return getDateStr(tradeDate.getTime());
+	}
+	
+	public static String getDateStr(long time) {
+		LocalDateTime ldt = LocalDateTime.ofInstant(new java.util.Date(time).toInstant(), ZoneId.systemDefault());
+		String dateStr = ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+		return dateStr;
+	}
+
 }

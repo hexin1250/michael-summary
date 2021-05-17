@@ -31,7 +31,7 @@ public class LoadFutureData {
 	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	private static final SimpleDateFormat dateSdf = new SimpleDateFormat("yyyy-MM-dd");
 	private static final String PREFIX = "I";
-	private static final String SQL_TEMPLATE = "insert into timeseries(security,security_name,open,high,low,close,up_limit,down_limit,volume,freq,trade_date,trade_ts,is_main_future) values(?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	private static final String SQL_TEMPLATE = "insert into timeseries(security,security_name,open,high,low,close,up_limit,down_limit,volume,freq,trade_date,trade_ts,is_main_future,variety) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 	public static void main(String[] args)
 			throws FileNotFoundException, IOException, SQLException, ClassNotFoundException, ParseException {
@@ -88,6 +88,7 @@ public class LoadFutureData {
 											ps.setString(11, tm.getTradeDate());
 											ps.setString(12, tm.getTradeTs());
 											ps.setString(13, tm.getIsMainFuture());
+											ps.setString(14, tm.getSecurity().replaceAll("[\\d]+", ""));
 											ps.addBatch();
 										}
 									}
@@ -139,6 +140,7 @@ public class LoadFutureData {
 									ps.setString(11, tm.getTradeDate());
 									ps.setString(12, tm.getTradeTs());
 									ps.setString(13, tm.getIsMainFuture());
+									ps.setString(14, tm.getSecurity().replaceAll("[\\d]+", ""));
 									ps.addBatch();
 									count++;
 									if (count >= 300) {

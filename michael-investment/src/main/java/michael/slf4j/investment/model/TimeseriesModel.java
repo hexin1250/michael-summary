@@ -1,7 +1,6 @@
 package michael.slf4j.investment.model;
 
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.Comparator;
 
@@ -16,6 +15,8 @@ public class TimeseriesModel implements Comparator<TimeseriesModel> {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
+	@Column(name = "variety")
+	private String variety;
 	@Column(name = "security")
 	private String security;
 	@Column(name = "security_name")
@@ -37,7 +38,7 @@ public class TimeseriesModel implements Comparator<TimeseriesModel> {
 	@Column(name = "freq")
 	private String freq;
 	@Column(name = "trade_date")
-	private Date tradeDate;
+	private String tradeDate;
 	@Column(name = "trade_ts")
 	private Timestamp tradeTs;
 	@Column(name = "is_main_future")
@@ -52,6 +53,14 @@ public class TimeseriesModel implements Comparator<TimeseriesModel> {
 
 	public void setId(Integer id) {
 		this.id = id;
+	}
+
+	public String getVariety() {
+		return variety;
+	}
+
+	public void setVariety(String variety) {
+		this.variety = variety;
 	}
 
 	public String getSecurity() {
@@ -134,11 +143,11 @@ public class TimeseriesModel implements Comparator<TimeseriesModel> {
 		this.freq = freq;
 	}
 
-	public Date getTradeDate() {
+	public String getTradeDate() {
 		return tradeDate;
 	}
 
-	public void setTradeDate(Date tradeDate) {
+	public void setTradeDate(String tradeDate) {
 		this.tradeDate = tradeDate;
 	}
 
@@ -177,6 +186,18 @@ public class TimeseriesModel implements Comparator<TimeseriesModel> {
 				&& tm.getVolume().compareTo(getVolume()) == 0;
 	}
 	
+	@Override
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("Security:").append(security)
+			.append(", Open:").append(open)
+			.append(", Close:").append(close)
+			.append(", High").append(high)
+			.append(", Low:").append(low)
+			.append(", TS:").append(tradeTs);
+		return sb.toString();
+	}
+	
 	public TimeseriesModel copy() {
 		TimeseriesModel ret = new TimeseriesModel();
 		ret.setClose(getClose());
@@ -191,6 +212,7 @@ public class TimeseriesModel implements Comparator<TimeseriesModel> {
 		ret.setTradeDate(getTradeDate());
 		ret.setTradeTs(getTradeTs());
 		ret.setUpLimit(getUpLimit());
+		ret.setVariety(getVariety());
 		ret.setVolume(getVolume());
 		return ret;
 	}
