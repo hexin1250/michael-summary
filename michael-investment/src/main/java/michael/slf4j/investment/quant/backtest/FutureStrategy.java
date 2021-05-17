@@ -1,5 +1,6 @@
-package michael.slf4j.investment.quant.strategy;
+package michael.slf4j.investment.quant.backtest;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.model.TimeseriesModel;
+import michael.slf4j.investment.quant.BacktestRequest;
 import michael.slf4j.investment.repo.TimeseriesRepository;
 
 @Controller
@@ -22,20 +24,34 @@ public class FutureStrategy {
 	
 	private Map<String, Double> rangeMap = new ConcurrentHashMap<>();
 	
-	public void mockup(String variety, String freq, int dataScope, double k) {
-		List<String> tradeDateList = timeseriesRepository.findAllTradeDateByVariety(variety);
+	public void mockup(BacktestRequest request, int dataScope, double k) {
+		List<String> tradeDateList = timeseriesRepository.findAllTradeDateByVariety(request.getVariety());
+		String accountFuture = null;
+		/**
+		 * buy for 1, sell for -1
+		 */
 		int direction = 0;
+		String startDate = request.getStartDate();
+		String endDate = request.getEndDate();
 		for (String tradeDate : tradeDateList) {
-			TimeseriesModel primaryContract = timeseriesRepository.findMainFutureByVarietyDate(variety, tradeDate);
+			if(tradeDate.compareTo(startDate) < 0 || tradeDate.compareTo(endDate) > 0) {
+				continue;
+			}
+			TimeseriesModel primaryContract = timeseriesRepository.findMainFutureByVarietyDate(request.getVariety(), tradeDate);
 			try {
 				String security = primaryContract.getSecurity();
 				Double range = getRangeValue(security, tradeDate, dataScope);
 				if(range != null) {
-					List<TimeseriesModel> modelList = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, freq);
+					List<TimeseriesModel> modelList = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, request.getFreq());
 					TimeseriesModel first = modelList.get(0);
+					if(accountFuture == null) {
+						accountFuture = security;
+					} else if(accountFuture != null && !accountFuture.equals(security)) {
+						changeDominate(direction, accountFuture, first);
+						accountFuture = security;
+					}
 					double buyLine = first.getOpen().doubleValue() + range * k;
 					double sellLine = first.getOpen().doubleValue() - range * k;
-//					log.info("Date:" + tradeDate + ", open:" + first.getOpen().doubleValue() + ",future[" + security + "], buy line:" + buyLine + ", sell line:" + sellLine);
 					for (TimeseriesModel model : modelList) {
 						double closePrice = model.getClose().doubleValue();
 						if(closePrice > buyLine && direction <= 0) {
@@ -48,12 +64,28 @@ public class FutureStrategy {
 					}
 				}
 			} catch(RuntimeException e) {
-				log.error("Date:" + tradeDate);
+				log.error("Date:" + tradeDate + ", Model:" + primaryContract);
 				throw e;
 			}
 		}
+		log.info("Backtest Done.");
 	}
 	
+	private void changeDominate(int direction, String accountFuture, TimeseriesModel first) {
+		String tradeDate = first.getTradeDate();
+		Timestamp ts = first.getTradeTs();
+		List<TimeseriesModel> modelList = timeseriesRepository.findByTradeDateWithPeriod(accountFuture, tradeDate, "1MI");
+		TimeseriesModel latest = modelList.get(modelList.size() - 1);
+		if(direction < 0) {
+			log.info(tradeDate + "[change dominate]->Buy:[" + accountFuture + "], Price:[" + latest.getClose() + "] at " + ts + ".");
+			log.info(tradeDate + "[change dominate]->Sell:[" + first.getSecurity() + "], Price:[" + first.getClose() + "] at " + ts + ".");
+		} else if(direction > 0) {
+			log.info(tradeDate + "[change dominate]->Sell:[" + accountFuture + "], Price:[" + latest.getClose() + "] at " + ts + ".");
+			log.info(tradeDate + "[change dominate]->Buy:[" + first.getSecurity() + "], Price:[" + first.getClose() + "] at " + ts + ".");
+		}
+		
+	}
+
 	public Double getRangeValue(String security, String tradeDate, int dataScope) {
 		Double ret = rangeMap.get(tradeDate);
 		if(ret != null) {

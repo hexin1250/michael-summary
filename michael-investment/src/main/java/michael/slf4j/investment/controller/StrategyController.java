@@ -7,7 +7,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import michael.slf4j.investment.quant.strategy.FutureStrategy;
+import michael.slf4j.investment.quant.BacktestRequest;
+import michael.slf4j.investment.quant.backtest.FutureStrategy;
 
 @Controller
 @RequestMapping(path = "/apps/strategy")
@@ -16,8 +17,9 @@ public class StrategyController {
 	private FutureStrategy strategy;
 	
 	@GetMapping(path = "/mockup")
-	public @ResponseBody String schedule(@RequestParam(defaultValue="I") String variety) {
-		strategy.mockup(variety, "1MI", 5, 0.4);
+	public @ResponseBody String schedule(@RequestParam String variety, @RequestParam String freq, @RequestParam String startDate, @RequestParam String endDate) {
+		BacktestRequest request = new BacktestRequest(variety, freq, startDate, endDate);
+		strategy.mockup(request, 5, 0.4);
 		return "ok";
 	}
 
