@@ -22,7 +22,7 @@ public class FutureLoader {
 	private TimeseriesRepository timeseriesRepository;
 
 	private Map<String, TimeseriesModel> previousMap = new ConcurrentHashMap<>();
-
+	
 	public boolean load(String security, String content) {
 		TimeseriesModel m = generateModel(security, content);
 		if (TradeUtil.isCompleteMunite()) {

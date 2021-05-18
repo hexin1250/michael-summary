@@ -59,13 +59,21 @@ public class TradeUtil {
 		return ldt.getSecond() == 0;
 	}
 	
-	public static String getDateStr(Date tradeDate) {
+	public static String getDateStr(java.sql.Date tradeDate) {
+		return getDateStr(tradeDate.getTime());
+	}
+	
+	public static String getDateStr(java.util.Date tradeDate) {
 		return getDateStr(tradeDate.getTime());
 	}
 	
 	public static String getDateStr(long time) {
+		return getDateStr(time, "yyyy-MM-dd");
+	}
+	
+	public static String getDateStr(long time, String pattern) {
 		LocalDateTime ldt = LocalDateTime.ofInstant(new java.util.Date(time).toInstant(), ZoneId.systemDefault());
-		String dateStr = ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+		String dateStr = ldt.format(DateTimeFormatter.ofPattern(pattern));
 		return dateStr;
 	}
 
