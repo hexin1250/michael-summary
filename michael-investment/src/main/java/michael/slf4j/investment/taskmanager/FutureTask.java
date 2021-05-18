@@ -20,12 +20,14 @@ public class FutureTask implements Runnable {
 
 	private FutureLoader futureLoader;
 	private CloseableHttpClient httpClient;
+	private String variety;
 	private String security;
 	
-	public FutureTask(FutureLoader futureLoader, CloseableHttpClient httpClient, String security) {
+	public FutureTask(FutureLoader futureLoader, CloseableHttpClient httpClient, String variety, String security) {
 		this.futureLoader = futureLoader;
 		this.httpClient = httpClient;
 		this.security = security;
+		this.variety = variety;
 	}
 
 	@Override
@@ -33,7 +35,7 @@ public class FutureTask implements Runnable {
 		try {
 			String content = getContent(httpClient, security);
 			if(content.length() > 0 && TradeUtil.isTradingTime()) {
-				futureLoader.load(security, content);
+				futureLoader.load(variety, security, content);
 			}
 		} catch (IOException e) {
 			log.error("错误发生！", e);

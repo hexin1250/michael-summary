@@ -22,7 +22,7 @@ public class TaskManagerController {
 	
 	@GetMapping(path = "/task")
 	public @ResponseBody String schedule() {
-		String ret = Constants.varietyList.stream().map(variety -> {
+		String ret = Constants.VARIETY_LIST.stream().map(variety -> {
 			StringBuffer sb = new StringBuffer();
 			boolean result = taskManager.scheduleTask(variety);
 			if(result) {

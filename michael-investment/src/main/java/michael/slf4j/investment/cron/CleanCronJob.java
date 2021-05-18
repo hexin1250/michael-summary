@@ -25,7 +25,7 @@ public class CleanCronJob {
 	@Scheduled(cron = "${cron}")
 	public void scheduled() {
 		log.info("Start to clean data.");
-		for (String variety : Constants.varietyList) {
+		for (String variety : Constants.VARIETY_LIST) {
 			List<String> tradeDateList = timeseriesRepository.findMaxTradeDate(variety);
 			tradeDateList.stream().forEach(tradeDate -> {
 				List<String> securites = timeseriesRepository.findSecurities(variety, tradeDate);

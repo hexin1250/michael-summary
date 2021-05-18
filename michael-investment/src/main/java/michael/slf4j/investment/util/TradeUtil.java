@@ -26,7 +26,7 @@ public class TradeUtil {
 	
 	private static long getTradeDate(LocalDateTime ld) {
 		int hour = ld.getHour();
-		if (hour > 20) {
+		if (hour >= 20) {
 			int dw = ld.getDayOfWeek().getValue();
 			if (dw == 5) {
 				ld = ld.plusDays(3);

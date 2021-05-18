@@ -41,7 +41,7 @@ public class TaskManager {
 		}
 		List<String> list = FutureContract.getFutureContracts(variety);
 		for (String security : list) {
-			FutureTask task = new FutureTask(futureLoader, httpClient, security);
+			FutureTask task = new FutureTask(futureLoader, httpClient, variety, security);
 			futureMap.put(security, service.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS));
 		}
 		log.info("schedule tasks have been set for [" + variety + "].");

@@ -2,6 +2,7 @@ package michael.slf4j.investment.etl;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -9,6 +10,7 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
+import michael.slf4j.investment.constant.Constants;
 import michael.slf4j.investment.model.TimeseriesModel;
 import michael.slf4j.investment.repo.TimeseriesRepository;
 import michael.slf4j.investment.taskmanager.FutureTask;
@@ -22,9 +24,31 @@ public class FutureLoader {
 	private TimeseriesRepository timeseriesRepository;
 
 	private Map<String, TimeseriesModel> previousMap = new ConcurrentHashMap<>();
+	private Map<String, String> primarySecurityMap = new ConcurrentHashMap<>();
 	
-	public boolean load(String security, String content) {
+	public void init() {
+		log.info("Initialize primary security.");
+		for (String variety : Constants.VARIETY_LIST) {
+			String currentTradeDate = TradeUtil.getDateStr(TradeUtil.getTradeDate());
+			List<String> latestTradeDateList = timeseriesRepository.findMaxTradeDate(variety);
+			String lastTradeDate = null;
+			for (String tradeDate : latestTradeDateList) {
+				if(!tradeDate.equals(currentTradeDate)) {
+					lastTradeDate = tradeDate;
+					break;
+				}
+			}
+			if(lastTradeDate != null) {
+				String primarySecurity = timeseriesRepository.findPrimarySecurity(variety, lastTradeDate);
+				primarySecurityMap.put(variety, primarySecurity);
+			}
+		}
+	}
+	
+	public boolean load(String variety, String security, String content) {
+		String primarySecurity = primarySecurityMap.get(variety);
 		TimeseriesModel m = generateModel(security, content);
+		m.setIsMainFuture(security.equals(primarySecurity) ? "T" : "F");
 		if (TradeUtil.isCompleteMunite()) {
 			TimeseriesModel freqTM = m.copy();
 			freqTM.setFreq("1MI");
