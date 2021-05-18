@@ -67,6 +67,12 @@
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.cronutils/cron-utils -->
+		<dependency>
+			<groupId>com.cronutils</groupId>
+			<artifactId>cron-utils</artifactId>
+			<version>9.1.5</version>
+		</dependency>
 	</dependencies>
 
 	<build>

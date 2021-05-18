@@ -1,6 +1,5 @@
 package michael.slf4j.investment.controller;
 
-import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
@@ -8,9 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import michael.slf4j.investment.constant.Constants;
 import michael.slf4j.investment.taskmanager.TaskManager;
 import michael.slf4j.investment.util.TradeUtil;
 
@@ -22,9 +21,8 @@ public class TaskManagerController {
 	private TaskManager taskManager;
 	
 	@GetMapping(path = "/task")
-	public @ResponseBody String schedule(@RequestParam(defaultValue="I") String varieties) {
-		String[] parts = varieties.split(",");
-		String ret = Arrays.stream(parts).map(variety -> {
+	public @ResponseBody String schedule() {
+		String ret = Constants.varietyList.stream().map(variety -> {
 			StringBuffer sb = new StringBuffer();
 			boolean result = taskManager.scheduleTask(variety);
 			if(result) {
