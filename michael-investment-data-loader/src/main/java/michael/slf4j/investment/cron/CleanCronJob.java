@@ -23,7 +23,7 @@ public class CleanCronJob {
 	private TimeseriesRepository timeseriesRepository;
 
 	@Scheduled(cron = "${cron}")
-	public void scheduled() {
+	public void cleanData() {
 		log.info("Start to clean data.");
 		for (String variety : Constants.VARIETY_LIST) {
 			List<String> tradeDateList = timeseriesRepository.findMaxTradeDate(variety);
@@ -31,7 +31,6 @@ public class CleanCronJob {
 				List<String> securites = timeseriesRepository.findSecurities(variety, tradeDate);
 				securites.stream().forEach(security -> {
 					List<TimeseriesModel> eodList = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, "1D");
-					log.info("check " + security + "/" + tradeDate);
 					if(eodList.isEmpty()) {
 						List<TimeseriesModel> tickList = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, "1MI");
 						if(!tickList.isEmpty()) {
