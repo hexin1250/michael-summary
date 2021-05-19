@@ -30,7 +30,6 @@ public class LoadFutureData {
 	private static final Pattern pattern = Pattern.compile("(.*)([\\s]+INFO[\\s]+)");
 	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	private static final SimpleDateFormat dateSdf = new SimpleDateFormat("yyyy-MM-dd");
-	private static final String PREFIX = "I";
 	private static final String SQL_TEMPLATE = "insert into timeseries(security,security_name,open,high,low,close,up_limit,down_limit,volume,freq,trade_date,trade_ts,is_main_future,variety,open_interest) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 	public static void main(String[] args)
@@ -47,7 +46,8 @@ public class LoadFutureData {
 				PreparedStatement ps = conn.prepareStatement(SQL_TEMPLATE)) {
 			File dir = new File(dirName);
 			for (File varietyDir : dir.listFiles()) {
-				Set<String> tradeDates = getTradeDates(conn, varietyDir.getName());
+				String variety = varietyDir.getName();
+				Set<String> tradeDates = getTradeDates(conn, variety);
 				Map<String, Map<String, TimeseriesModel>> tradeMap = new HashMap<>();
 				for (File file : varietyDir.listFiles()) {
 					System.out.println("Start to read file[" + file.getName() + "].");
@@ -107,7 +107,7 @@ public class LoadFutureData {
 										continue;
 									}
 									TimeseriesModel tm = new TimeseriesModel();
-									String security = PREFIX + futureParts[0].substring(futureParts[0].length() - 4, futureParts[0].length());
+									String security = variety + futureParts[0].substring(futureParts[0].length() - 4, futureParts[0].length());
 									tm.setSecurity(security);
 									tm.setName(futureParts[0]);
 									tm.setOpen(new BigDecimal(futureParts[1]));
