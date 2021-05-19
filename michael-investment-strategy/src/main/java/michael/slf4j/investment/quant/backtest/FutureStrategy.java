@@ -37,9 +37,9 @@ public class FutureStrategy {
 			if(tradeDate.compareTo(startDate) < 0 || tradeDate.compareTo(endDate) > 0) {
 				continue;
 			}
-			TimeseriesModel primaryContract = timeseriesRepository.findMainFutureByVarietyDate(request.getVariety(), tradeDate);
+			String primarySecurity = timeseriesRepository.findMainFutureByVarietyDate(request.getVariety(), tradeDate);
 			try {
-				String security = primaryContract.getSecurity();
+				String security = primarySecurity;
 				Double range = getRangeValue(security, tradeDate, dataScope);
 				if(range != null) {
 					List<TimeseriesModel> modelList = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, request.getFreq());
@@ -52,6 +52,7 @@ public class FutureStrategy {
 					}
 					double buyLine = first.getOpen().doubleValue() + range * k;
 					double sellLine = first.getOpen().doubleValue() - range * k;
+					log.info(tradeDate + ":" + "Buy Line->" + buyLine + " vs Sell Line->" + sellLine);
 					for (TimeseriesModel model : modelList) {
 						double closePrice = model.getClose().doubleValue();
 						if(closePrice > buyLine && direction <= 0) {
@@ -64,7 +65,7 @@ public class FutureStrategy {
 					}
 				}
 			} catch(RuntimeException e) {
-				log.error("Date:" + tradeDate + ", Model:" + primaryContract);
+				log.error("Date:" + tradeDate);
 				throw e;
 			}
 		}
