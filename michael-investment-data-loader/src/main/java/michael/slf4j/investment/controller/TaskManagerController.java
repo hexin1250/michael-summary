@@ -21,8 +21,8 @@ public class TaskManagerController {
 	private TaskManager taskManager;
 	
 	@GetMapping(path = "/task")
-	public @ResponseBody String schedule() {
-		String ret = Constants.VARIETY_LIST.stream().map(variety -> {
+	public @ResponseBody String retrieveData() {
+		String ret = Constants.VARIETY_LIST.parallelStream().map(variety -> {
 			StringBuffer sb = new StringBuffer();
 			boolean result = taskManager.scheduleTask(variety);
 			if(result) {

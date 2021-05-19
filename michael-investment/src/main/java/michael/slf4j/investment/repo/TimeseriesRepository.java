@@ -27,7 +27,7 @@ public interface TimeseriesRepository extends CrudRepository<TimeseriesModel, In
 	@Query(value = "select distinct trade_date from timeseries where variety = ?1 order by trade_date", nativeQuery = true)
 	List<String> findAllTradeDateByVariety(@Param("variety") String variety);
 	
-	@Query(value = "select distinct trade_date from timeseries where variety = ?1 order by trade_date desc limit 2", nativeQuery = true)
+	@Query(value = "select distinct trade_date from timeseries where variety = ?1 order by trade_date desc limit 1", nativeQuery = true)
 	List<String> findMaxTradeDate(@Param("variety") String variety);
 	
 	@Query(value = "select distinct security from timeseries where variety = ?1 and trade_date = ?2", nativeQuery = true)
