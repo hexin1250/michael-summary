@@ -10,6 +10,7 @@ create table timeseries (
 	up_limit numeric(10,4),
 	down_limit numeric(10,4),
 	volume numeric(38,10) NOT NULL,
+	open_interest numeric(38,10) NOT NULL,
 	freq varchar(10) NOT NULL,
 	trade_date varchar(10) NOT null,
 	trade_ts timestamp NOT NULL,
