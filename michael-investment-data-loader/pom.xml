@@ -6,7 +6,7 @@
 	<groupId>michael.slf4j.investment</groupId>
 	<artifactId>michael-investment-data-loader</artifactId>
 
-	<name>michael-investment-data-loader Maven Plugin</name>
+	<name>michael-investment-data-loader</name>
 
 	<!-- FIXME change it to the project's website -->
 	<url>http://maven.apache.org</url>
