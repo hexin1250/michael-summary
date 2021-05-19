@@ -2,7 +2,7 @@ server:
    port: 1701
 spring:
    application:
-      name: "investment"
+      name: "investment-data-loader"
    datasource:
       driverClassName: com.mysql.cj.jdbc.Driver
       url: "jdbc:mysql://localhost:3306/investment?useUnicode=true;characterEncoding=utf-8"
