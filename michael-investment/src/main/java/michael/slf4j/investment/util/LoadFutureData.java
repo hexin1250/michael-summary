@@ -31,7 +31,7 @@ public class LoadFutureData {
 	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	private static final SimpleDateFormat dateSdf = new SimpleDateFormat("yyyy-MM-dd");
 	private static final String PREFIX = "I";
-	private static final String SQL_TEMPLATE = "insert into timeseries(security,security_name,open,high,low,close,up_limit,down_limit,volume,freq,trade_date,trade_ts,is_main_future,variety) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	private static final String SQL_TEMPLATE = "insert into timeseries(security,security_name,open,high,low,close,up_limit,down_limit,volume,freq,trade_date,trade_ts,is_main_future,variety,open_interest) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 	public static void main(String[] args)
 			throws FileNotFoundException, IOException, SQLException, ClassNotFoundException, ParseException {
@@ -89,6 +89,7 @@ public class LoadFutureData {
 											ps.setString(12, tm.getTradeTs());
 											ps.setString(13, tm.getIsMainFuture());
 											ps.setString(14, tm.getSecurity().replaceAll("[\\d]+", ""));
+											ps.setBigDecimal(15, tm.getOpenInterest());
 											ps.addBatch();
 										}
 									}
@@ -115,6 +116,7 @@ public class LoadFutureData {
 								tm.setUpLimit(new BigDecimal(futureParts[5]));
 								tm.setDownLimit(new BigDecimal(futureParts[6]));
 								tm.setVolume(new BigDecimal(futureParts[7]));
+								tm.setOpenInterest(new BigDecimal(futureParts[8]));
 								tm.setTradeDate(tradeDate);
 								tm.setTradeTs(tradeTs);
 								tm.setFreq("1MI");
@@ -141,6 +143,7 @@ public class LoadFutureData {
 									ps.setString(12, tm.getTradeTs());
 									ps.setString(13, tm.getIsMainFuture());
 									ps.setString(14, tm.getSecurity().replaceAll("[\\d]+", ""));
+									ps.setBigDecimal(15, tm.getOpenInterest());
 									ps.addBatch();
 									count++;
 									if (count >= 300) {

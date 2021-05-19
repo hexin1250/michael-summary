@@ -33,7 +33,7 @@ public interface TimeseriesRepository extends CrudRepository<TimeseriesModel, In
 	@Query(value = "select distinct security from timeseries where variety = ?1 and trade_date = ?2", nativeQuery = true)
 	List<String> findSecurities(@Param("variety") String variety, @Param("tradeDate") String tradeDate);
 	
-	@Query(value = "select security from timeseries where volume = (select max(b.volume) from timeseries as b where variety = ?1 and trade_date = ?2 and freq = '1D') and freq = '1D'", nativeQuery = true)
+	@Query(value = "select security from timeseries where open_interest = (select max(b.open_interest) from timeseries as b where variety = ?1 and trade_date = ?2 and freq = '1D') and freq = '1D'", nativeQuery = true)
 	String findPrimarySecurity(@Param("variety") String variety, @Param("tradeDate") String tradeDate);
 
 }

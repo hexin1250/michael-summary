@@ -35,6 +35,8 @@ public class TimeseriesModel implements Comparator<TimeseriesModel> {
 	private BigDecimal downLimit;
 	@Column(name = "volume")
 	private BigDecimal volume;
+	@Column(name = "open_interest")
+	private BigDecimal openInterest;
 	@Column(name = "freq")
 	private String freq;
 	@Column(name = "trade_date")
@@ -135,6 +137,14 @@ public class TimeseriesModel implements Comparator<TimeseriesModel> {
 		this.volume = volume;
 	}
 
+	public BigDecimal getOpenInterest() {
+		return openInterest;
+	}
+
+	public void setOpenInterest(BigDecimal openInterest) {
+		this.openInterest = openInterest;
+	}
+
 	public String getFreq() {
 		return freq;
 	}
@@ -214,6 +224,7 @@ public class TimeseriesModel implements Comparator<TimeseriesModel> {
 		ret.setUpLimit(getUpLimit());
 		ret.setVariety(getVariety());
 		ret.setVolume(getVolume());
+		ret.setOpenInterest(getOpenInterest());
 		return ret;
 	}
 

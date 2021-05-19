@@ -73,6 +73,7 @@ public class FutureLoader {
 		m.setHigh(new BigDecimal(parts[3]));
 		m.setLow(new BigDecimal(parts[4]));
 		m.setClose(new BigDecimal(parts[8]));
+		m.setOpenInterest(new BigDecimal(parts[13]));
 		m.setVolume(new BigDecimal(parts[14]));
 		BigDecimal buy1 = new BigDecimal(parts[6]);
 		BigDecimal sell1 = new BigDecimal(parts[7]);

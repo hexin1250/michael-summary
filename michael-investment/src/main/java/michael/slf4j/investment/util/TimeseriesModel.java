@@ -12,6 +12,7 @@ public class TimeseriesModel {
 	private BigDecimal upLimit;
 	private BigDecimal downLimit;
 	private BigDecimal volume;
+	private BigDecimal openInterest;
 	private String freq;
 	private String tradeDate;
 	private String tradeTs;
@@ -70,6 +71,12 @@ public class TimeseriesModel {
 	public void setVolume(BigDecimal volume) {
 		this.volume = volume;
 	}
+	public BigDecimal getOpenInterest() {
+		return openInterest;
+	}
+	public void setOpenInterest(BigDecimal openInterest) {
+		this.openInterest = openInterest;
+	}
 	public String getFreq() {
 		return freq;
 	}
@@ -106,6 +113,7 @@ public class TimeseriesModel {
 		tm.setUpLimit(m.getUpLimit());
 		tm.setDownLimit(m.getDownLimit());
 		tm.setVolume(m.getVolume());
+		tm.setOpenInterest(m.getOpenInterest());
 		tm.setFreq(m.getFreq());
 		tm.setTradeDate(m.getTradeDate());
 		tm.setTradeTs(m.getTradeTs());
