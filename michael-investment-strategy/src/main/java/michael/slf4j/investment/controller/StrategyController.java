@@ -17,9 +17,9 @@ public class StrategyController {
 	private FutureStrategy strategy;
 	
 	@GetMapping(path = "/mockup")
-	public @ResponseBody String schedule(@RequestParam String variety, @RequestParam String freq, @RequestParam String startDate, @RequestParam String endDate) {
+	public @ResponseBody String schedule(@RequestParam String variety, @RequestParam String freq, @RequestParam String startDate, @RequestParam String endDate, @RequestParam int dataScope, @RequestParam double range) {
 		BacktestRequest request = new BacktestRequest(variety, freq, startDate, endDate);
-		strategy.mockup(request, 5, 0.4);
+		strategy.mockup(request, dataScope, range);
 		return "ok";
 	}
 

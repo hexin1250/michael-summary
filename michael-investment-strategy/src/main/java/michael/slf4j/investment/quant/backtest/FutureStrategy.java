@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -22,9 +23,12 @@ public class FutureStrategy {
 	@Autowired
 	public TimeseriesRepository timeseriesRepository;
 	
-	private Map<String, Double> rangeMap = new ConcurrentHashMap<>();
+	private AtomicInteger increaseAtomic = new AtomicInteger();
+	private Map<Integer, Map<String, Double>> runMap = new ConcurrentHashMap<>();
 	
 	public void mockup(BacktestRequest request, int dataScope, double k) {
+		int nextInt = increaseAtomic.getAndIncrement();
+		runMap.put(nextInt, new ConcurrentHashMap<>());
 		List<String> tradeDateList = timeseriesRepository.findAllTradeDateByVariety(request.getVariety());
 		String accountFuture = null;
 		/**
@@ -40,7 +44,7 @@ public class FutureStrategy {
 			String primarySecurity = timeseriesRepository.findMainFutureByVarietyDate(request.getVariety(), tradeDate);
 			try {
 				String security = primarySecurity;
-				Double range = getRangeValue(security, tradeDate, dataScope);
+				Double range = getRangeValue(nextInt, security, tradeDate, dataScope);
 				if(range != null) {
 					List<TimeseriesModel> modelList = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, request.getFreq());
 					TimeseriesModel first = modelList.get(0);
@@ -70,6 +74,7 @@ public class FutureStrategy {
 			}
 		}
 		log.info("Backtest Done.");
+		runMap.remove(nextInt);
 	}
 	
 	private void changeDominate(int direction, String accountFuture, TimeseriesModel first) {
@@ -87,7 +92,8 @@ public class FutureStrategy {
 		
 	}
 
-	public Double getRangeValue(String security, String tradeDate, int dataScope) {
+	public Double getRangeValue(int runId, String security, String tradeDate, int dataScope) {
+		Map<String, Double> rangeMap = runMap.get(runId);
 		Double ret = rangeMap.get(tradeDate);
 		if(ret != null) {
 			return ret;
@@ -109,10 +115,6 @@ public class FutureStrategy {
 		double rangeOfValue = Math.max((hh - lc), (hc - ll));
 		rangeMap.put(tradeDate, rangeOfValue);
 		return rangeOfValue;
-	}
-
-	public void clear() {
-		rangeMap.clear();
 	}
 
 }
