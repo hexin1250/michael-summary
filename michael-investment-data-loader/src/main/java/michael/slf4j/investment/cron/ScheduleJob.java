@@ -10,19 +10,23 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.constant.Constants;
+import michael.slf4j.investment.etl.FutureLoader;
 import michael.slf4j.investment.model.TimeseriesModel;
 import michael.slf4j.investment.repo.TimeseriesRepository;
 
 @Component
 @Controller
-@PropertySource("classpath:/cleancron.properties")
-public class CleanCronJob {
-	private static final Logger log = Logger.getLogger(CleanCronJob.class);
+@PropertySource("classpath:/schedule.properties")
+public class ScheduleJob {
+	private static final Logger log = Logger.getLogger(ScheduleJob.class);
 	
 	@Autowired
 	private TimeseriesRepository timeseriesRepository;
 
-	@Scheduled(cron = "${cron}")
+	@Autowired
+	private FutureLoader loader;
+	
+	@Scheduled(cron = "${clean-schedule}")
 	public void cleanData() {
 		log.info("Start to clean data.");
 		for (String variety : Constants.VARIETY_LIST) {
@@ -44,6 +48,11 @@ public class CleanCronJob {
 			});
 		}
 		log.info("complete to update.");
+	}
+	
+	@Scheduled(cron = "${update-primary}")
+	public void initPrimaryContract() {
+		loader.init();
 	}
 
 }

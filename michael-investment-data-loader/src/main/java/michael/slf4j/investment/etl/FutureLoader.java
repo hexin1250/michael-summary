@@ -28,6 +28,7 @@ public class FutureLoader {
 	
 	public void init() {
 		log.info("Initialize primary security.");
+		primarySecurityMap.clear();
 		for (String variety : Constants.VARIETY_LIST) {
 			String currentTradeDate = TradeUtil.getDateStr(TradeUtil.getTradeDate());
 			List<String> latestTradeDateList = timeseriesRepository.findMaxTradeDate(variety);
