@@ -1,6 +1,8 @@
 package michael.slf4j.investment.util;
 
 import java.sql.Date;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -40,7 +42,17 @@ public class TradeUtil {
 	}
 
 	public static boolean isTradingTime() {
-		return isTradingTime(LocalTime.now());
+		return isTradingTime(LocalDateTime.now());
+	}
+	
+	public static boolean isTradingTime(LocalDateTime ldt) {
+		LocalDate ld = ldt.toLocalDate();
+		DayOfWeek dayOfWeek = ld.getDayOfWeek();
+		int day = dayOfWeek.getValue();
+		if(day >= 6) {
+			return false;
+		}
+		return isTradingTime(ldt.toLocalTime());
 	}
 
 	public static boolean isTradingTime(LocalTime ldt) {
