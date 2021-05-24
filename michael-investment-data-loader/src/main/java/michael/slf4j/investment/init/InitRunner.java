@@ -6,8 +6,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
-import michael.slf4j.investment.controller.TaskManagerController;
-import michael.slf4j.investment.etl.FutureLoader;
+import michael.slf4j.investment.taskmanager.TaskManager;
 import michael.slf4j.investment.util.TradeUtil;
 
 @Component
@@ -16,17 +15,14 @@ public class InitRunner implements CommandLineRunner {
 	private static final Logger log = Logger.getLogger(InitRunner.class);
 	
 	@Autowired
-	private FutureLoader loader;
-	
-	@Autowired
-	private TaskManagerController taskManagerController;
+	private TaskManager taskManager;
 
     @Override
     public void run(String... args) throws Exception {
     	log.info("Initializing...");
     	if(TradeUtil.isTradingTime()) {
-    		loader.init();
-    		taskManagerController.retrieveData();
+    		taskManager.init();
+    		taskManager.subscribeAll();
     	}
     	log.info("Done to initialize resources.");
     }

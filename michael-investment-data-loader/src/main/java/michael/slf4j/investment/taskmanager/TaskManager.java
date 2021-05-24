@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -17,6 +18,7 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
+import michael.slf4j.investment.constant.Constants;
 import michael.slf4j.investment.etl.FutureLoader;
 import michael.slf4j.investment.util.FutureContract;
 
@@ -32,6 +34,24 @@ public class TaskManager {
 	private CloseableHttpClient httpClient = HttpClientBuilder.create().build();
 	
 	public Map<String, ScheduledFuture<?>> futureMap = new ConcurrentHashMap<>();
+	
+	public void init() {
+		futureLoader.init();
+	}
+	
+	public String subscribeAll() {
+		String ret = Constants.VARIETY_LIST.parallelStream().map(variety -> {
+			StringBuffer sb = new StringBuffer();
+			boolean result = scheduleTask(variety);
+			if(result) {
+				sb.append("Successful to subscribe [" + variety + "]");
+			} else {
+				sb.append("Already subscribe [" + variety + "]");
+			}
+			return sb.toString();
+		}).collect(Collectors.joining("<br>"));
+		return ret;
+	}
 	
 	public boolean scheduleTask(String variety) {
 		if(recordMap.get(variety) == null || !recordMap.get(variety)) {

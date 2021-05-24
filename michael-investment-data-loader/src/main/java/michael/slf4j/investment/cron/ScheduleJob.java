@@ -6,23 +6,25 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
-import michael.slf4j.investment.etl.FutureLoader;
+import michael.slf4j.investment.taskmanager.TaskManager;
 
 @Component
 @Controller
 @PropertySource("classpath:/schedule.properties")
 public class ScheduleJob {
 	@Autowired
-	private FutureLoader loader;
+	private TaskManager taskManager;
 	
 	@Scheduled(cron = "${clean-schedule}")
 	public void cleanData() {
-		loader.fillBack1D();
+		taskManager.cancelTasks();
+		taskManager.fillBack1D();
 	}
 
 	@Scheduled(cron = "${update-primary}")
 	public void initPrimaryContract() {
-		loader.init();
+		taskManager.init();
+		taskManager.subscribeAll();
 	}
 
 }

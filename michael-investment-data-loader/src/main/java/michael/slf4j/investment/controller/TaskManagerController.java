@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import michael.slf4j.investment.constant.Constants;
 import michael.slf4j.investment.taskmanager.TaskManager;
 import michael.slf4j.investment.util.TradeUtil;
 
@@ -22,17 +21,7 @@ public class TaskManagerController {
 	
 	@GetMapping(path = "/task")
 	public @ResponseBody String retrieveData() {
-		String ret = Constants.VARIETY_LIST.parallelStream().map(variety -> {
-			StringBuffer sb = new StringBuffer();
-			boolean result = taskManager.scheduleTask(variety);
-			if(result) {
-				sb.append("Successful to subscribe [" + variety + "]");
-			} else {
-				sb.append("Already subscribe [" + variety + "]");
-			}
-			return sb.toString();
-		}).collect(Collectors.joining("<br>"));
-		return ret;
+		return taskManager.subscribeAll();
 	}
 	
 	@GetMapping(path = "/cancelAllTasks")
