@@ -61,4 +61,10 @@ public class TaskManagerController {
 		log.info("Current time is complete munite? " + isCompleteMunite);
 		return isCompleteMunite;
 	}
+	
+	@GetMapping(path = "/fillBack")
+	public @ResponseBody boolean fillBack() {
+		taskManager.fillBack1D();
+		return true;
+	}
 }

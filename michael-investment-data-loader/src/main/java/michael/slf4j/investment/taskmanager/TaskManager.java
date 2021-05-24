@@ -62,6 +62,10 @@ public class TaskManager {
 		recordMap.clear();
 	}
 	
+	public void fillBack1D() {
+		futureLoader.fillBack1D();
+	}
+	
 	public void close() {
 		try {
 			httpClient.close();

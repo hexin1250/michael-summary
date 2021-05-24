@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.controller.TaskManagerController;
 import michael.slf4j.investment.etl.FutureLoader;
+import michael.slf4j.investment.util.TradeUtil;
 
 @Component
 @Controller
@@ -23,8 +24,10 @@ public class InitRunner implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
     	log.info("Initializing...");
-    	loader.init();
-    	taskManagerController.retrieveData();
+    	if(TradeUtil.isTradingTime()) {
+    		loader.init();
+    		taskManagerController.retrieveData();
+    	}
     	log.info("Done to initialize resources.");
     }
 }

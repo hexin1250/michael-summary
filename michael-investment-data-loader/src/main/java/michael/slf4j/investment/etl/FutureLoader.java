@@ -91,4 +91,31 @@ public class FutureLoader {
 		return m;
 	}
 
+	public void fillBack1D() {
+		for (String variety : Constants.VARIETY_LIST) {
+			List<String> tradeDateList = timeseriesRepository.findMaxTradeDate(variety);
+			fillBack1D(variety, tradeDateList);
+		}
+	}
+	
+	public void fillBack1D(String variety, List<String> tradeDateList) {
+		log.info("Start to clean [" + variety + "] data.");
+		tradeDateList.stream().forEach(tradeDate -> {
+			List<String> securites = timeseriesRepository.findSecurities(variety, tradeDate);
+			securites.stream().forEach(security -> {
+				List<TimeseriesModel> eodList = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, "1D");
+				if(eodList.isEmpty()) {
+					List<TimeseriesModel> tickList = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, "TICK");
+					if(!tickList.isEmpty()) {
+						TimeseriesModel latest = tickList.get(tickList.size() - 1).copy();
+						latest.setFreq("1D");
+						timeseriesRepository.save(latest);
+						log.info("Update for security[" + security + "," + tradeDate + "]");
+					}
+				}
+			});
+		});
+		log.info("complete to update[" + variety + "].");
+	}
+
 }
