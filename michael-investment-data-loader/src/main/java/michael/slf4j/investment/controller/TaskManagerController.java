@@ -19,8 +19,8 @@ public class TaskManagerController {
 	@Autowired
 	private TaskManager taskManager;
 	
-	@GetMapping(path = "/task")
-	public @ResponseBody String retrieveData() {
+	@GetMapping(path = "/subscribeAll")
+	public @ResponseBody String subscribeAll() {
 		return taskManager.subscribeAll();
 	}
 	
