@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.model.TimeseriesModel;
+import michael.slf4j.investment.model.TradeDeal;
 import michael.slf4j.investment.quant.BacktestRequest;
 import michael.slf4j.investment.repo.TimeseriesRepository;
 
@@ -25,6 +26,7 @@ public class FutureStrategy {
 	
 	private AtomicInteger increaseAtomic = new AtomicInteger();
 	private Map<Integer, Map<String, Double>> runMap = new ConcurrentHashMap<>();
+	private Map<Integer, TradeDeal> lastTradeMap = new ConcurrentHashMap<>();
 	
 	public void mockup(BacktestRequest request, int dataScope, double k) {
 		int nextInt = increaseAtomic.getAndIncrement();
