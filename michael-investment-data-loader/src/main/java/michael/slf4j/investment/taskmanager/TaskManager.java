@@ -20,6 +20,7 @@ import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.constant.Constants;
 import michael.slf4j.investment.etl.FutureLoader;
+import michael.slf4j.investment.source.SinaSource;
 import michael.slf4j.investment.util.FutureContract;
 
 @Controller
@@ -28,6 +29,9 @@ public class TaskManager {
 	
 	@Autowired
 	private FutureLoader futureLoader;
+	
+	@Autowired
+	private SinaSource sinaSource;
 	
 	private ScheduledExecutorService service = Executors.newScheduledThreadPool(20);
 	private Map<String, Boolean> recordMap = new ConcurrentHashMap<>();
@@ -61,7 +65,7 @@ public class TaskManager {
 		}
 		List<String> list = FutureContract.getFutureContracts(variety);
 		for (String security : list) {
-			FutureTask task = new FutureTask(futureLoader, httpClient, variety, security);
+			FutureTask task = new FutureTask(futureLoader, sinaSource, variety, security);
 			futureMap.put(security, service.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS));
 		}
 		log.info("schedule tasks have been set for [" + variety + "].");

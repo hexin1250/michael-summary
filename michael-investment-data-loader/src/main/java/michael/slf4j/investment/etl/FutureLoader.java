@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
+import michael.slf4j.investment.configuration.FreqEnum;
 import michael.slf4j.investment.constant.Constants;
 import michael.slf4j.investment.model.TimeseriesModel;
 import michael.slf4j.investment.repo.TimeseriesRepository;
@@ -46,25 +47,25 @@ public class FutureLoader {
 		}
 	}
 	
-	public boolean load(String variety, String security, String content) {
+	public boolean load(String variety, String security, String content, FreqEnum freq) {
 		String primarySecurity = primarySecurityMap.get(variety);
-		TimeseriesModel m = generateModel(security, content);
+		TimeseriesModel m = generateModel(security, content, freq);
 		m.setIsMainFuture(security.equals(primarySecurity) ? "T" : "F");
-		if (TradeUtil.isCompleteMunite()) {
-			TimeseriesModel freqTM = m.copy();
-			freqTM.setFreq("1MI");
-			timeseriesRepository.save(freqTM);
-		}
-		if (previousMap.get(security) == null || (TradeUtil.isTradingTime() && !m.equals(previousMap.get(security)))) {
-			log.info("load[" + security + "] successful.");
+		switch(freq) {
+		case _TICK:
+			if(previousMap.get(security) != null && (!TradeUtil.isTradingTime() || m.equals(previousMap.get(security)))) {
+				return false;
+			}
 			previousMap.put(security, m);
-			timeseriesRepository.save(m);
-			return true;
+			default:
+				break;
 		}
-		return false;
+		timeseriesRepository.save(m);
+		log.info("load[" + security + "] for [" + freq + "] successful.");
+		return true;
 	}
-
-	private TimeseriesModel generateModel(String security, String content) {
+	
+	private TimeseriesModel generateModel(String security, String content, FreqEnum freq) {
 		String[] parts = content.split(",");
 		TimeseriesModel m = new TimeseriesModel();
 		m.setSecurity(security);
@@ -84,7 +85,7 @@ public class FutureLoader {
 		if (sell1.compareTo(new BigDecimal(0)) == 0) {
 			m.setUpLimit(new BigDecimal(parts[8]));
 		}
-		m.setFreq("TICK");
+		m.setFreq(freq.getValue());
 		
 		m.setTradeDate(TradeUtil.getDateStr(TradeUtil.getTradeDate()));
 		m.setTradeTs(new Timestamp(System.currentTimeMillis()));
