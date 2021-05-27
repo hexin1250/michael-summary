@@ -12,7 +12,9 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.springframework.stereotype.Controller;
 
+@Controller
 public class SinaSource implements Closeable {
 	private static final Logger log = Logger.getLogger(SinaSource.class);
 	private static final Pattern p = Pattern.compile(".*[\"](.+)[\"].*");

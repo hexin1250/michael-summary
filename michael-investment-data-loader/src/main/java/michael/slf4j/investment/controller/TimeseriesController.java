@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import michael.slf4j.investment.model.TimeseriesModel;
+import michael.slf4j.investment.model.Timeseries;
 import michael.slf4j.investment.repo.TimeseriesRepository;
 
 @Controller
@@ -20,7 +20,7 @@ public class TimeseriesController {
 	
 	@GetMapping(path = "/list")
 	public @ResponseBody String getTs(@RequestParam(defaultValue="") String security) {
-		List<TimeseriesModel> list = timeseriesRepository.findBySecurity(security);
+		List<Timeseries> list = timeseriesRepository.findBySecurity(security);
 		return "size:" + list.size();
 	}
 	

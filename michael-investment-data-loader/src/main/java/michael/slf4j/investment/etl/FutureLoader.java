@@ -12,7 +12,7 @@ import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.configuration.FreqEnum;
 import michael.slf4j.investment.constant.Constants;
-import michael.slf4j.investment.model.TimeseriesModel;
+import michael.slf4j.investment.model.Timeseries;
 import michael.slf4j.investment.repo.TimeseriesRepository;
 import michael.slf4j.investment.taskmanager.FutureTask;
 import michael.slf4j.investment.util.TradeUtil;
@@ -24,7 +24,7 @@ public class FutureLoader {
 	@Autowired
 	private TimeseriesRepository timeseriesRepository;
 
-	private Map<String, TimeseriesModel> previousMap = new ConcurrentHashMap<>();
+	private Map<String, Timeseries> previousMap = new ConcurrentHashMap<>();
 	private Map<String, String> primarySecurityMap = new ConcurrentHashMap<>();
 	
 	public void init() {
@@ -49,7 +49,7 @@ public class FutureLoader {
 	
 	public boolean load(String variety, String security, String content, FreqEnum freq) {
 		String primarySecurity = primarySecurityMap.get(variety);
-		TimeseriesModel m = generateModel(security, content, freq);
+		Timeseries m = generateModel(security, content, freq);
 		m.setIsMainFuture(security.equals(primarySecurity) ? "T" : "F");
 		switch(freq) {
 		case _TICK:
@@ -65,9 +65,9 @@ public class FutureLoader {
 		return true;
 	}
 	
-	private TimeseriesModel generateModel(String security, String content, FreqEnum freq) {
+	private Timeseries generateModel(String security, String content, FreqEnum freq) {
 		String[] parts = content.split(",");
-		TimeseriesModel m = new TimeseriesModel();
+		Timeseries m = new Timeseries();
 		m.setSecurity(security);
 		m.setVariety(security.replaceAll("[\\d]+", ""));
 		m.setSecurityName(parts[0]);
@@ -104,11 +104,11 @@ public class FutureLoader {
 		tradeDateList.stream().forEach(tradeDate -> {
 			List<String> securites = timeseriesRepository.findSecurities(variety, tradeDate);
 			securites.stream().forEach(security -> {
-				List<TimeseriesModel> eodList = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, "1D");
+				List<Timeseries> eodList = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, "1D");
 				if(eodList.isEmpty()) {
-					List<TimeseriesModel> tickList = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, "TICK");
+					List<Timeseries> tickList = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, "TICK");
 					if(!tickList.isEmpty()) {
-						TimeseriesModel latest = tickList.get(tickList.size() - 1).copy();
+						Timeseries latest = tickList.get(tickList.size() - 1).copy();
 						latest.setFreq("1D");
 						timeseriesRepository.save(latest);
 						log.info("Update for security[" + security + "," + tradeDate + "]");

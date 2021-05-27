@@ -11,7 +11,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
 @Entity(name = "timeseries")
-public class TimeseriesModel implements Comparator<TimeseriesModel> {
+public class Timeseries implements Comparator<Timeseries> {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
@@ -46,7 +46,7 @@ public class TimeseriesModel implements Comparator<TimeseriesModel> {
 	@Column(name = "is_main_future")
 	private String isMainFuture;
 
-	public TimeseriesModel() {
+	public Timeseries() {
 	}
 
 	public Integer getId() {
@@ -178,7 +178,7 @@ public class TimeseriesModel implements Comparator<TimeseriesModel> {
 	}
 
 	@Override
-	public int compare(TimeseriesModel o1, TimeseriesModel o2) {
+	public int compare(Timeseries o1, Timeseries o2) {
 		int ret = o1.getTradeTs().compareTo(o2.getTradeTs());
 		if (ret != 0) {
 			return ret;
@@ -188,10 +188,10 @@ public class TimeseriesModel implements Comparator<TimeseriesModel> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof TimeseriesModel)) {
+		if (obj == null || !(obj instanceof Timeseries)) {
 			return false;
 		}
-		TimeseriesModel tm = (TimeseriesModel) obj;
+		Timeseries tm = (Timeseries) obj;
 		return tm.getSecurityName().equals(getSecurityName()) && tm.getClose().compareTo(getClose()) == 0
 				&& tm.getVolume().compareTo(getVolume()) == 0;
 	}
@@ -208,8 +208,8 @@ public class TimeseriesModel implements Comparator<TimeseriesModel> {
 		return sb.toString();
 	}
 	
-	public TimeseriesModel copy() {
-		TimeseriesModel ret = new TimeseriesModel();
+	public Timeseries copy() {
+		Timeseries ret = new Timeseries();
 		ret.setClose(getClose());
 		ret.setDownLimit(getDownLimit());
 		ret.setFreq(getFreq());
