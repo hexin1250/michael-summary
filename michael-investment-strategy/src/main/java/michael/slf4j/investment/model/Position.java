@@ -31,7 +31,8 @@ public class Position implements Serializable {
 	 * @throws EmptySecurityException 
 	 */
 	public ProfitLoss deal(DirectionEnum dir, double price, int quantity) {
-		double transactionCost = DealUtil.getTransactionCost(security.getVariety(), price, quantity, false);
+		Variety variety = security.getVariety();
+		double transactionCost = DealUtil.getTransactionCost(variety, price, quantity, false);
 		switch(dir) {
 		case buy:
 		case sell:
@@ -69,23 +70,13 @@ public class Position implements Serializable {
 				top.quantity = top.quantity - diff;
 				quantity = 0;
 			}
-			pnl += (top.price * pair.getValue() + price * dir.getValue()) * diff;
+			pnl += (top.price * pair.getValue() + price * dir.getValue()) * diff * variety.getUnit();
 			releaseMargin -= DealUtil.getMargin(security.getVariety(), top.price, diff);
 		}
 		if(queue.isEmpty()) {
 			securityMap.remove(pair);
 		}
 		return new ProfitLoss(releaseMargin, pnl, transactionCost);
-	}
-	
-	public double pnl(double price) {
-		return securityMap.entrySet().stream().mapToDouble(entry -> {
-			DirectionEnum dir = entry.getKey();
-			Queue<DealInfo> q = entry.getValue();
-			return q.stream().mapToDouble(dealInfo -> {
-				return (dealInfo.price - price) * dealInfo.quantity * dir.getValue();
-			}).sum();
-		}).sum();
 	}
 	
 	public double total(double price) {
@@ -95,7 +86,8 @@ public class Position implements Serializable {
 			return q.stream().mapToDouble(dealInfo -> {
 				Variety variety = security.getVariety();
 				double margin = DealUtil.getMargin(variety, dealInfo.price, dealInfo.quantity);
-				return (dealInfo.price - price) * dealInfo.quantity * dir.getValue() * variety.getUnit() + margin;
+				double pnl = (dealInfo.price - price) * dealInfo.quantity * dir.getValue() * variety.getUnit();
+				return pnl + margin;
 			}).sum();
 		}).sum();
 	}
@@ -126,6 +118,11 @@ public class Position implements Serializable {
 		public DealInfo(double price, int quantity) {
 			this.price = price;
 			this.quantity = quantity;
+		}
+		
+		@Override
+		public String toString() {
+			return price + ":" + quantity;
 		}
 	}
 

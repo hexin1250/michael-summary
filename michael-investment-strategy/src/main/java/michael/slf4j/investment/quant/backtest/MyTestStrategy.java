@@ -68,16 +68,15 @@ public class MyTestStrategy extends AbstractStrategy implements IStrategy {
 			double sellLine = openPrice - range * k;
 			params.put(BUY_PRICE, buyLine);
 			params.put(SELL_PRICE, sellLine);
-//			log.info(now() + ": open:" + openPrice + ", buy line:[" + buyLine + "] sell line:[" + sellLine + "].");
 		}
 		double buyLine = (double) params.get(BUY_PRICE);
 		double sellLine = (double) params.get(SELL_PRICE);
 		Contract contract = bar.getContract(security.getName());
 		double closePrice = contract.getClose();
 		
-		double total = acc.total(context);
-		int targetQ = (int) (total / (contract.getClose() * 30));
 		if(closePrice > buyLine && (dir == null || dir == DirectionEnum.sell)) {
+			double total = acc.total(context);
+			int targetQ = (int) (total / (contract.getClose() * 30));
 			if(dir != null) {
 				int closeQ = (int) params.get(OPEN_HANDS);
 				acc.deal(security, DirectionEnum.buy_close, closePrice, closeQ);
@@ -88,6 +87,8 @@ public class MyTestStrategy extends AbstractStrategy implements IStrategy {
 			params.put(OPEN_HANDS, targetQ);
 			dir = DirectionEnum.buy;
 		} else if(closePrice < sellLine && (dir == null || dir == DirectionEnum.buy)) {
+			double total = acc.total(context);
+			int targetQ = (int) (total / (contract.getClose() * 30));
 			if(dir != null) {
 				int closeQ = (int) params.get(OPEN_HANDS);
 				acc.deal(security, DirectionEnum.sell_close, closePrice, closeQ);
