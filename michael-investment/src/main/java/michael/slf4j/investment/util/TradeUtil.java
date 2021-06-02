@@ -21,6 +21,22 @@ public class TradeUtil {
 		return getTradeDate(ld);
 	}
 	
+	public static LocalDate previousTradeDate(LocalDate ld) {
+		int dw = ld.getDayOfWeek().getValue();
+		if (dw == 1) {
+			return ld.minusDays(3);
+		} else if (dw == 7) {
+			return ld.minusDays(2);
+		} else {
+			return ld.minusDays(1);
+		}
+	}
+	
+	public static boolean isWeekend(LocalDate ld) {
+		int dw = ld.getDayOfWeek().getValue();
+		return dw == 6 || dw == 7;
+	}
+	
 	public static long getTradeDate(Date date) {
 	    LocalDateTime localDateTime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
 	    return getTradeDate(localDateTime);

@@ -1,6 +1,6 @@
 package michael.slf4j.investment.exception;
 
-public class CashNotEnoughException extends Exception {
+public class CashNotEnoughException extends RuntimeException {
 
 	/**
 	 * 
