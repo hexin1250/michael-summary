@@ -10,7 +10,7 @@ import com.google.common.collect.Sets;
 import michael.slf4j.investment.exception.NotSubscribeException;
 
 public class Bar {
-	private Map<String, Contract> map = new HashMap<>();
+	public Map<String, Contract> map = new HashMap<>();
 	
 	public Contract getContract(String security) {
 		if(!map.containsKey(security)) {

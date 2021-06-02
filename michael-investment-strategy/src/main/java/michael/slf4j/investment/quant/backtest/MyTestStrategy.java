@@ -2,7 +2,6 @@ package michael.slf4j.investment.quant.backtest;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 import michael.slf4j.investment.model.Account;
 import michael.slf4j.investment.model.Bar;
@@ -25,6 +24,7 @@ public class MyTestStrategy extends AbstractStrategy implements IStrategy {
 	private static final String SELL_PRICE = "sell_price";
 	private static final String MAIN_SECURITY = "main_security";
 	private static final String CHANGE_DOMINATE = "change_dominate";
+	private static final String OPEN_HANDS = "open_hands";
 	
 	private Variety variety;
 	private List<Security> subscriberList;
@@ -32,23 +32,22 @@ public class MyTestStrategy extends AbstractStrategy implements IStrategy {
 	private int dataRange;
 	private DirectionEnum dir;
 	private double k;
-	private LocalDate tradeDate;
-	
-	public MyTestStrategy() {
+
+	@Override
+	public void init(Context context) {
+		super.init(context);
 		variety = Variety.I;
 		dataRange = 5;
 		k = 0.4D;
 		params.put(Context.HISTORICAL_RANGE, dataRange);
 	}
-
-	@Override
-	public Map<String, Object> getParams() {
-		return params;
-	}
-
+	
 	@Override
 	public void before(Context context, LocalDate current) {
-		params.clear();
+		params.remove(CHANGE_DOMINATE);
+		params.remove(MAIN_SECURITY);
+		params.remove(BUY_PRICE);
+		params.remove(SELL_PRICE);
 		Security security = subscriberList.get(0);
 		List<Contract> list = context.historical.getList(security.getName());
 		range = getRangeValue(list);
@@ -69,22 +68,34 @@ public class MyTestStrategy extends AbstractStrategy implements IStrategy {
 			double sellLine = openPrice - range * k;
 			params.put(BUY_PRICE, buyLine);
 			params.put(SELL_PRICE, sellLine);
+//			log.info(now() + ": open:" + openPrice + ", buy line:[" + buyLine + "] sell line:[" + sellLine + "].");
 		}
 		double buyLine = (double) params.get(BUY_PRICE);
 		double sellLine = (double) params.get(SELL_PRICE);
 		Contract contract = bar.getContract(security.getName());
 		double closePrice = contract.getClose();
+		
+		double total = acc.total(context);
+		int targetQ = (int) (total / (contract.getClose() * 30));
 		if(closePrice > buyLine && (dir == null || dir == DirectionEnum.sell)) {
 			if(dir != null) {
-				acc.deal(security, DirectionEnum.buy_close, closePrice, 1);
+				int closeQ = (int) params.get(OPEN_HANDS);
+				acc.deal(security, DirectionEnum.buy_close, closePrice, closeQ);
+				log.info(now() + " " + security + ":" + DirectionEnum.buy_close + ":" + closePrice + ":" + closeQ);
 			}
-			acc.deal(security, DirectionEnum.buy, closePrice, 1);
+			acc.deal(security, DirectionEnum.buy, closePrice, targetQ);
+			log.info(now() + " " + security + ":" + DirectionEnum.buy + ":" + closePrice + ":" + targetQ);
+			params.put(OPEN_HANDS, targetQ);
 			dir = DirectionEnum.buy;
 		} else if(closePrice < sellLine && (dir == null || dir == DirectionEnum.buy)) {
 			if(dir != null) {
-				acc.deal(security, DirectionEnum.sell_close, closePrice, 1);
+				int closeQ = (int) params.get(OPEN_HANDS);
+				acc.deal(security, DirectionEnum.sell_close, closePrice, closeQ);
+				log.info(now() + " " + security + ":" + DirectionEnum.sell_close + ":" + closePrice + ":" + closeQ);
 			}
-			acc.deal(security, DirectionEnum.sell, closePrice, 1);
+			acc.deal(security, DirectionEnum.sell, closePrice, targetQ);
+			log.info(now() + " " + security + ":" + DirectionEnum.sell + ":" + closePrice + ":" + targetQ);
+			params.put(OPEN_HANDS, targetQ);
 			dir = DirectionEnum.sell;
 		}
 	}
@@ -95,7 +106,6 @@ public class MyTestStrategy extends AbstractStrategy implements IStrategy {
 
 	@Override
 	public List<Security> subscriberList(LocalDate tradeDate) {
-		this.tradeDate = tradeDate;
 		subscriberList = getMainFutures(variety, tradeDate);
 		return subscriberList;
 	}
@@ -107,15 +117,18 @@ public class MyTestStrategy extends AbstractStrategy implements IStrategy {
 	
 	private void changeDominate(Account acc, Bar bar) {
 		if(dir != null) {
+			int quantity = (int) params.get(OPEN_HANDS);
 			Security previousSecurity = subscriberList.get(1);
 			Contract previousContract = bar.getContract(previousSecurity.getName());
 			Security mainSecurity = subscriberList.get(0);
 			Contract mainContract = bar.getContract(mainSecurity.getName());
 			
-			log.info(tradeDate + ": Start to change Dominate.");
-			acc.deal(previousSecurity, dir.getPair(), previousContract.getClose(), 1);
-			acc.deal(mainSecurity, dir, mainContract.getClose(), 1);
-			log.info(tradeDate + ": Done to change Dominate.");
+			log.info(now() + ": Start to change Dominate.");
+			acc.deal(previousSecurity, dir.getPair(), previousContract.getClose(), quantity);
+			log.info(now() + " " + previousSecurity + ":" + dir.getPair() + ":" + previousContract.getClose() + ":" + quantity);
+			acc.deal(mainSecurity, dir, mainContract.getClose(), quantity);
+			log.info(now() + " " + mainSecurity + ":" + dir + ":" + mainContract.getClose() + ":" + quantity);
+			log.info(now() + ": Done to change Dominate.");
 		}
 	}
 

@@ -9,6 +9,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
@@ -20,6 +22,7 @@ import michael.slf4j.investment.model.Bar;
 import michael.slf4j.investment.model.Context;
 import michael.slf4j.investment.model.Contract;
 import michael.slf4j.investment.model.Future;
+import michael.slf4j.investment.model.Status;
 import michael.slf4j.investment.model.Timeseries;
 import michael.slf4j.investment.model.TradeDateEnum;
 import michael.slf4j.investment.model.TradePairEnum;
@@ -32,13 +35,20 @@ import michael.slf4j.investment.util.TradeUtil;
 public class RunningProcess {
 	private static final Logger log = Logger.getLogger(RunningProcess.class);
 	
+	private AtomicInteger atom = new AtomicInteger();
+	private Map<Integer, Bar> barMap = new ConcurrentHashMap<>();
+	
 	@Autowired
 	private TimeseriesRepository repo;
 	
 	public void backtest(Account acc, IStrategy strategy, LocalDate startDate, LocalDate endDate) {
+		int runId = atom.getAndIncrement();
 		Bar bar = new Bar();
+		barMap.put(runId, bar);
 		LocalDate current = startDate;
-		Context context = new Context(acc, strategy.getParams());
+		Context context = new Context(runId, acc);
+		strategy.init(context);
+		context.init(strategy.getParams());
 		TradePairEnum[] nightPair = TradeDateEnum.night.getTradingHours();
 		TradePairEnum[] dayPair = TradeDateEnum.day.getTradingHours();
 		TradePairEnum[] pairs = new TradePairEnum[nightPair.length + dayPair.length];
@@ -53,7 +63,10 @@ public class RunningProcess {
 				current = current.plusDays(1);
 				continue;
 			}
-			log.info("Deal with " + current);
+			LocalDate previousTradeDate = TradeUtil.previousTradeDate(current);
+			while(HolidayUtil.$.isHoliday(previousTradeDate)) {
+				previousTradeDate = TradeUtil.previousTradeDate(previousTradeDate);
+			}
 			strategy.subscriber(context, current);
 			strategy.before(context, current);
 			List<String> securityList = strategy.subscriberList(current).stream().map(security -> security.getName()).collect(Collectors.toList());
@@ -72,6 +85,13 @@ public class RunningProcess {
 						continue;
 					}
 					tradingMap.entrySet().forEach(entry -> bar.update(entry.getKey(), entry.getValue()));
+					LocalDateTime ldt = null;
+					if(currentLt.getHour() >= 21) {
+						ldt = LocalDateTime.of(previousTradeDate, currentLt);
+					} else {
+						ldt = LocalDateTime.of(current, currentLt);
+					}
+					Status.updateStatus(runId, bar.map, ldt);
 					strategy.handle(acc, bar);
 					currentLt = currentLt.plusMinutes(1);
 				}
@@ -79,10 +99,11 @@ public class RunningProcess {
 			strategy.after(context, current);
 			context.historical.update(current);
 			Map<String, Contract> status = context.historical.getEodStatus();
-			log.info(acc.total(status));
+			log.info(current + ":" + acc.total(status));
 			
 			current = current.plusDays(1);
 		}
+		Status.unregister(runId);
 	}
 	
 	private Map<LocalTime, Map<String, Contract>> getTradingMap(List<String> securityList, LocalDate tradeDate){
@@ -95,15 +116,11 @@ public class RunningProcess {
 			String security = model.getSecurity();
 			Contract contract = new Future(model);
 			Map<String, Contract> timingMap = map.get(lt);
-			try {
-				if(timingMap == null) {
-					timingMap = new HashMap<>();
-					map.put(lt, timingMap);
-				}
-				timingMap.put(security, contract);
-			} catch(Exception e) {
-				log.error("Error", e);
+			if(timingMap == null) {
+				timingMap = new HashMap<>();
+				map.put(lt, timingMap);
 			}
+			timingMap.put(security, contract);
 		});
 		return map;
 	}

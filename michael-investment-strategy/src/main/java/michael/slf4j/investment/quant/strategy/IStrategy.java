@@ -11,12 +11,14 @@ import michael.slf4j.investment.model.Context;
 import michael.slf4j.investment.model.Security;
 
 public interface IStrategy extends Serializable {
+	public void init(Context context);
 	public Map<String, Object> getParams();
 	public void before(Context context, LocalDate current);
 	public void handle(Account acc, Bar bar);
 	public void after(Context context, LocalDate current);
 	public List<Security> subscriberList(LocalDate tradeDate);
 	public int getHistoricalSize();
+	public Context getContext();
 	
 	public default void subscriber(Context context, LocalDate tradeDate) {
 		List<Security> list = subscriberList(tradeDate);

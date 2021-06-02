@@ -6,13 +6,16 @@ public class Context {
 	public static final String HISTORICAL_RANGE = "historical_range";
 	
 	private final Account acc;
+	public final int runId;
 	
-	public final HistoricalBar historical;
-	public final Map<String, Object> params;
+	public HistoricalBar historical;
 	
-	public Context(Account acc, Map<String, Object> params) {
+	public Context(int runId, Account acc) {
+		this.runId = runId;
 		this.acc = acc;
-		this.params = params;
+	}
+	
+	public void init(Map<String, Object> params) {
 		Object hisObj = params.get(HISTORICAL_RANGE);
 		int range = 0;
 		if(hisObj != null) {

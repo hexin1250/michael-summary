@@ -49,5 +49,10 @@ public class Future implements Contract {
 	public double getOpenInterest() {
 		return openInterest;
 	}
+	
+	@Override
+	public String toString() {
+		return close + "";
+	}
 
 }

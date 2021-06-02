@@ -1,9 +1,9 @@
 package michael.slf4j.investment.model;
 
 public enum Variety {
-	I{{rate = 0.00006D; dayRate = 0.00024D; unit = 100D; marginRate = 0.12D;}},
-	J{{rate = 0.00006D; dayRate = 0.00024D; unit = 100D; marginRate = 0.11D;}},
-	RB{{rate = 0.0001D; dayRate = 0.0002D; unit = 10D; marginRate = 0.1D;}};
+	I{{rate = 0.0006D; dayRate = 0.0024D; unit = 100D; marginRate = 0.12D;}},
+	J{{rate = 0.0006D; dayRate = 0.0024D; unit = 100D; marginRate = 0.11D;}},
+	RB{{rate = 0.001D; dayRate = 0.002D; unit = 10D; marginRate = 0.1D;}};
 	
 	public double rate;
 	public double dayRate;

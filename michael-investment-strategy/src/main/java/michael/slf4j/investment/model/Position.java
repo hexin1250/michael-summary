@@ -93,8 +93,9 @@ public class Position implements Serializable {
 			DirectionEnum dir = entry.getKey();
 			Queue<DealInfo> q = entry.getValue();
 			return q.stream().mapToDouble(dealInfo -> {
-				double margin = DealUtil.getMargin(security.getVariety(), dealInfo.price, dealInfo.quantity);
-				return (dealInfo.price - price) * dealInfo.quantity * dir.getValue() + margin;
+				Variety variety = security.getVariety();
+				double margin = DealUtil.getMargin(variety, dealInfo.price, dealInfo.quantity);
+				return (dealInfo.price - price) * dealInfo.quantity * dir.getValue() * variety.getUnit() + margin;
 			}).sum();
 		}).sum();
 	}

@@ -1,6 +1,7 @@
 package michael.slf4j.investment.quant.strategy;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,7 +10,9 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import michael.slf4j.investment.model.Context;
 import michael.slf4j.investment.model.Security;
+import michael.slf4j.investment.model.Status;
 import michael.slf4j.investment.model.Timeseries;
 import michael.slf4j.investment.model.Variety;
 import michael.slf4j.investment.repo.TimeseriesRepository;
@@ -27,6 +30,7 @@ public abstract class AbstractStrategy implements IStrategy {
 	private TimeseriesRepository repo;
 	
 	protected Map<String, Object> params = new HashMap<>();
+	protected Context context;
 	
 	public AbstractStrategy() {
 		repo = SpringContextUtil.getBean("timeseriesRepository", TimeseriesRepository.class);
@@ -67,6 +71,24 @@ public abstract class AbstractStrategy implements IStrategy {
 			previousTradeDate = TradeUtil.previousTradeDate(previousTradeDate);
 		}
 		return repo.findSecurities(variety.name(), previousTradeDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+	}
+	
+	@Override
+	public void init(Context context) {
+		this.context = context;
+	}
+	
+	public Context getContext() {
+		return context;
+	}
+	
+	@Override
+	public Map<String, Object> getParams() {
+		return params;
+	}
+	
+	protected final LocalDateTime now() {
+		return Status.getCurrentTime(context);
 	}
 
 }

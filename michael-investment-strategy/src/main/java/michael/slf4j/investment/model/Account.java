@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
-
 import michael.slf4j.investment.exception.CashNotEnoughException;
 import michael.slf4j.investment.exception.InvalidCloseException;
 import michael.slf4j.investment.util.DealUtil;
@@ -17,7 +15,6 @@ public class Account implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private static final Logger log = Logger.getLogger(Account.class);
 	
 	private final double initCash;
 	private double cash;
@@ -34,7 +31,6 @@ public class Account implements Serializable {
 			position = new Position(security);
 			positionMap.put(security.getName(), position);
 		}
-		log.info("Deal " + security + ":" + dir + ":" + dealPrice);
 		double expectedCash = 0D;
 		switch(dir) {
 		case buy_close:
@@ -65,6 +61,10 @@ public class Account implements Serializable {
 	
 	public double pnl(Map<String, Contract> status) {
 		return total(status) - initCash;
+	}
+	
+	public double total(Context context) {
+		return total(Status.getStatus(context));
 	}
 	
 	public double total(Map<String, Contract> status) {
