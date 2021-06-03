@@ -16,7 +16,7 @@ import michael.slf4j.investment.repo.TimeseriesRepository;
 import michael.slf4j.investment.util.SpringContextUtil;
 
 public class HistoricalBar {
-	private Map<String, Queue<Contract>> map = new HashMap<>();
+	private Map<Security, Queue<Contract>> map = new HashMap<>();
 	private int historicalRange;
 	
 	private TimeseriesRepository repo;
@@ -26,16 +26,16 @@ public class HistoricalBar {
 		this.repo = SpringContextUtil.getBean("timeseriesRepository", TimeseriesRepository.class);
 	}
 	
-	public List<Contract> getList(String security){
+	public List<Contract> getList(Security security){
 		if(!map.containsKey(security)) {
 			throw new NotSubscribeException("Doesn't find the security[" + security + "].");
 		}
 		return map.get(security).stream().collect(Collectors.toList());
 	}
 	
-	public Map<String, Contract> getEodStatus(){
-		Map<String, Contract> ret = new HashMap<>();
-		for (Entry<String, Queue<Contract>> entry : map.entrySet()) {
+	public Map<Security, Contract> getEodStatus(){
+		Map<Security, Contract> ret = new HashMap<>();
+		for (Entry<Security, Queue<Contract>> entry : map.entrySet()) {
 			Queue<Contract> q = entry.getValue();
 			Contract[] contracts = q.toArray(new Contract[] {});
 			ret.put(entry.getKey(), contracts[q.size() - 1]);
@@ -45,24 +45,25 @@ public class HistoricalBar {
 	
 	public void update(LocalDate tradeDate) {
 		map.entrySet().stream().forEach(entry -> {
-			String security = entry.getKey();
+			Security security = entry.getKey();
 			Queue<Contract> q = entry.getValue();
 			if(q.size() == historicalRange) {
 				q.poll();
 			}
 			String tradeDateStr = tradeDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-			Timeseries model = repo.findDailySecurityByTradeDate(security, tradeDateStr);
-			q.add(new Future(model));
+			List<Timeseries> models = repo.findDailySecurityByTradeDate(security.getName(), tradeDateStr);
+			if(!models.isEmpty()) {
+				q.add(new Future(models.get(0)));
+			}
 		});
 	}
 	
 	public void subscribe(List<Security> securities, LocalDate tradeDate) {
-		List<String> securityStrList = securities.stream().map(security -> security.getName()).collect(Collectors.toList());
-		map.keySet().retainAll(securityStrList);
-		List<String> copy = new ArrayList<>(securityStrList);
+		map.keySet().retainAll(securities);
+		List<Security> copy = new ArrayList<>(securities);
 		copy.removeAll(map.keySet());
 		copy.stream().forEach(security -> {
-			List<Timeseries> list = repo.findByTradeDateWithPeriodLimit(security, tradeDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), "1D", historicalRange);
+			List<Timeseries> list = repo.findByTradeDateWithPeriodLimit(security.getName(), tradeDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), "1D", historicalRange);
 			int size = list.size();
 			Queue<Contract> q = new LinkedBlockingQueue<>();
 			for (int i = 0; i < size; i++) {

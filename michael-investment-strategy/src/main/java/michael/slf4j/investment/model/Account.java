@@ -18,7 +18,7 @@ public class Account implements Serializable {
 	
 	private final double initCash;
 	private double cash;
-	private Map<String, Position> positionMap = new HashMap<>();
+	private Map<Security, Position> positionMap = new HashMap<>();
 	
 	public Account(double cash) {
 		this.initCash = cash;
@@ -26,10 +26,10 @@ public class Account implements Serializable {
 	}
 	
 	public void deal(Security security, DirectionEnum dir, double dealPrice, int quantity) throws CashNotEnoughException {
-		Position position = positionMap.get(security.getName());
+		Position position = positionMap.get(security);
 		if(position == null) {
 			position = new Position(security);
-			positionMap.put(security.getName(), position);
+			positionMap.put(security, position);
 		}
 		double expectedCash = 0D;
 		switch(dir) {
@@ -55,11 +55,11 @@ public class Account implements Serializable {
 		ProfitLoss pnl = position.deal(dir, dealPrice, quantity);
 		cash = cash - pnl.getMargin() - pnl.getTransactionCost() + pnl.getPnl();
 		if(position.done()) {
-			positionMap.remove(security.getName());
+			positionMap.remove(security);
 		}
 	}
 	
-	public double pnl(Map<String, Contract> status) {
+	public double pnl(Map<Security, Contract> status) {
 		return total(status) - initCash;
 	}
 	
@@ -67,14 +67,18 @@ public class Account implements Serializable {
 		return total(Status.getStatus(context));
 	}
 	
-	public double total(Map<String, Contract> status) {
+	public double total(Map<Security, Contract> status) {
 		double total = cash;
-		for (Entry<String, Position> entry : positionMap.entrySet()) {
+		for (Entry<Security, Position> entry : positionMap.entrySet()) {
 			Contract contract = status.get(entry.getKey());
 			Position position = entry.getValue();
 			total += position.total(contract.getClose());
 		}
 		return total;
+	}
+	
+	public Map<Security, Position> getPositions() {
+		return positionMap;
 	}
 
 }

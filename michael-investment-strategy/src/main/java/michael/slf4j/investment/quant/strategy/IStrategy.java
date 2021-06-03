@@ -13,9 +13,9 @@ import michael.slf4j.investment.model.Security;
 public interface IStrategy extends Serializable {
 	public void init(Context context);
 	public Map<String, Object> getParams();
-	public void before(Context context, LocalDate current);
+	public void before(Context context, LocalDate tradeDate);
 	public void handle(Account acc, Bar bar);
-	public void after(Context context, LocalDate current);
+	public void after(Context context, LocalDate tradeDate);
 	public List<Security> subscriberList(LocalDate tradeDate);
 	public int getHistoricalSize();
 	public Context getContext();

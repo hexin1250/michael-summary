@@ -5,19 +5,19 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Status {
-	private static Map<Integer, Map<String, Contract>> barCacheMap = new ConcurrentHashMap<>();
+	private static Map<Integer, Map<Security, Contract>> barCacheMap = new ConcurrentHashMap<>();
 	private static Map<Integer, LocalDateTime> tradeTimeMap = new ConcurrentHashMap<>();
 	
-	public static void updateStatus(int runId, Map<String, Contract> map, LocalDateTime ldt) {
+	public static void updateStatus(int runId, Map<Security, Contract> map, LocalDateTime ldt) {
 		barCacheMap.put(runId, map);
 		tradeTimeMap.put(runId, ldt);
 	}
 	
-	public static Map<String, Contract> getStatus(Context context){
+	public static Map<Security, Contract> getStatus(Context context){
 		return getStatus(context.runId);
 	}
 	
-	private static Map<String, Contract> getStatus(int runId){
+	private static Map<Security, Contract> getStatus(int runId){
 		return barCacheMap.get(runId);
 	}
 	

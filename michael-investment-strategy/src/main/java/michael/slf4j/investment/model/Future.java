@@ -3,13 +3,15 @@ package michael.slf4j.investment.model;
 import java.math.BigDecimal;
 
 public class Future implements Contract {
+	private final Security security;
 	private final double open;
 	private final double high;
 	private final double low;
 	private final double close;
 	private final double openInterest;
 
-	public Future(double open, double high, double low, double close, double openInterest) {
+	public Future(Security security, double open, double high, double low, double close, double openInterest) {
+		this.security = security;
 		this.open = open;
 		this.high = high;
 		this.low = low;
@@ -17,12 +19,12 @@ public class Future implements Contract {
 		this.openInterest = openInterest;
 	}
 
-	public Future(BigDecimal open, BigDecimal high, BigDecimal low, BigDecimal close, BigDecimal openInterest) {
-		this(open.doubleValue(), high.doubleValue(), low.doubleValue(), close.doubleValue(), openInterest.doubleValue());
+	public Future(Security security, BigDecimal open, BigDecimal high, BigDecimal low, BigDecimal close, BigDecimal openInterest) {
+		this(security, open.doubleValue(), high.doubleValue(), low.doubleValue(), close.doubleValue(), openInterest.doubleValue());
 	}
 	
 	public Future(Timeseries model) {
-		this(model.getOpen(), model.getHigh(), model.getLow(), model.getClose(), model.getOpenInterest());
+		this(new Security(model.getSecurity(), Variety.of(model.getVariety())), model.getOpen(), model.getHigh(), model.getLow(), model.getClose(), model.getOpenInterest());
 	}
 
 	@Override
@@ -53,6 +55,11 @@ public class Future implements Contract {
 	@Override
 	public String toString() {
 		return close + "";
+	}
+
+	@Override
+	public Security getSecurity() {
+		return security;
 	}
 
 }
