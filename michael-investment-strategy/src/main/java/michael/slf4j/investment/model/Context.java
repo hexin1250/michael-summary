@@ -1,5 +1,6 @@
 package michael.slf4j.investment.model;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class Context {
@@ -7,15 +8,17 @@ public class Context {
 	
 	private final Account acc;
 	public final int runId;
+	public final Map<String, Object> params;
 	
 	public HistoricalBar historical;
 	
 	public Context(int runId, Account acc) {
 		this.runId = runId;
 		this.acc = acc;
+		this.params = new HashMap<>();
 	}
 	
-	public void init(Map<String, Object> params) {
+	public void init() {
 		Object hisObj = params.get(HISTORICAL_RANGE);
 		int range = 0;
 		if(hisObj != null) {

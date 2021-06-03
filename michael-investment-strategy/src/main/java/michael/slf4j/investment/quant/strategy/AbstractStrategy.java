@@ -3,7 +3,6 @@ package michael.slf4j.investment.quant.strategy;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -33,7 +32,6 @@ public abstract class AbstractStrategy implements IStrategy {
 
 	private TimeseriesRepository repo;
 	
-	protected Map<String, Object> params = new HashMap<>();
 	protected Context context;
 	protected Map<Variety, Security> mainSecurityMap = new ConcurrentHashMap<>();
 	
@@ -74,17 +72,12 @@ public abstract class AbstractStrategy implements IStrategy {
 	}
 	
 	@Override
-	public void init(Context context) {
+	public final void initContext(Context context) {
 		this.context = context;
 	}
 	
 	public Context getContext() {
 		return context;
-	}
-	
-	@Override
-	public Map<String, Object> getParams() {
-		return params;
 	}
 	
 	protected final LocalDateTime now() {

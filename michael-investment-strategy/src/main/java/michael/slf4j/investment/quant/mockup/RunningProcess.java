@@ -49,8 +49,9 @@ public class RunningProcess {
 		barMap.put(runId, bar);
 		LocalDate current = startDate;
 		Context context = new Context(runId, acc);
-		strategy.init(context);
-		context.init(strategy.getParams());
+		strategy.initContext(context);
+		strategy.init();
+		context.init();
 		TradePairEnum[] nightPair = TradeDateEnum.night.getTradingHours();
 		TradePairEnum[] dayPair = TradeDateEnum.day.getTradingHours();
 		TradePairEnum[] pairs = new TradePairEnum[nightPair.length + dayPair.length];
@@ -73,7 +74,7 @@ public class RunningProcess {
 				System.out.println("-------");
 			}
 			strategy.subscriber(context, current);
-			strategy.before(context, current);
+			strategy.before();
 			List<Security> securityList = strategy.subscriberList(current);
 			bar.subscribe(securityList);
 			Map<LocalTime, Map<Security, Contract>> map = getTradingMap(securityList, current);
@@ -101,7 +102,7 @@ public class RunningProcess {
 					currentLt = currentLt.plusMinutes(1);
 				}
 			}
-			strategy.after(context, current);
+			strategy.after();
 			context.historical.update(current);
 			Map<Security, Contract> status = context.historical.getEodStatus();
 			log.info(current + ":\t" + acc.total(status));

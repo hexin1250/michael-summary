@@ -2,6 +2,7 @@ package michael.slf4j.investment.quant.backtest;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import michael.slf4j.investment.model.Account;
 import michael.slf4j.investment.model.Bar;
@@ -36,22 +37,22 @@ public class MyTestStrategy extends AbstractStrategy implements IStrategy {
 	private static final String TRADING_DIRECTION = "trading_direction";
 	
 	@Override
-	public void init(Context context) {
-		super.init(context);
-		params.put(TARGET_VARIETY, Variety.I);
-		params.put(K, 0.4D);
-		params.put(Context.HISTORICAL_RANGE, 5);
+	public void init() {
+		context.params.put(TARGET_VARIETY, Variety.I);
+		context.params.put(K, 0.4D);
+		context.params.put(Context.HISTORICAL_RANGE, 5);
 	}
 	
 	@Override
-	public void before(Context context, LocalDate tradeDate) {
-		params.remove(CHANGE_DOMINATE);
-		params.remove(BUY_PRICE);
-		params.remove(SELL_PRICE);
+	public void before() {
+		context.params.remove(CHANGE_DOMINATE);
+		context.params.remove(BUY_PRICE);
+		context.params.remove(SELL_PRICE);
 	}
 
 	@Override
 	public void handle(Account acc, Bar bar) {
+		Map<String, Object> params = context.params;
 		if(!params.containsKey(CHANGE_DOMINATE)) {
 			changeDominate(acc, bar);
 			params.put(CHANGE_DOMINATE, true);
@@ -106,21 +107,24 @@ public class MyTestStrategy extends AbstractStrategy implements IStrategy {
 	}
 
 	@Override
-	public void after(Context context, LocalDate tradeDate) {
+	public void after() {
 	}
 
 	@Override
 	public List<Security> subscriberList(LocalDate tradeDate) {
+		Map<String, Object> params = context.params;
 		Variety variety = (Variety) params.get(TARGET_VARIETY);
 		return getAllFutures(variety, tradeDate);
 	}
 
 	@Override
 	public int getHistoricalSize() {
+		Map<String, Object> params = context.params;
 		return (int) params.get(Context.HISTORICAL_RANGE);
 	}
 	
 	private void changeDominate(Account acc, Bar bar) {
+		Map<String, Object> params = context.params;
 		Variety variety = (Variety) params.get(TARGET_VARIETY);
 		Security mainSecurity = getMainFutures(variety, bar);
 		Security previousSecurity = (Security) params.get(MAIN_SECURITY);
@@ -141,6 +145,7 @@ public class MyTestStrategy extends AbstractStrategy implements IStrategy {
 	}
 
 	private double getRangeValue(List<Contract> list) {
+		Map<String, Object> params = context.params;
 		int dataRange = (int) params.get(Context.HISTORICAL_RANGE);
 		List<Contract> modelList = list.subList(0, dataRange - 1);
 		double hh = modelList.stream().mapToDouble(m -> m.getHigh()).max().getAsDouble();
