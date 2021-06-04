@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
@@ -16,7 +17,7 @@ import michael.slf4j.investment.repo.TimeseriesRepository;
 import michael.slf4j.investment.util.SpringContextUtil;
 
 public class HistoricalBar {
-	private Map<Security, Queue<Contract>> map = new HashMap<>();
+	private Map<Security, Queue<Contract>> map = new ConcurrentHashMap<>();
 	private int historicalRange;
 	
 	private TimeseriesRepository repo;

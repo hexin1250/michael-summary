@@ -1,0 +1,34 @@
+insert into timeseries(
+	variety,
+	security,
+	security_name,
+	open,
+	high,
+	low,
+	close,
+	up_limit,
+	down_limit,
+	volume,
+	open_interest,
+	freq,
+	trade_date,
+	trade_ts,
+	is_main_future
+) 
+select 
+	variety,
+	security,
+	security_name,
+	open,
+	high,
+	low,
+	close,
+	up_limit,
+	down_limit,
+	volume,
+	open_interest,
+	'1D',
+	trade_date,
+	trade_ts,
+	is_main_future
+from timeseries where trade_date = '2020-10-30' and variety = 'RB' and freq = '1MI' order by trade_ts desc limit 12;
