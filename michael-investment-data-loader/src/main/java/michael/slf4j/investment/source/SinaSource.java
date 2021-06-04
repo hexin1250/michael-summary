@@ -27,7 +27,7 @@ public class SinaSource implements Closeable {
 			String content = null;
 			int status = response.getStatusLine().getStatusCode();
 			if(status >= 400) {
-				log.error("[" + security + "]响应状态为:" + status);
+				log.error("[" + security + "] status:" + status);
 			}
 			HttpEntity responseEntity = response.getEntity();
 			if (responseEntity != null) {
@@ -36,7 +36,7 @@ public class SinaSource implements Closeable {
 				if(m.matches()) {
 					content = m.group(1);
 				} else {
-					log.error("[" + security + "]不匹配!" + line);
+					log.error("[" + security + "] doesn't match!" + line);
 				}
 			}
 			return content;
