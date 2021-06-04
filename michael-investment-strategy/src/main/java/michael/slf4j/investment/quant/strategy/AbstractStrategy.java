@@ -83,5 +83,9 @@ public abstract class AbstractStrategy implements IStrategy {
 	protected final LocalDateTime now() {
 		return Status.getCurrentTime(context);
 	}
+	
+	protected final LocalDate tradeDate() {
+		return Status.getTradeDate(context);
+	}
 
 }

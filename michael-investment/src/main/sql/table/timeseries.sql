@@ -25,6 +25,7 @@ insert into timeseries(security,security_name,open,high,low,close,up_limit,down_
 show indexes from timeseries;
 */
 create index ts_s_index on timeseries (security);
+create index ts_sf_index on timeseries (security, freq);
 create index ts_stf_index on timeseries (security, trade_date, freq);
 create index ts_vtf_index on timeseries (variety, trade_date, freq);
 create index ts_vti_index on timeseries (variety, trade_date, is_main_future);

@@ -97,7 +97,7 @@ public class RunningProcess {
 					} else {
 						ldt = LocalDateTime.of(current, currentLt);
 					}
-					Status.updateStatus(runId, bar.map, ldt);
+					Status.updateStatus(runId, bar.map, ldt, current);
 					strategy.handle(acc, bar);
 					currentLt = currentLt.plusMinutes(1);
 				}

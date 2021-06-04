@@ -41,6 +41,12 @@ public class MyTestStrategy extends AbstractStrategy implements IStrategy {
 		context.params.put(TARGET_VARIETY, Variety.I);
 		context.params.put(K, 0.4D);
 		context.params.put(Context.HISTORICAL_RANGE, 5);
+//		context.params.put(TARGET_VARIETY, Variety.J);
+//		context.params.put(K, 0.5D);
+//		context.params.put(Context.HISTORICAL_RANGE, 4);
+//		context.params.put(TARGET_VARIETY, Variety.RB);
+//		context.params.put(K, 0.35D);
+//		context.params.put(Context.HISTORICAL_RANGE, 5);
 	}
 	
 	@Override
@@ -73,10 +79,11 @@ public class MyTestStrategy extends AbstractStrategy implements IStrategy {
 		Contract contract = bar.getContract(mainSecurity);
 		double closePrice = contract.getClose();
 		
+		Variety variety = (Variety) params.get(TARGET_VARIETY);
 		DirectionEnum dir = (DirectionEnum) params.get(TRADING_DIRECTION);
 		if((closePrice > buyLine && (dir == null || dir == DirectionEnum.sell)) || (closePrice < sellLine && (dir == null || dir == DirectionEnum.buy))) {
 			double total = acc.total(context);
-			int targetQ = (int) (total / (contract.getClose() * 30));
+			int targetQ = (int) (total * variety.getCal() / (contract.getClose() * 30));
 			if(targetQ == 0) {
 				targetQ = 1;
 			}
