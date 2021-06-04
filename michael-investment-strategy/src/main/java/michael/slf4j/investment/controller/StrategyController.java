@@ -23,7 +23,7 @@ public class StrategyController {
 	public @ResponseBody String schedule(@RequestParam String variety, @RequestParam String freq, @RequestParam String startDate, @RequestParam String endDate, @RequestParam int dataScope, @RequestParam double range) {
 		LocalDate start = LocalDate.parse(startDate);
 		LocalDate end = LocalDate.parse(endDate);
-		Account acc = new Account(20000D);
+		Account acc = new Account(60000D);
 		process.backtest(acc, new MyTestStrategy(), start, end);
 		return "ok";
 	}

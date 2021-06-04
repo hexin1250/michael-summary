@@ -112,6 +112,12 @@ public class FutureLoader {
 						latest.setFreq("1D");
 						timeseriesRepository.save(latest);
 						log.info("Update for security[" + security + "," + tradeDate + "]");
+					} else {
+						List<Timeseries> miList = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, "1MI");
+						Timeseries latest = miList.get(miList.size() - 1).copy();
+						latest.setFreq("1D");
+						timeseriesRepository.save(latest);
+						log.info("Update for security[" + security + "," + tradeDate + "]");
 					}
 				}
 			});
