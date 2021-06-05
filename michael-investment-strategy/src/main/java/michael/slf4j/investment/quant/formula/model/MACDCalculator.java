@@ -42,6 +42,20 @@ public class MACDCalculator {
 		public double getDEA() {
 			return DEA;
 		}
+		public int operate() {
+			if(MACD > 0) {
+				return 1;
+			} else if(MACD < 0) {
+				return -1;
+			}
+			return 0;
+//			if(MACD < 0 && DEA > 0) {
+//				return -1;
+//			} else if(MACD > 0 && DIFF < 0) {
+//				return 1;
+//			}
+//			return 0;
+		}
 	}
 
 }
