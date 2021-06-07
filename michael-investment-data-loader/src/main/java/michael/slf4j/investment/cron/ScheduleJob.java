@@ -41,14 +41,51 @@ public class ScheduleJob {
 	
 	@Scheduled(cron = "${clean-schedule}")
 	public void cleanData() {
-		taskManager.cancelTasks();
 		taskManager.fillBack1D();
 	}
 
-	@Scheduled(cron = "${update-primary}")
-	public void initPrimaryContract() {
+	@Scheduled(cron = "${start-schedule1}")
+	public void startNightSchedule() {
 		taskManager.init();
 		taskManager.subscribeAll();
+	}
+	
+	@Scheduled(cron = "${end-schedule1}")
+	public void endNightSchedule() {
+		taskManager.cancelTasks();
+	}
+	
+	@Scheduled(cron = "${start-schedule2}")
+	public void startDaySchedule1() {
+		taskManager.init();
+		taskManager.subscribeAll();
+	}
+	
+	@Scheduled(cron = "${end-schedule2}")
+	public void endDaySchedule1() {
+		taskManager.cancelTasks();
+	}
+	
+	@Scheduled(cron = "${start-schedule3}")
+	public void startDaySchedule2() {
+		taskManager.init();
+		taskManager.subscribeAll();
+	}
+	
+	@Scheduled(cron = "${end-schedule3}")
+	public void endDaySchedule2() {
+		taskManager.cancelTasks();
+	}
+	
+	@Scheduled(cron = "${start-schedule4}")
+	public void startDaySchedule3() {
+		taskManager.init();
+		taskManager.subscribeAll();
+	}
+	
+	@Scheduled(cron = "${end-schedule4}")
+	public void endDaySchedule3() {
+		taskManager.cancelTasks();
 	}
 	
 	@Scheduled(cron = "${update-minute}")
