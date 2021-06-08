@@ -45,6 +45,7 @@ public class FutureLoader {
 				primarySecurityMap.put(variety, primarySecurity);
 			}
 		}
+		log.info("Done to initialize primary security.");
 	}
 	
 	public boolean load(String variety, String security, String content, FreqEnum freq) {

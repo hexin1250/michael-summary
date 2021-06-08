@@ -84,6 +84,7 @@ public class TaskManager {
 			it.remove();
 		}
 		recordMap.clear();
+		log.info("Cancel Tasks.");
 	}
 	
 	public void fillBack1D() {
