@@ -40,8 +40,8 @@ public class MACDStrategy extends AbstractStrategy implements IStrategy {
 
 	@Override
 	public void init() {
-		context.params.put(TARGET_VARIETY, Variety.I);
-		macdFormula = new MACDFormula(12, 26, 9);
+		context.params.put(TARGET_VARIETY, Variety.J);
+		macdFormula = new MACDFormula(8, 21, 8);
 	}
 
 	@Override
@@ -72,13 +72,13 @@ public class MACDStrategy extends AbstractStrategy implements IStrategy {
 			
 			Variety variety = (Variety) params.get(TARGET_VARIETY);
 			DirectionEnum dir = (DirectionEnum) params.get(TRADING_DIRECTION);
-			if((macd.getDIFF() > macd.getDEA() && (dir == null || dir == DirectionEnum.sell)) || (macd.getDIFF() < macd.getDEA() && (dir == null || dir == DirectionEnum.buy))) {
+			if((macd.operate() == 1 && (dir == null || dir == DirectionEnum.sell)) || (macd.operate() == -1 && (dir == null || dir == DirectionEnum.buy))) {
 				double total = acc.total(context);
 				int targetQ = (int) (total * variety.getCal() / (contract.getClose() * 30));
 				if(targetQ == 0) {
 					targetQ = 1;
 				}
-				if(macd.getDIFF() > macd.getDEA() && (dir == null || dir == DirectionEnum.sell)) {
+				if(macd.operate() == 1 && (dir == null || dir == DirectionEnum.sell)) {
 					if(dir != null) {
 						int closeQ = (int) params.get(OPEN_HANDS);
 						acc.deal(mainSecurity, DirectionEnum.buy_close, closePrice, closeQ);

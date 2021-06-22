@@ -45,8 +45,8 @@ public class MyTestStrategy extends AbstractStrategy implements IStrategy {
 //		context.params.put(K, 0.5D);
 //		context.params.put(Context.HISTORICAL_RANGE, 4);
 //		context.params.put(TARGET_VARIETY, Variety.RB);
-//		context.params.put(K, 0.35D);
-//		context.params.put(Context.HISTORICAL_RANGE, 5);
+//		context.params.put(K, 0.4D);
+//		context.params.put(Context.HISTORICAL_RANGE, 6);
 	}
 	
 	@Override
@@ -73,6 +73,7 @@ public class MyTestStrategy extends AbstractStrategy implements IStrategy {
 			double sellLine = openPrice - range * k;
 			params.put(BUY_PRICE, buyLine);
 			params.put(SELL_PRICE, sellLine);
+			log.info(now() + " " + mainSecurity.getName() + " Buy line:" + buyLine + ", Sell line:" + sellLine);
 		}
 		double buyLine = (double) params.get(BUY_PRICE);
 		double sellLine = (double) params.get(SELL_PRICE);
