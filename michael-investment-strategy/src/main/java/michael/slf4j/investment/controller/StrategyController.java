@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import michael.slf4j.investment.model.Account;
 import michael.slf4j.investment.quant.backtest.MACDStrategy;
 import michael.slf4j.investment.quant.backtest.MyTestStrategy;
-import michael.slf4j.investment.quant.mockup.RunningProcess;
+import michael.slf4j.investment.quant.mockup.MockupProcess;
 import michael.slf4j.investment.quant.strategy.IStrategy;
 
 @Controller
@@ -23,7 +23,7 @@ public class StrategyController {
 	private final Map<String, IStrategy> map = new HashMap<>();
 	
 	@Autowired
-	private RunningProcess process;
+	private MockupProcess process;
 	
 	@GetMapping(path = "/mockup")
 	public @ResponseBody String schedule(@RequestParam String strategy, @RequestParam String variety, @RequestParam String startDate, @RequestParam String endDate, @RequestParam int dataScope, @RequestParam double range) {

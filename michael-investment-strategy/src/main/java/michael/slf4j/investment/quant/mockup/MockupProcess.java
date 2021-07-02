@@ -34,8 +34,8 @@ import michael.slf4j.investment.util.HolidayUtil;
 import michael.slf4j.investment.util.TradeUtil;
 
 @Controller
-public class RunningProcess {
-	private static final Logger log = Logger.getLogger(RunningProcess.class);
+public class MockupProcess {
+	private static final Logger log = Logger.getLogger(MockupProcess.class);
 	
 	private AtomicInteger atom = new AtomicInteger();
 	private Map<Integer, Bar> barMap = new ConcurrentHashMap<>();
