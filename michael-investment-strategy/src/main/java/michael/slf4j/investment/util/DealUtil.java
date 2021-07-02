@@ -8,8 +8,17 @@ public class DealUtil {
 	}
 	
 	public static double getTransactionCost(Variety variety, double dealPrice, int quantity, boolean isDayTrade) {
+		if(variety == Variety.STOCK) {
+			return getStockTransactionCost(variety, dealPrice, quantity, isDayTrade);
+		}
 		double rate = isDayTrade ? variety.getDayRate() : variety.getRate();
 		return dealPrice * quantity * variety.getUnit() * rate;
+	}
+	
+	private static double getStockTransactionCost(Variety variety, double dealPrice, int quantity, boolean isDayTrade) {
+		double rate = isDayTrade ? variety.getDayRate() : variety.getRate();
+		double cost = dealPrice * quantity * variety.getUnit() * rate;
+		return cost < 6D ? 6D : cost;
 	}
 
 }

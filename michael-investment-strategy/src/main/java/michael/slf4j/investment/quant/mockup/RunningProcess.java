@@ -70,9 +70,6 @@ public class RunningProcess {
 			while(HolidayUtil.$.isHoliday(previousTradeDate)) {
 				previousTradeDate = TradeUtil.previousTradeDate(previousTradeDate);
 			}
-			if(current.getMonthValue() == 12 && current.getDayOfMonth() == 7) {
-				System.out.println("-------");
-			}
 			strategy.subscriber(context, current);
 			strategy.before();
 			List<Security> securityList = strategy.subscriberList(current);

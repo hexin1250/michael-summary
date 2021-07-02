@@ -1,7 +1,9 @@
 package michael.slf4j.investment.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -18,15 +20,18 @@ public class Account implements Serializable {
 	
 	private final double initCash;
 	private double cash;
-	private Map<Security, AbstractPosition> positionMap = new HashMap<>();
+	private Map<Security, Position> positionMap;
+	private List<Transaction> transactionList;
 	
 	public Account(double cash) {
 		this.initCash = cash;
 		this.cash = cash;
+		positionMap = new HashMap<>();
+		transactionList = new ArrayList<>();
 	}
 	
 	public void deal(Security security, DirectionEnum dir, double dealPrice, int quantity) throws CashNotEnoughException {
-		AbstractPosition position = positionMap.get(security);
+		Position position = positionMap.get(security);
 		if(position == null) {
 			position = new FuturePosition(security);
 			positionMap.put(security, position);
@@ -53,6 +58,8 @@ public class Account implements Serializable {
 			throw new CashNotEnoughException(expectedCash + " is needed, but " + cash + " is left.");
 		}
 		ProfitLoss pnl = position.deal(dir, dealPrice, quantity);
+		Transaction transaction = new Transaction(security, dir, dealPrice, quantity, pnl.getTransactionCost());
+		transactionList.add(transaction);
 		cash = cash - pnl.getMargin() - pnl.getTransactionCost() + pnl.getPnl();
 		if(position.done()) {
 			positionMap.remove(security);
@@ -69,16 +76,20 @@ public class Account implements Serializable {
 	
 	public double total(Map<Security, Contract> status) {
 		double total = cash;
-		for (Entry<Security, AbstractPosition> entry : positionMap.entrySet()) {
+		for (Entry<Security, Position> entry : positionMap.entrySet()) {
 			Contract contract = status.get(entry.getKey());
-			AbstractPosition position = entry.getValue();
+			Position position = entry.getValue();
 			total += position.total(contract.getClose());
 		}
 		return total;
 	}
 	
-	public Map<Security, AbstractPosition> getPositions() {
+	public Map<Security, Position> getPositions() {
 		return positionMap;
+	}
+
+	public List<Transaction> getTransactionList() {
+		return transactionList;
 	}
 
 }
