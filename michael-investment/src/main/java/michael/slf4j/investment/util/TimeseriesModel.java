@@ -16,7 +16,6 @@ public class TimeseriesModel {
 	private String freq;
 	private String tradeDate;
 	private String tradeTs;
-	private String isMainFuture;
 	public String getSecurity() {
 		return security;
 	}
@@ -95,12 +94,6 @@ public class TimeseriesModel {
 	public void setTradeTs(String tradeTs) {
 		this.tradeTs = tradeTs;
 	}
-	public String getIsMainFuture() {
-		return isMainFuture;
-	}
-	public void setIsMainFuture(String isMainFuture) {
-		this.isMainFuture = isMainFuture;
-	}
 	
 	public static TimeseriesModel of(TimeseriesModel m) {
 		TimeseriesModel tm = new TimeseriesModel();
@@ -117,7 +110,6 @@ public class TimeseriesModel {
 		tm.setFreq(m.getFreq());
 		tm.setTradeDate(m.getTradeDate());
 		tm.setTradeTs(m.getTradeTs());
-		tm.setIsMainFuture(m.getIsMainFuture());
 		return tm;
 	}
 	

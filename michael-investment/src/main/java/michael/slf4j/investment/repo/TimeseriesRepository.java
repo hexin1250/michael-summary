@@ -15,9 +15,6 @@ public interface TimeseriesRepository extends CrudRepository<Timeseries, Integer
 	@Query(value = "select * from timeseries where security = :security and freq = :freq order by trade_ts", nativeQuery = true)
 	List<Timeseries> findBySecurityFreq(@Param("security") String security, @Param("freq") String freq);
 	
-	@Query(value = "select distinct security from timeseries where variety = ?1 and trade_date = ?2 and is_main_future = 'T'", nativeQuery = true)
-	String findMainFutureByVarietyDate(@Param("variety") String variety, @Param("tradeDate") String tradeDate);
-	
 	@Query(value = "select * from timeseries where security = ?1 and trade_date >= ?2 and trade_date <= ?3 and freq = ?4 order by trade_ts", nativeQuery = true)
 	List<Timeseries> findByTradeDateWithPeriod(@Param("security") String security, @Param("start") String start, @Param("end") String end, @Param("freq") String freq);
 	

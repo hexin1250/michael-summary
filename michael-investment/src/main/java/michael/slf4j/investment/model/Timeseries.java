@@ -43,8 +43,6 @@ public class Timeseries implements Comparator<Timeseries> {
 	private String tradeDate;
 	@Column(name = "trade_ts")
 	private Timestamp tradeTs;
-	@Column(name = "is_main_future")
-	private String isMainFuture;
 
 	public Timeseries() {
 	}
@@ -169,14 +167,6 @@ public class Timeseries implements Comparator<Timeseries> {
 		this.tradeTs = tradeTs;
 	}
 
-	public String getIsMainFuture() {
-		return isMainFuture;
-	}
-
-	public void setIsMainFuture(String isMainFuture) {
-		this.isMainFuture = isMainFuture;
-	}
-
 	@Override
 	public int compare(Timeseries o1, Timeseries o2) {
 		int ret = o1.getTradeTs().compareTo(o2.getTradeTs());
@@ -214,7 +204,6 @@ public class Timeseries implements Comparator<Timeseries> {
 		ret.setDownLimit(getDownLimit());
 		ret.setFreq(getFreq());
 		ret.setHigh(getHigh());
-		ret.setIsMainFuture(getIsMainFuture());
 		ret.setLow(getLow());
 		ret.setOpen(getOpen());
 		ret.setSecurity(getSecurity());

@@ -88,7 +88,6 @@ public class LoadFutureData {
 												ps.setString(10, "1D");
 												ps.setString(11, tm.getTradeDate());
 												ps.setString(12, tm.getTradeTs());
-												ps.setString(13, tm.getIsMainFuture());
 												ps.setString(14, tm.getSecurity().replaceAll("[\\d]+", ""));
 												ps.setBigDecimal(15, tm.getOpenInterest());
 												ps.addBatch();
@@ -100,7 +99,6 @@ public class LoadFutureData {
 									tdMap = new LinkedHashMap<>();
 									tradeMap.put(tradeDate, tdMap);
 								}
-								String mainFuture = parts[1];
 								for (int i = 2; i < parts.length; i++) {
 									String[] futureParts = parts[i].split(",");
 									if("nan".equalsIgnoreCase(futureParts[1])) {
@@ -121,13 +119,6 @@ public class LoadFutureData {
 									tm.setTradeDate(tradeDate);
 									tm.setTradeTs(tradeTs);
 									tm.setFreq("1MI");
-									String isMainFuture = null;
-									if (security.equals(mainFuture)) {
-										isMainFuture = "T";
-									} else {
-										isMainFuture = "F";
-									}
-									tm.setIsMainFuture(isMainFuture);
 									
 									if(!tradeDates.contains(tradeDate)) {
 										ps.setString(1, tm.getSecurity());
@@ -142,7 +133,6 @@ public class LoadFutureData {
 										ps.setString(10, tm.getFreq());
 										ps.setString(11, tm.getTradeDate());
 										ps.setString(12, tm.getTradeTs());
-										ps.setString(13, tm.getIsMainFuture());
 										ps.setString(14, tm.getSecurity().replaceAll("[\\d]+", ""));
 										ps.setBigDecimal(15, tm.getOpenInterest());
 										ps.addBatch();

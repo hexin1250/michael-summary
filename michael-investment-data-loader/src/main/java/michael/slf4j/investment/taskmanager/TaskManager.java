@@ -39,10 +39,6 @@ public class TaskManager {
 	
 	public Map<String, ScheduledFuture<?>> futureMap = new ConcurrentHashMap<>();
 	
-	public void init() {
-		futureLoader.init();
-	}
-	
 	public String subscribeAll() {
 		String ret = Constants.VARIETY_LIST.parallelStream().map(variety -> {
 			StringBuffer sb = new StringBuffer();

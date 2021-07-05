@@ -25,33 +25,9 @@ public class FutureLoader {
 	private TimeseriesRepository timeseriesRepository;
 
 	private Map<String, Timeseries> previousMap = new ConcurrentHashMap<>();
-	private Map<String, String> primarySecurityMap = new ConcurrentHashMap<>();
-	
-	public void init() {
-		log.info("Initialize primary security.");
-		primarySecurityMap.clear();
-		for (String variety : Constants.VARIETY_LIST) {
-			String currentTradeDate = TradeUtil.getDateStr(TradeUtil.getTradeDate());
-			List<String> latestTradeDateList = timeseriesRepository.findMaxTradeDate(variety);
-			String lastTradeDate = null;
-			for (String tradeDate : latestTradeDateList) {
-				if(!tradeDate.equals(currentTradeDate)) {
-					lastTradeDate = tradeDate;
-					break;
-				}
-			}
-			if(lastTradeDate != null) {
-				String primarySecurity = timeseriesRepository.findPrimarySecurity(variety, lastTradeDate);
-				primarySecurityMap.put(variety, primarySecurity);
-			}
-		}
-		log.info("Done to initialize primary security.");
-	}
 	
 	public boolean load(String variety, String security, String content, FreqEnum freq) {
-		String primarySecurity = primarySecurityMap.get(variety);
 		Timeseries m = generateModel(security, content, freq);
-		m.setIsMainFuture(security.equals(primarySecurity) ? "T" : "F");
 		switch(freq) {
 		case _TICK:
 			if(previousMap.get(security) != null && (!TradeUtil.isTradingTime() || m.equals(previousMap.get(security)))) {

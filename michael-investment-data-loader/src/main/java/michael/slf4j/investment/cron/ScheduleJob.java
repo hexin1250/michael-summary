@@ -50,7 +50,6 @@ public class ScheduleJob {
 	@Scheduled(cron = "${start-schedule1}")
 	public void startNightSchedule() {
 		log.info("[Start Night] subscribe all varieties.");
-		taskManager.init();
 		String result = taskManager.subscribeAll();
 		log.info("[Start Night] Done, result=" + result);
 	}
@@ -65,7 +64,6 @@ public class ScheduleJob {
 	@Scheduled(cron = "${start-schedule2}")
 	public void startDaySchedule1() {
 		log.info("[Start Day 9 o'clock] subscribe all varieties.");
-		taskManager.init();
 		String result = taskManager.subscribeAll();
 		log.info("[Start Day 9 o'clock] Done, result=" + result);
 	}
@@ -80,7 +78,6 @@ public class ScheduleJob {
 	@Scheduled(cron = "${start-schedule3}")
 	public void startDaySchedule2() {
 		log.info("[Start Day 10:30 o'clock] subscribe all varieties.");
-		taskManager.init();
 		String result = taskManager.subscribeAll();
 		log.info("[Start Day 10:30 o'clock] Done, result=" + result);
 	}
@@ -95,7 +92,6 @@ public class ScheduleJob {
 	@Scheduled(cron = "${start-schedule4}")
 	public void startDaySchedule3() {
 		log.info("[Start Day 13:30 o'clock] subscribe all varieties.");
-		taskManager.init();
 		String result = taskManager.subscribeAll();
 		log.info("[Start Day 13:30 o'clock] Done, result=" + result);
 	}

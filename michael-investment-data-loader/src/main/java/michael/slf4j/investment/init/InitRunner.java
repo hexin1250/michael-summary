@@ -21,7 +21,6 @@ public class InitRunner implements CommandLineRunner {
     public void run(String... args) throws Exception {
     	log.info("Initializing...");
     	if(TradeUtil.isTradingTime()) {
-			taskManager.init();
 			taskManager.subscribeAll();
     	}
     	log.info("Done to initialize resources.");

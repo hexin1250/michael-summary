@@ -14,7 +14,6 @@ create table timeseries (
 	freq varchar(10) NOT NULL,
 	trade_date varchar(10) NOT null,
 	trade_ts timestamp NOT NULL,
-	is_main_future varchar(1),
 	PRIMARY KEY (id)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 /*
@@ -28,5 +27,4 @@ create index ts_s_index on timeseries (security);
 create index ts_sf_index on timeseries (security, freq);
 create index ts_stf_index on timeseries (security, trade_date, freq);
 create index ts_vtf_index on timeseries (variety, trade_date, freq);
-create index ts_vti_index on timeseries (variety, trade_date, is_main_future);
 create index ts_vt_index on timeseries (variety, trade_date);
