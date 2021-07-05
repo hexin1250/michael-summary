@@ -17,3 +17,6 @@ spring:
          hibernate:
             jdbc:
                time_zone: "Asia/Shanghai"
+   kafka:
+      producer:
+         value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
