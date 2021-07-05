@@ -1,5 +1,3 @@
+# start kafka service
 ./bin/zookeeper-server-start.sh ./config/zookeeper.properties &
 ./bin/kafka-server-start.sh ./config/server.properties &
-
-./bin/kafka-topics.sh --create --topic I-TICK-TOPIC --bootstrap-server localhost:9092
-./bin/kafka-topics.sh --describe --topic I-TICK-TOPIC --bootstrap-server localhost:9092
