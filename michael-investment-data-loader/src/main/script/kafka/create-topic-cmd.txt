@@ -1,6 +1,8 @@
 # create I tick topic
-./bin/kafka-topics.sh --create --topic I-TICK-TOPIC --bootstrap-server localhost:9092
-./bin/kafka-topics.sh --describe --topic I-TICK-TOPIC --bootstrap-server localhost:9092
+#./bin/kafka-topics.sh --delete --topic I-TICK-TOPIC --bootstrap-server localhost:9092
 
-./bin/kafka-topics.sh --create --topic I-1Mi-TOPIC --bootstrap-server localhost:9092
-./bin/kafka-topics.sh --describe --topic I-1Mi-TOPIC --bootstrap-server localhost:9092
+./bin/kafka-topics.sh --create --topic TICK-TOPIC --bootstrap-server localhost:9092
+./bin/kafka-topics.sh --describe --topic TICK-TOPIC --bootstrap-server localhost:9092
+
+./bin/kafka-topics.sh --create --topic 1Mi-TOPIC --bootstrap-server localhost:9092
+./bin/kafka-topics.sh --describe --topic 1Mi-TOPIC --bootstrap-server localhost:9092
