@@ -1,0 +1,1 @@
+CREATE USER 'springuser'@'localhost' IDENTIFIED BY 'springuser';

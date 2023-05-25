@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,30 +21,49 @@ import michael.slf4j.investment.quant.strategy.IStrategy;
 @Controller
 @RequestMapping(path = "/apps/strategy")
 public class StrategyController {
+	private static final Logger log = Logger.getLogger(StrategyController.class);
+	
 	private final Map<String, IStrategy> map = new HashMap<>();
 	
 	@Autowired
 	private MockupProcess process;
 	
+	/**
+	 * http://localhost:1702/apps/strategy/mockup?strategy=test&variety=I&startDate=2023-04-17&endDate=2023-05-25&dataScope=1&range=1
+	 * @param strategy
+	 * @param variety
+	 * @param startDate
+	 * @param endDate
+	 * @param dataScope
+	 * @param range
+	 * @return
+	 */
 	@GetMapping(path = "/mockup")
-	public @ResponseBody String schedule(@RequestParam String strategy, @RequestParam String variety, @RequestParam String startDate, @RequestParam String endDate, @RequestParam int dataScope, @RequestParam double range) {
+	public @ResponseBody String schedule(@RequestParam String strategy, @RequestParam String variety, @RequestParam String startDate,
+			@RequestParam String endDate) {
 		LocalDate start = LocalDate.parse(startDate);
 		LocalDate end = LocalDate.parse(endDate);
 		Account acc = new Account(60000D);
-		IStrategy istrategy = map.get(strategy);
-		if(istrategy == null) {
+		IStrategy iStrategy = map.get(strategy);
+		if(iStrategy == null) {
 			switch(strategy) {
 			case "macd":
-				istrategy = new MACDStrategy();
+				iStrategy = new MACDStrategy();
 				break;
 			case "test":
-				istrategy = new MyTestStrategy();
+				iStrategy = new MyTestStrategy();
 				break;
 				default:
 			}
-			map.put(strategy, istrategy);
+			map.put(strategy, iStrategy);
 		}
-		process.backtest(acc, istrategy, start, end);
+		process.backtest(acc, iStrategy, start, end);
+		return "ok";
+	}
+	
+	@GetMapping(path = "/health")
+	public @ResponseBody String health() {
+		log.info("get request");
 		return "ok";
 	}
 
