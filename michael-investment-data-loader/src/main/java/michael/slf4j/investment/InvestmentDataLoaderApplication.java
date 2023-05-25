@@ -10,4 +10,5 @@ public class InvestmentDataLoaderApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(InvestmentDataLoaderApplication.class, args);
 	}
+
 }

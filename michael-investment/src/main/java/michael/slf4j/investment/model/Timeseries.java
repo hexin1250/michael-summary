@@ -1,5 +1,6 @@
 package michael.slf4j.investment.model;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Comparator;
@@ -11,7 +12,12 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
 @Entity(name = "timeseries")
-public class Timeseries implements Comparator<Timeseries> {
+public class Timeseries implements Comparator<Timeseries>, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -5688848722817145351L;
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;

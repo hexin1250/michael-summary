@@ -35,18 +35,24 @@ public class MyTestStrategy extends AbstractStrategy implements IStrategy {
 	private static final String K = "k";
 	private static final String TARGET_VARIETY = "variety";
 	private static final String TRADING_DIRECTION = "trading_direction";
+	/**
+	 * I/J = 30
+	 * RB = 3
+	 */
+	private static final String OPEN_HANDS_INDEX = "openHandsIndex";
 	
 	@Override
 	public void init() {
-		context.params.put(TARGET_VARIETY, Variety.I);
-		context.params.put(K, 0.4D);
-		context.params.put(Context.HISTORICAL_RANGE, 5);
+//		context.params.put(TARGET_VARIETY, Variety.I);
+//		context.params.put(K, 0.4D);
+//		context.params.put(Context.HISTORICAL_RANGE, 5);
 //		context.params.put(TARGET_VARIETY, Variety.J);
 //		context.params.put(K, 0.5D);
 //		context.params.put(Context.HISTORICAL_RANGE, 4);
-//		context.params.put(TARGET_VARIETY, Variety.RB);
-//		context.params.put(K, 0.4D);
-//		context.params.put(Context.HISTORICAL_RANGE, 6);
+		context.params.put(TARGET_VARIETY, Variety.RB);
+		context.params.put(K, 0.4D);
+		context.params.put(Context.HISTORICAL_RANGE, 5);
+		context.params.put(OPEN_HANDS_INDEX, 3D);
 	}
 	
 	@Override
@@ -80,11 +86,10 @@ public class MyTestStrategy extends AbstractStrategy implements IStrategy {
 		Contract contract = bar.getContract(mainSecurity);
 		double closePrice = contract.getClose();
 		
-		Variety variety = (Variety) params.get(TARGET_VARIETY);
 		DirectionEnum dir = (DirectionEnum) params.get(TRADING_DIRECTION);
 		if((closePrice > buyLine && (dir == null || dir == DirectionEnum.sell)) || (closePrice < sellLine && (dir == null || dir == DirectionEnum.buy))) {
 			double total = acc.total(context);
-			int targetQ = (int) (total * variety.getCal() / (contract.getClose() * 30));
+			int targetQ = (int) (total / (contract.getClose() * (double)(context.params.get(OPEN_HANDS_INDEX))));
 			if(targetQ == 0) {
 				targetQ = 1;
 			}
