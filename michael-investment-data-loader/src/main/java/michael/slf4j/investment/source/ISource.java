@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -14,7 +15,7 @@ import michael.slf4j.investment.model.Timeseries;
 import michael.slf4j.investment.util.TradeUtil;
 
 public interface ISource {
-	public String getContent(List<String> securities) throws IOException;
+	public String getContent(Set<String> securities) throws IOException;
 	public String getContent(String security) throws IOException;
 	
 	public default Timeseries getModel(String security) throws IOException {
@@ -49,7 +50,7 @@ public interface ISource {
 		return m;
 	}
 	
-	public default List<Timeseries> getModels(List<String> securities) throws IOException {
+	public default List<Timeseries> getModels(Set<String> securities) throws IOException {
 		String content = getContent(securities);
 		return generateModels(content);
 	}

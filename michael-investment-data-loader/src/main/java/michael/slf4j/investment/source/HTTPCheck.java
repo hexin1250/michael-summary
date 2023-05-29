@@ -10,6 +10,8 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 
+import michael.slf4j.investment.source.impl.SinaSource;
+
 public class HTTPCheck {
 	private static final Logger log = Logger.getLogger(SinaSource.class);
 

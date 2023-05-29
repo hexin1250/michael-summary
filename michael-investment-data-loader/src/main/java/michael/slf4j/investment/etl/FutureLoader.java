@@ -1,74 +1,51 @@
 package michael.slf4j.investment.etl;
 
-import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Component;
 
 import michael.slf4j.investment.configuration.FreqEnum;
 import michael.slf4j.investment.constant.Constants;
 import michael.slf4j.investment.model.Timeseries;
+import michael.slf4j.investment.parse.IParser;
 import michael.slf4j.investment.repo.TimeseriesRepository;
-import michael.slf4j.investment.taskmanager.FutureTask;
 import michael.slf4j.investment.util.TradeUtil;
 
-@Controller
+@Component("futureLoader")
 public class FutureLoader {
-	private static final Logger log = Logger.getLogger(FutureTask.class);
+	private static final Logger log = Logger.getLogger(FutureLoader.class);
 
 	@Autowired
 	private TimeseriesRepository timeseriesRepository;
 
 	private Map<String, Timeseries> previousMap = new ConcurrentHashMap<>();
 	
-	public boolean load(String variety, String security, String content, FreqEnum freq) {
-		Timeseries m = generateModel(security, content, freq);
-		switch(freq) {
-		case _TICK:
-			if(previousMap.get(security) != null && (!TradeUtil.isTradingTime() || m.equals(previousMap.get(security)))) {
-				return false;
-			}
-			previousMap.put(security, m);
-			default:
-				break;
+	public boolean loadMultiSecurities(IParser parser, String content, FreqEnum freq) {
+		if(!TradeUtil.isTradingTime()) {
+			return false;
 		}
-		timeseriesRepository.save(m);
-		log.info("load[" + security + "] for [" + freq + "] successful.");
+		List<Timeseries> series = parser.parse(content, freq);
+		List<Timeseries> availableSeries = series;
+		if(freq == FreqEnum._TICK) {
+			availableSeries = series.stream().filter(m -> !(previousMap.get(m.getSecurity()) != null && m.equals(previousMap.get(m.getSecurity()))))
+				.collect(Collectors.toList());
+		}
+		StringBuffer sb = new StringBuffer();
+		availableSeries.forEach(m -> {
+			previousMap.put(m.getSecurity(), m);
+			sb.append(m.getSecurity());
+			sb.append(" ");
+		});
+		timeseriesRepository.saveAll(availableSeries);
+		log.info("load[" + sb.toString().trim() + "] for [" + freq + "] successful.");
 		return true;
 	}
 	
-	private Timeseries generateModel(String security, String content, FreqEnum freq) {
-		String[] parts = content.split(",");
-		Timeseries m = new Timeseries();
-		m.setSecurity(security);
-		m.setVariety(security.replaceAll("[\\d]+", ""));
-		m.setSecurityName(parts[0]);
-		m.setOpen(new BigDecimal(parts[2]));
-		m.setHigh(new BigDecimal(parts[3]));
-		m.setLow(new BigDecimal(parts[4]));
-		m.setClose(new BigDecimal(parts[8]));
-		m.setOpenInterest(new BigDecimal(parts[13]));
-		m.setVolume(new BigDecimal(parts[14]));
-		BigDecimal buy1 = new BigDecimal(parts[6]);
-		BigDecimal sell1 = new BigDecimal(parts[7]);
-		if (buy1.compareTo(new BigDecimal(0)) == 0) {
-			m.setDownLimit(new BigDecimal(parts[8]));
-		}
-		if (sell1.compareTo(new BigDecimal(0)) == 0) {
-			m.setUpLimit(new BigDecimal(parts[8]));
-		}
-		m.setFreq(freq.getValue());
-		
-		m.setTradeDate(TradeUtil.getDateStr(TradeUtil.getTradeDate()));
-		m.setTradeTs(new Timestamp(System.currentTimeMillis()));
-		return m;
-	}
-
 	public void fillBack1D() {
 		for (String variety : Constants.VARIETY_LIST) {
 			List<String> tradeDateList = timeseriesRepository.findMaxTradeDate(variety);
@@ -84,18 +61,16 @@ public class FutureLoader {
 				List<Timeseries> eodList = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, "1D");
 				if(eodList.isEmpty()) {
 					List<Timeseries> tickList = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, "TICK");
+					Timeseries latest = null;
 					if(!tickList.isEmpty()) {
-						Timeseries latest = tickList.get(tickList.size() - 1).copy();
-						latest.setFreq("1D");
-						timeseriesRepository.save(latest);
-						log.info("Update for security[" + security + "," + tradeDate + "]");
+						latest = tickList.get(tickList.size() - 1).copy();
 					} else {
 						List<Timeseries> miList = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, "1MI");
-						Timeseries latest = miList.get(miList.size() - 1).copy();
-						latest.setFreq("1D");
-						timeseriesRepository.save(latest);
-						log.info("Update for security[" + security + "," + tradeDate + "]");
+						latest = miList.get(miList.size() - 1).copy();
 					}
+					latest.setFreq("1D");
+					timeseriesRepository.save(latest);
+					log.info("Update for security[" + security + "," + tradeDate + "]");
 				}
 			});
 		});
