@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import michael.slf4j.investment.model.Account;
 import michael.slf4j.investment.quant.backtest.MACDStrategy;
-import michael.slf4j.investment.quant.backtest.MyTestStrategy;
+import michael.slf4j.investment.quant.backtest.ClassicalFutureStrategy;
 import michael.slf4j.investment.quant.mockup.MockupProcess;
 import michael.slf4j.investment.quant.strategy.IStrategy;
 
@@ -51,7 +51,7 @@ public class StrategyController {
 				iStrategy = new MACDStrategy();
 				break;
 			case "test":
-				iStrategy = new MyTestStrategy();
+				iStrategy = new ClassicalFutureStrategy();
 				break;
 				default:
 			}

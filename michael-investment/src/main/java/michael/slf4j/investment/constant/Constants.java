@@ -4,5 +4,6 @@ import java.util.List;
 
 public class Constants {
 	public static final List<String> VARIETY_LIST = List.of("I", "J", "RB");
+//	public static final List<String> VARIETY_LIST = List.of("I");
 
 }

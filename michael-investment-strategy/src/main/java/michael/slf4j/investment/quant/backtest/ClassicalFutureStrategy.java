@@ -14,7 +14,7 @@ import michael.slf4j.investment.model.Variety;
 import michael.slf4j.investment.quant.strategy.AbstractStrategy;
 import michael.slf4j.investment.quant.strategy.IStrategy;
 
-public class MyTestStrategy extends AbstractStrategy implements IStrategy {
+public class ClassicalFutureStrategy extends AbstractStrategy implements IStrategy {
 
 	/**
 	 * 

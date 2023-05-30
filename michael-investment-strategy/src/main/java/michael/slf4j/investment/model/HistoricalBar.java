@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
+import michael.slf4j.investment.configuration.FreqEnum;
 import michael.slf4j.investment.exception.NotSubscribeException;
 import michael.slf4j.investment.repo.TimeseriesRepository;
 import michael.slf4j.investment.util.SpringContextUtil;
@@ -52,11 +53,21 @@ public class HistoricalBar {
 				q.poll();
 			}
 			String tradeDateStr = tradeDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-			List<Timeseries> models = repo.findDailySecurityByTradeDate(security.getName(), tradeDateStr);
-			if(!models.isEmpty()) {
-				q.add(new Future(models.get(0)));
+			boolean result = getModels(q, security.getName(), tradeDateStr, FreqEnum._1D.getValue());
+			if(result) {
+				return;
 			}
+			getModels(q, security.getName(), tradeDateStr, FreqEnum._1MI.getValue());
 		});
+	}
+	
+	private boolean getModels(Queue<Contract> q, String security, String tradeDate, String freq){
+		List<Timeseries> models = repo.findLatestSecurityByTradeDate(security, tradeDate, freq);
+		if(!models.isEmpty()) {
+			q.add(new Future(models.get(0)));
+			return true;
+		}
+		return false;
 	}
 	
 	public void subscribe(List<Security> securities, LocalDate tradeDate) {
