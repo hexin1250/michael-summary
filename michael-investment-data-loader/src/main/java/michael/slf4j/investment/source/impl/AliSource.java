@@ -28,6 +28,7 @@ public class AliSource implements ISource, Closeable {
 	private CloseableHttpClient httpClient = HttpClientBuilder.create().build();
 	
 	public String getContent(Set<String> securities) throws IOException {
+		log.info("request to Ali server now.");
 //		String[] symbolArr = new String[] {"SH000001","SH600887"};
 //		String[] symbolArr = new String[] {"DCEI2209","DCEI2301","DCEJ2209","DCEJ2301","DCERB2210"};
 		String symbol = securities.stream().map(security -> {
@@ -51,7 +52,7 @@ public class AliSource implements ISource, Closeable {
 			String content = null;
 			int status = response.getStatusLine().getStatusCode();
 			if(status >= 400) {
-				log.error("[" + symbol + "] status:" + status + " ->" + response.getEntity());
+				log.error("[" + symbol + "] status:" + status);
 			}
 			HttpEntity responseEntity = response.getEntity();
 			if (responseEntity != null) {
