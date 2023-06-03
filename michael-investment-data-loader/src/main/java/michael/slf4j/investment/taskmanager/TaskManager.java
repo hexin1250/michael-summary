@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.etl.FutureLoader;
-import michael.slf4j.investment.model.SecurityEnum;
+import michael.slf4j.investment.model.FutureSecurityEnum;
 
 @Controller
 public class TaskManager {
@@ -51,7 +51,7 @@ public class TaskManager {
 	
 	public Set<String> subscribeSecurities() {
 		Set<String> securities = new HashSet<>();
-		Arrays.stream(SecurityEnum.values()).forEach(e -> {
+		Arrays.stream(FutureSecurityEnum.values()).forEach(e -> {
 			securities.addAll(e.getSecurities());
 		});
 		futureTask.adjustSecurities(securities);
