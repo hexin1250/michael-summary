@@ -34,16 +34,10 @@
 
 	<modules>
 		<module>michael-config-server</module>
-		<module>michael-eureka</module>
-		<module>michael-gateway</module>
 		<module>michael-investment</module>
 		<module>michael-investment-data-loader</module>
 		<module>michael-investment-strategy</module>
-		<module>michael-security-web</module>
-		<module>michael-service</module>
-		<module>michael-web-client</module>
-		<module>michael-book-service</module>
-		<module>michael-ribbon</module>
+		<module>michael-investment-messagebus</module>
 	</modules>
 	
 	<build>
