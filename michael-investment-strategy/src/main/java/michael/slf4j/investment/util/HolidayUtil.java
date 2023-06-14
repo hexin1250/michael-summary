@@ -31,5 +31,12 @@ public enum HolidayUtil {
 	public boolean isHoliday(LocalDate ld) {
 		return holiday.contains(ld);
 	}
+	
+	public LocalDate getCurrentTradeDate(LocalDate ld) {
+		while(isHoliday(ld) || TradeUtil.isWeekend(ld)) {
+			ld = ld.plusDays(1);
+		}
+		return ld;
+	}
 
 }

@@ -1,5 +1,7 @@
 package michael.slf4j.investment.quant.mockup;
 
+import java.io.File;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -10,12 +12,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Component;
+
+import com.google.common.io.Files;
 
 import michael.slf4j.investment.model.Account;
 import michael.slf4j.investment.model.Bar;
@@ -33,18 +36,16 @@ import michael.slf4j.investment.repo.TimeseriesRepository;
 import michael.slf4j.investment.util.HolidayUtil;
 import michael.slf4j.investment.util.TradeUtil;
 
-@Controller
+@Component("mockupProcess")
 public class MockupProcess {
 	private static final Logger log = Logger.getLogger(MockupProcess.class);
 	
-	private AtomicInteger atom = new AtomicInteger();
-	private Map<Integer, Bar> barMap = new ConcurrentHashMap<>();
+	private Map<Long, Bar> barMap = new ConcurrentHashMap<>();
 	
 	@Autowired
 	private TimeseriesRepository repo;
 	
-	public void backtest(Account acc, IStrategy strategy, LocalDate startDate, LocalDate endDate) {
-		int runId = atom.getAndIncrement();
+	public void backtest(long runId, Account acc, IStrategy strategy, LocalDate startDate, LocalDate endDate) {
 		Bar bar = new Bar();
 		barMap.put(runId, bar);
 		LocalDate current = startDate;
@@ -105,6 +106,12 @@ public class MockupProcess {
 			log.info(current + ":\t" + acc.total(status));
 			
 			current = current.plusDays(1);
+		}
+		try {
+			String str = acc.getTransactionList().stream().map(rrt -> rrt.toString()).collect(Collectors.joining("\n"));
+			Files.write(str.getBytes(), new File("src/test/data/testdata.txt"));
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		Status.unregister(runId);
 	}

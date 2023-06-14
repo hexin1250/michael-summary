@@ -6,21 +6,34 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Status {
-	private static Map<Integer, Map<Security, Contract>> barCacheMap = new ConcurrentHashMap<>();
-	private static Map<Integer, LocalDateTime> tradeTimeMap = new ConcurrentHashMap<>();
-	private static Map<Integer, LocalDate> tradeDateMap = new ConcurrentHashMap<>();
+	private static Map<Long, Map<Security, Contract>> barCacheMap = new ConcurrentHashMap<>();
+	private static Map<Long, LocalDateTime> tradeTimeMap = new ConcurrentHashMap<>();
+	private static Map<Long, LocalDate> tradeDateMap = new ConcurrentHashMap<>();
 	
-	public static void updateStatus(int runId, Map<Security, Contract> map, LocalDateTime ldt, LocalDate ld) {
+	public static void updateStatus(long runId, Map<Security, Contract> map, LocalDateTime ldt, LocalDate ld) {
 		barCacheMap.put(runId, map);
 		tradeTimeMap.put(runId, ldt);
 		tradeDateMap.put(runId, ld);
+	}
+	
+	public static void updateTime(long runId, LocalDateTime ldt, LocalDate ld) {
+		tradeTimeMap.put(runId, ldt);
+		tradeDateMap.put(runId, ld);
+	}
+	
+	public static void updateTime(long runId, LocalDateTime ldt) {
+		tradeTimeMap.put(runId, ldt);
+	}
+	
+	public static void updateStatus(long runId, Map<Security, Contract> map) {
+		barCacheMap.put(runId, map);
 	}
 	
 	public static Map<Security, Contract> getStatus(Context context){
 		return getStatus(context.runId);
 	}
 	
-	private static Map<Security, Contract> getStatus(int runId){
+	private static Map<Security, Contract> getStatus(Long runId){
 		return barCacheMap.get(runId);
 	}
 	
@@ -28,7 +41,7 @@ public class Status {
 		return getCurrentTime(context.runId);
 	}
 	
-	private static LocalDateTime getCurrentTime(int runId) {
+	public static LocalDateTime getCurrentTime(Long runId) {
 		return tradeTimeMap.get(runId);
 	}
 	
@@ -36,11 +49,11 @@ public class Status {
 		return getTradeDate(context.runId);
 	}
 	
-	private static LocalDate getTradeDate(int runId) {
+	public static LocalDate getTradeDate(Long runId) {
 		return tradeDateMap.get(runId);
 	}
 	
-	public static void unregister(int runId) {
+	public static void unregister(Long runId) {
 		barCacheMap.remove(runId);
 		tradeTimeMap.remove(runId);
 	}
