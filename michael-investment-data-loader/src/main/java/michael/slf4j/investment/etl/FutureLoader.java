@@ -30,6 +30,13 @@ public class FutureLoader {
 			return false;
 		}
 		List<Timeseries> series = parser.parse(content, freq);
+		return loadMultiSecurities(series, freq);
+	}
+	
+	public boolean loadMultiSecurities(List<Timeseries> series, FreqEnum freq) {
+		if(!TradeUtil.isTradingTime()) {
+			return false;
+		}
 		List<Timeseries> availableSeries = series;
 		if(freq == FreqEnum._TICK) {
 			availableSeries = series.stream().filter(m -> !(previousMap.get(m.getSecurity()) != null && m.equals(previousMap.get(m.getSecurity()))))

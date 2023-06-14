@@ -17,3 +17,5 @@ spring:
          hibernate:
             jdbc:
                time_zone: "Asia/Shanghai"
+future.activemq.topic: future-MI-topic
+               

@@ -1,0 +1,35 @@
+/*
+drop table real_run;
+drop table real_run_txn;
+*/
+
+create table real_run (
+	id Bigint NOT NULL AUTO_INCREMENT,
+	name varchar(10) NOT NULL,
+	type int NOT NULL,
+	class_name varchar(100) NOT NULL,
+	init_cash numeric(38,10) NOT NULL,
+	start_time timestamp NOT NULL,
+	end_time timestamp,
+	PRIMARY KEY (id)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+/*
+show indexes from timeseries;
+*/
+create index rr_n_index on real_run (name);
+
+create table real_run_txn (
+	id Bigint NOT NULL AUTO_INCREMENT,
+	real_run_id Bigint NOT NULL,
+	security varchar(20) NOT NULL,
+	variety varchar(10) NOT NULL,
+	deal_price numeric(10,4) NOT NULL,
+	deal_count int NOT NULL,
+	direction int NOT NULL,
+	trade_date varchar(10) NOT null,
+	trade_ts timestamp NOT NULL,
+	PRIMARY KEY (id)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+create index trr_n_index on real_run_txn (real_run_id);

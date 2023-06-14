@@ -1,9 +1,10 @@
 package michael.slf4j.investment.cron;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+
+import javax.jms.JMSException;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.configuration.FreqEnum;
 import michael.slf4j.investment.etl.FutureLoader;
+import michael.slf4j.investment.message.service.MessageService;
+import michael.slf4j.investment.model.Timeseries;
 import michael.slf4j.investment.parse.IParser;
 import michael.slf4j.investment.source.ISource;
 import michael.slf4j.investment.taskmanager.TaskManager;
@@ -23,6 +26,7 @@ import michael.slf4j.investment.util.TradeUtil;
 @Component
 @Controller
 @PropertySource("classpath:/schedule.properties")
+//@PropertySource("file:src/main/resources/schedule.properties")
 public class ScheduleJob {
 	private static final Logger log = Logger.getLogger(ScheduleJob.class);
 	
@@ -44,7 +48,9 @@ public class ScheduleJob {
 	@Qualifier(value="currentSecurities")
 	private Set<String> futureSecurities;
 	
-	private ExecutorService executor = Executors.newFixedThreadPool(30);
+	@Autowired
+	MessageService messageService;
+//	private ExecutorService executor = Executors.newFixedThreadPool(30);
 	
 	@Scheduled(cron = "${clean-schedule}")
 	public void cleanData() {
@@ -114,19 +120,22 @@ public class ScheduleJob {
 			return;
 		}
 		taskManager.subscribeSecurities();
-		executor.execute(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					String content = source.getContent(futureSecurities);
-					futureLoader.loadMultiSecurities(parser, content, FreqEnum._1MI);
-				} catch (IOException e) {
-					/**
-					 * Should not find one security. Ignore this case.
-					 */
-				}
-			}
-		});
+		List<Timeseries> series = null;
+		try {
+			String content = source.getContent(futureSecurities);
+			FreqEnum freq = FreqEnum._1MI;
+			series = parser.parse(content, freq);
+			futureLoader.loadMultiSecurities(series, freq);
+		} catch (IOException e) {
+			/**
+			 * Should not find one security. Ignore this case.
+			 */
+		}
+		try {
+			messageService.send("future-MI-topic", series);
+		} catch (JMSException e) {
+			log.error("Error when sending message to topic", e);
+		}
 	}
 
 }

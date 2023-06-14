@@ -20,7 +20,7 @@ public class Timeseries implements Comparator<Timeseries>, Serializable {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
+	private Long id;
 	@Column(name = "variety")
 	private String variety;
 	@Column(name = "security")
@@ -53,11 +53,11 @@ public class Timeseries implements Comparator<Timeseries>, Serializable {
 	public Timeseries() {
 	}
 
-	public Integer getId() {
+	public Long getId() {
 		return id;
 	}
 
-	public void setId(Integer id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 

@@ -10,6 +10,7 @@ import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 
 @Configuration
 @PropertySource("classpath:/cleancron.properties")
+//@PropertySource("file:C:/Users/CPU/git/michael-summary/michael-investment/src/main/resources/cleancron.properties")
 public class ScheduleConfig implements SchedulingConfigurer {
 	@Value("${pool.size}")
 	private int maxPoolSize;

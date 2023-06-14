@@ -1,0 +1,1 @@
+[activemq dashboard](http://localhost:8161/admin/topics.jsp)

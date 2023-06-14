@@ -10,11 +10,16 @@ import java.time.format.DateTimeFormatter;
 
 public class TradeUtil {
 	public static LocalTime[][] periods = new LocalTime[][] {
-		{LocalTime.of(21, 0, 0), LocalTime.of(23, 0, 0)},
+		{LocalTime.of(21, 1, 0), LocalTime.of(23, 0, 0)},
 		{LocalTime.of(9, 0, 0), LocalTime.of(10, 15, 0)},
 		{LocalTime.of(10, 30, 0), LocalTime.of(11, 30, 0)},
 		{LocalTime.of(13, 30, 0), LocalTime.of(15, 0, 0)}
 	};
+	
+	public static LocalDate getLDTradeDate() {
+		Date tradeDate = new Date(getTradeDate());
+		return LocalDate.ofInstant(tradeDate.toInstant(), ZoneId.systemDefault());
+	}
 	
 	public static long getTradeDate() {
 		LocalDateTime ld = LocalDateTime.now();
@@ -42,7 +47,7 @@ public class TradeUtil {
 	    return getTradeDate(localDateTime);
 	}
 	
-	private static long getTradeDate(LocalDateTime ld) {
+	public static long getTradeDate(LocalDateTime ld) {
 		int hour = ld.getHour();
 		if (hour >= 20) {
 			int dw = ld.getDayOfWeek().getValue();
@@ -69,6 +74,15 @@ public class TradeUtil {
 			return false;
 		}
 		return isTradingTime(ldt.toLocalTime());
+	}
+	
+	public static LocalDate getCurrentTradeDate(LocalDateTime ldt) {
+		LocalDate ld = LocalDate.of(ldt.getYear(), ldt.getMonth(), ldt.getDayOfMonth());
+		int hour = ldt.getHour();
+		if(hour > 15) {
+			return ld.plusDays(1);
+		}
+		return ld;
 	}
 
 	public static boolean isTradingTime(LocalTime ldt) {
@@ -97,6 +111,11 @@ public class TradeUtil {
 	
 	public static String getDateStr(long time) {
 		return getDateStr(time, "yyyy-MM-dd");
+	}
+	
+	public static String getDateStr(LocalDate ld) {
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+		return ld.format(formatter);
 	}
 	
 	public static String getDateStr(long time, String pattern) {
