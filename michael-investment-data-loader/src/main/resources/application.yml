@@ -17,3 +17,4 @@ spring:
          hibernate:
             jdbc:
                time_zone: "Asia/Shanghai"
+            dialect: org.hibernate.dialect.MySQLDialect
