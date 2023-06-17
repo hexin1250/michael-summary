@@ -14,7 +14,9 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.EventListener;
 
 import com.google.common.io.Files;
@@ -24,12 +26,15 @@ import michael.slf4j.investment.repo.RealRunTxnRepository;
 
 @SpringBootApplication
 public class InvestmentStrategyApplication {
-//	private static final Logger log = Logger.getLogger(InvestmentStrategyApplication.class);
 	
 	public static void main(String[] args) {
-		SpringApplication.run(InvestmentStrategyApplication.class, args);
+		SpringApplicationBuilder builder = new SpringApplicationBuilder(InvestmentStrategyApplication.class);
+		builder.headless(false);
+		builder.run(args);
 	}
 	
+//	private static final Logger log = Logger.getLogger(InvestmentStrategyApplication.class);
+//	
 //	@Autowired
 //	RealRunTxnRepository repo;
 //	

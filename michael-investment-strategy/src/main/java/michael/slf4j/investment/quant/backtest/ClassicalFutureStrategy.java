@@ -80,6 +80,7 @@ public class ClassicalFutureStrategy extends AbstractStrategy implements IStrate
 			params.put(BUY_PRICE, buyLine);
 			params.put(SELL_PRICE, sellLine);
 			log.info(now() + " " + mainSecurity.getName() + " Buy line:" + buyLine + ", Sell line:" + sellLine);
+			robot.sendWechatMessage(now() + " " + mainSecurity.getName() + " Buy line:" + buyLine + ", Sell line:" + sellLine);
 		}
 		double buyLine = (double) params.get(BUY_PRICE);
 		double sellLine = (double) params.get(SELL_PRICE);

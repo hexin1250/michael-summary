@@ -21,6 +21,7 @@ import michael.slf4j.investment.repo.TimeseriesRepository;
 import michael.slf4j.investment.util.HolidayUtil;
 import michael.slf4j.investment.util.SpringContextUtil;
 import michael.slf4j.investment.util.TradeUtil;
+import michael.slf4j.investment.util.WeChatRobot;
 
 public abstract class AbstractStrategy implements IStrategy {
 	/**
@@ -34,9 +35,11 @@ public abstract class AbstractStrategy implements IStrategy {
 	
 	protected Context context;
 	protected Map<Variety, Security> mainSecurityMap = new ConcurrentHashMap<>();
+	protected WeChatRobot robot;
 	
 	public AbstractStrategy() {
 		repo = SpringContextUtil.getBean("timeseriesRepository", TimeseriesRepository.class);
+		robot = new WeChatRobot();
 	}
 	
 	protected final Security getMainFutures(Variety variety, Bar bar) {

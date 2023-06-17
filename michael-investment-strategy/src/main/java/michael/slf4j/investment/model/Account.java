@@ -18,6 +18,7 @@ import michael.slf4j.investment.repo.RealRunTxnRepository;
 import michael.slf4j.investment.util.DealUtil;
 import michael.slf4j.investment.util.SpringContextUtil;
 import michael.slf4j.investment.util.TradeUtil;
+import michael.slf4j.investment.util.WeChatRobot;
 
 public class Account implements Serializable {
 
@@ -33,6 +34,7 @@ public class Account implements Serializable {
 	private Map<Security, Position> positionMap;
 	private List<RealRunTxn> transactionList;
 	private boolean isPersistent = false;
+	private WeChatRobot robot;
 	
 	public Account(long runId, double cash) {
 		this.runId = runId;
@@ -41,6 +43,7 @@ public class Account implements Serializable {
 		positionMap = new HashMap<>();
 		transactionList = new ArrayList<>();
 		this.repo = SpringContextUtil.getBean("realRunTxnRepository", RealRunTxnRepository.class);
+		this.robot = new WeChatRobot();
 	}
 	
 	public void deal(Security security, DirectionEnum dir, double dealPrice, int quantity) throws CashNotEnoughException {
@@ -95,6 +98,7 @@ public class Account implements Serializable {
 
 		if(isPersistent) {
 			repo.save(rrt);
+			robot.sendWechatMessage(rrt.toString());
 		}
 		
 		transactionList.add(rrt);

@@ -8,7 +8,13 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.KeyEvent;
 
+import org.apache.log4j.Logger;
+
+import michael.slf4j.investment.quant.strategy.AbstractStrategy;
+
 public class WeChatRobot {
+	private final static Logger log = Logger.getLogger(AbstractStrategy.class);
+	
 	private Robot bot = null;
 	private Clipboard clip = null;
 
@@ -17,7 +23,7 @@ public class WeChatRobot {
 			this.clip = Toolkit.getDefaultToolkit().getSystemClipboard();
 			this.bot = new Robot();
 		} catch (AWTException e) {
-			e.printStackTrace();
+			log.error("Error during initializing wechat robot", e);
 		}
 	}
 	
