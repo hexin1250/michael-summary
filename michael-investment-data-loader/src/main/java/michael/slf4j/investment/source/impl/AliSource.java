@@ -44,7 +44,7 @@ public class AliSource implements ISource, Closeable {
 		HttpGet httpGet = new HttpGet("http://alirmgbft.market.alicloudapi.com/query/comrms?symbols=" + symbol);
 		Map<String, String> headers = new HashMap<String, String>();
 	    //最后在header中的格式(中间是英文空格)为Authorization:APPCODE 83359fd73fe94948385f570e3c139105
-	    headers.put("Authorization", "APPCODE dbf34af5855347bd81e71d077d932522");
+	    headers.put("Authorization", "APPCODE xxx");
 	    for (Entry<String, String> entry : headers.entrySet()) {
 	    	httpGet.setHeader(entry.getKey(), entry.getValue());
 		}
