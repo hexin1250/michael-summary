@@ -50,6 +50,9 @@ public abstract class AbstractStrategy implements IStrategy {
 		for (Entry<Security, Contract> entry : bar.map.entrySet()) {
 			Security security = entry.getKey();
 			Contract contract = entry.getValue();
+			if(contract == null) {
+				continue;
+			}
 			if(security.equals(mainSecurity)) {
 				mainOpenInterest = contract.getOpenInterest();
 			}

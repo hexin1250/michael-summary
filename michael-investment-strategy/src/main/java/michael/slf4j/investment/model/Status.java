@@ -16,6 +16,11 @@ public class Status {
 		tradeDateMap.put(runId, ld);
 	}
 	
+	public static void updateStatus(long runId, Map<Security, Contract> map, LocalDateTime ldt) {
+		barCacheMap.put(runId, map);
+		tradeTimeMap.put(runId, ldt);
+	}
+	
 	public static void updateTime(long runId, LocalDateTime ldt, LocalDate ld) {
 		tradeTimeMap.put(runId, ldt);
 		tradeDateMap.put(runId, ld);

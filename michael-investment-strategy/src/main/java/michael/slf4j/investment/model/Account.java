@@ -107,6 +107,38 @@ public class Account implements Serializable {
 			positionMap.remove(security);
 		}
 	}
+	
+	public RealRunTxn getLatestTxn() {
+		List<RealRunTxn> list = repo.findByRealRunId(runId);
+		RealRunTxn ret = null;
+		if(!list.isEmpty()) {
+			ret = list.get(list.size() - 1);
+		}
+		return ret;
+	}
+	
+	public DirectionEnum getLatestDirection(RealRunTxn txn) {
+		if(txn != null) {
+			int code = txn.getDirection();
+			return DirectionEnum.of(code);
+		}
+		return null;
+	}
+	
+	public Integer getLatestQuantity(RealRunTxn txn) {
+		if(txn != null) {
+			return txn.getDealCount();
+		}
+		return null;
+	}
+	
+	public Security getLatestSecurity(RealRunTxn txn) {
+		if(txn != null) {
+			Variety variety = Variety.of(txn.getVariety());
+			return new Security(txn.getSecurity(), variety);
+		}
+		return null;
+	}
 
 	public double pnl(Map<Security, Contract> status) {
 		return total(status) - initCash;

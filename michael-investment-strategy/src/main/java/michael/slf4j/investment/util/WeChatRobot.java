@@ -39,6 +39,7 @@ public class WeChatRobot {
 		bot.keyPress(KeyEvent.VK_W);
 		bot.keyRelease(KeyEvent.VK_CONTROL);
 		bot.keyRelease(KeyEvent.VK_ALT);
+		bot.delay(100);
 	}
 
 	private void ChooseFriends(String name) {
@@ -51,8 +52,9 @@ public class WeChatRobot {
 		bot.keyPress(KeyEvent.VK_CONTROL);
 		bot.keyPress(KeyEvent.VK_V);
 		bot.keyRelease(KeyEvent.VK_CONTROL);
-		bot.delay(300);
+		bot.delay(500);
 		bot.keyPress(KeyEvent.VK_ENTER);
+		bot.delay(200);
 	}
 
 	private void SendMessage(String message) {
@@ -62,7 +64,7 @@ public class WeChatRobot {
 		bot.keyPress(KeyEvent.VK_V);
 		bot.keyRelease(KeyEvent.VK_CONTROL);
 		bot.keyPress(KeyEvent.VK_ENTER);
-		bot.delay(200);
+		bot.delay(500);
 		bot.keyPress(KeyEvent.VK_CONTROL);
 		bot.keyPress(KeyEvent.VK_ALT);
 		bot.keyPress(KeyEvent.VK_W);

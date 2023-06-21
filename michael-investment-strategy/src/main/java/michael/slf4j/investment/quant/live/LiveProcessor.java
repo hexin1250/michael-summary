@@ -128,11 +128,12 @@ public class LiveProcessor {
 	
 	public void handle(StrategyType type, Map<Security, Contract> contractMap) {
 		log.info("Start to handle trade");
+		LocalDateTime ldt = LocalDateTime.now();
 		centerMap.entrySet().stream().filter(entry -> entry.getValue() == type).forEach(entry -> {
 			String strategyName = entry.getKey();
 			updateBar(strategyName, contractMap);
 			Context context = contextMap.get(strategyName);
-			Status.updateStatus(context.runId, contractMap);
+			Status.updateStatus(context.runId, contractMap, ldt, context.getCurrentTradeDate());
 			handle(strategyName);
 		});
 		log.info("Done to handle trade");
@@ -140,9 +141,6 @@ public class LiveProcessor {
 	
 	public void handle(String strategyName) {
 		log.info("handling:" + strategyName);
-		Context context = contextMap.get(strategyName);
-		Status.updateTime(context.runId, LocalDateTime.now(), context.getCurrentTradeDate());
-		
 		IStrategy strategy = strategyMap.get(strategyName);
 		Account acc = accMap.get(strategyName);
 		Bar bar = barMap.get(strategyName);

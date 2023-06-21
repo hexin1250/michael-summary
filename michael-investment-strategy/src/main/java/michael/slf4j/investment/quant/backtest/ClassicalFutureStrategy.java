@@ -9,6 +9,7 @@ import michael.slf4j.investment.model.Bar;
 import michael.slf4j.investment.model.Context;
 import michael.slf4j.investment.model.Contract;
 import michael.slf4j.investment.model.DirectionEnum;
+import michael.slf4j.investment.model.RealRunTxn;
 import michael.slf4j.investment.model.Security;
 import michael.slf4j.investment.model.Variety;
 import michael.slf4j.investment.quant.strategy.AbstractStrategy;
@@ -60,6 +61,17 @@ public class ClassicalFutureStrategy extends AbstractStrategy implements IStrate
 		context.params.remove(CHANGE_DOMINATE);
 		context.params.remove(BUY_PRICE);
 		context.params.remove(SELL_PRICE);
+		if(!context.params.containsKey(TRADING_DIRECTION)) {
+			RealRunTxn txn = context.getAcc().getLatestTxn();
+			DirectionEnum dir = context.getAcc().getLatestDirection(txn);
+			Integer quatity = context.getAcc().getLatestQuantity(txn);
+			Security mainSecurity = context.getAcc().getLatestSecurity(txn);
+			if(dir != null) {
+				context.params.put(TRADING_DIRECTION, dir);
+				context.params.put(OPEN_HANDS, quatity);
+				context.params.put(MAIN_SECURITY, mainSecurity);
+			}
+		}
 	}
 
 	@Override
