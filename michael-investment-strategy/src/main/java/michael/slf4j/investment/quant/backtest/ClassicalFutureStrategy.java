@@ -58,9 +58,6 @@ public class ClassicalFutureStrategy extends AbstractStrategy implements IStrate
 	
 	@Override
 	public void before() {
-		context.params.remove(CHANGE_DOMINATE);
-		context.params.remove(BUY_PRICE);
-		context.params.remove(SELL_PRICE);
 		if(!context.params.containsKey(TRADING_DIRECTION)) {
 			RealRunTxn txn = context.getAcc().getLatestTxn();
 			DirectionEnum dir = context.getAcc().getLatestDirection(txn);
@@ -134,6 +131,9 @@ public class ClassicalFutureStrategy extends AbstractStrategy implements IStrate
 
 	@Override
 	public void after() {
+		context.params.remove(CHANGE_DOMINATE);
+		context.params.remove(BUY_PRICE);
+		context.params.remove(SELL_PRICE);
 	}
 
 	@Override
