@@ -16,7 +16,6 @@ import michael.slf4j.investment.exception.CashNotEnoughException;
 import michael.slf4j.investment.exception.InvalidCloseException;
 import michael.slf4j.investment.repo.RealRunTxnRepository;
 import michael.slf4j.investment.util.DealUtil;
-import michael.slf4j.investment.util.SpringContextUtil;
 import michael.slf4j.investment.util.TradeUtil;
 import michael.slf4j.investment.util.WeChatRobot;
 
@@ -42,8 +41,12 @@ public class Account implements Serializable {
 		this.cash = cash;
 		positionMap = new HashMap<>();
 		transactionList = new ArrayList<>();
-		this.repo = SpringContextUtil.getBean("realRunTxnRepository", RealRunTxnRepository.class);
 		this.robot = new WeChatRobot();
+	}
+	
+	public Account(long runId, double cash, RealRunTxnRepository repo) {
+		this(runId, cash);
+		this.repo = repo;
 	}
 	
 	public void deal(Security security, DirectionEnum dir, double dealPrice, int quantity) throws CashNotEnoughException {
@@ -109,6 +112,9 @@ public class Account implements Serializable {
 	}
 	
 	public RealRunTxn getLatestTxn() {
+		if(repo == null) {
+			return null;
+		}
 		List<RealRunTxn> list = repo.findByRealRunId(runId);
 		RealRunTxn ret = null;
 		if(!list.isEmpty()) {

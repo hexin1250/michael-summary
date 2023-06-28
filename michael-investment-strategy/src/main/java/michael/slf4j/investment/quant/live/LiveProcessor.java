@@ -62,7 +62,7 @@ public class LiveProcessor {
 		/**
 		 * Init Account
 		 */
-		Account acc = new Account(runId, rr.getInitCash().doubleValue());
+		Account acc = new Account(runId, rr.getInitCash().doubleValue(), realRunTxnRepo);
 		/**
 		 * Init Context
 		 */

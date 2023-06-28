@@ -57,6 +57,7 @@ public class StrategyController {
 		LocalDate start = LocalDate.parse(startDate);
 		LocalDate end = LocalDate.parse(endDate);
 		long runId = atom.getAndIncrement();
+		log.info("Run ID:" + runId);
 		Account acc = new Account(runId, 60000D);
 		IStrategy iStrategy = map.get(strategy);
 		if(iStrategy == null) {

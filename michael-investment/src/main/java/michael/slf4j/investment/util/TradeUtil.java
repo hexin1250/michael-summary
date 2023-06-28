@@ -11,7 +11,7 @@ import java.time.format.DateTimeFormatter;
 public class TradeUtil {
 	public static LocalTime[][] periods = new LocalTime[][] {
 		{LocalTime.of(21, 1, 0), LocalTime.of(23, 0, 0)},
-		{LocalTime.of(9, 0, 0), LocalTime.of(10, 15, 0)},
+		{LocalTime.of(9, 1, 0), LocalTime.of(10, 15, 0)},
 		{LocalTime.of(10, 30, 0), LocalTime.of(11, 30, 0)},
 		{LocalTime.of(13, 30, 0), LocalTime.of(15, 0, 0)}
 	};
