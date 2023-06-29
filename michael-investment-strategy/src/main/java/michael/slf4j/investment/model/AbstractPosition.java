@@ -13,6 +13,7 @@ public abstract class AbstractPosition implements Position, Serializable {
 	
 	protected final Security security;
 	protected Map<DirectionEnum, Queue<DealInfo>> securityMap = new HashMap<>();
+	protected DirectionEnum direction;
 	
 	public AbstractPosition(Security security) {
 		this.security = security;
@@ -50,6 +51,10 @@ public abstract class AbstractPosition implements Position, Serializable {
 		public String toString() {
 			return price + ":" + quantity;
 		}
+	}
+	
+	public DirectionEnum getDirection() {
+		return direction;
 	}
 
 }

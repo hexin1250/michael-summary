@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import michael.slf4j.investment.exception.CashNotEnoughException;
 import michael.slf4j.investment.exception.InvalidCloseException;
@@ -162,6 +163,19 @@ public class Account implements Serializable {
 			total += position.total(contract.getClose());
 		}
 		return total;
+	}
+	
+	public String getLatestPositionStatus(Map<Security, Contract> status){
+		return positionMap.entrySet().stream().map(entry -> {
+			Contract contract = status.get(entry.getKey());
+			Security security = entry.getKey();
+			double close = contract.getClose();
+			Position postion = entry.getValue();
+			DirectionEnum direction = postion.getDirection();
+			StringBuffer sb = new StringBuffer();
+			sb.append(security).append(",").append(direction).append(",").append(close);
+			return sb.toString();
+		}).collect(Collectors.joining("|"));
 	}
 	
 	public Map<Security, Position> getPositions() {

@@ -134,18 +134,21 @@ public class LiveProcessor {
 			updateBar(strategyName, contractMap);
 			Context context = contextMap.get(strategyName);
 			Status.updateStatus(context.runId, contractMap, ldt, context.getCurrentTradeDate());
-			handle(strategyName);
+			handle(strategyName, contractMap);
 		});
 		log.info("Done to handle trade");
 	}
 	
-	public void handle(String strategyName) {
+	public void handle(String strategyName, Map<Security, Contract> contractMap) {
 		log.info("handling:" + strategyName);
 		IStrategy strategy = strategyMap.get(strategyName);
 		Account acc = accMap.get(strategyName);
 		Bar bar = barMap.get(strategyName);
 		strategy.handle(acc, bar);
 		log.info("Done to handle:" + strategyName);
+		Context context = contextMap.get(strategyName);
+		log.info(context.getCurrentTradeDate() + ":\t" + acc.getLatestPositionStatus(contractMap));
+		log.info(context.getCurrentTradeDate() + ":\t" + strategyName + ":" + acc.total(contractMap));
 	}
 	
 	public void afterTrading() {

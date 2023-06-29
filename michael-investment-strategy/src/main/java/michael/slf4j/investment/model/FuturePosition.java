@@ -26,6 +26,7 @@ public class FuturePosition extends AbstractPosition implements Position, Serial
 	 * @throws EmptySecurityException 
 	 */
 	public ProfitLoss deal(DirectionEnum dir, double price, int quantity) {
+		this.direction = dir;
 		Variety variety = security.getVariety();
 		double transactionCost = DealUtil.getTransactionCost(variety, price, quantity, false);
 		switch(dir) {

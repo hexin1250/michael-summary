@@ -6,5 +6,6 @@ public interface Position {
 	public boolean done();
 	public int buyPosition();
 	public int sellPosition();
+	public DirectionEnum getDirection();
 
 }

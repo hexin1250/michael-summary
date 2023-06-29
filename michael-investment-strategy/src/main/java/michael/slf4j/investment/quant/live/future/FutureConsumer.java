@@ -48,7 +48,7 @@ public class FutureConsumer implements MessageListener {
 			Variety variety = Variety.of(ts.getVariety());
 			Security security = new Security(ts.getSecurity(), variety);
 			contractMap.put(security, new Future(ts));
-			log.info("Receive:" + ts);
+//			log.info("Receive:" + ts);
 		});
 		liveProcess.handle(StrategyType.FUTURE, contractMap);
 	}
