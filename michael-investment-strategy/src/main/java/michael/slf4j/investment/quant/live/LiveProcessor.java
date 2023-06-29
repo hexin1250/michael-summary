@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,6 +47,7 @@ public class LiveProcessor {
 	private Map<String, Account> accMap = new ConcurrentHashMap<>();
 	private Map<String, Context> contextMap = new ConcurrentHashMap<>();
 	private Map<String, Bar> barMap = new ConcurrentHashMap<>();
+	private String statusCode;
 	
 	public void init() {
 		log.info("Start to initialize live trade processor");
@@ -129,14 +131,21 @@ public class LiveProcessor {
 	public void handle(StrategyType type, Map<Security, Contract> contractMap) {
 		log.info("Start to handle trade");
 		LocalDateTime ldt = LocalDateTime.now();
+		List<String> statusList = new ArrayList<String>();
 		centerMap.entrySet().stream().filter(entry -> entry.getValue() == type).forEach(entry -> {
 			String strategyName = entry.getKey();
 			updateBar(strategyName, contractMap);
 			Context context = contextMap.get(strategyName);
 			Status.updateStatus(context.runId, contractMap, ldt, context.getCurrentTradeDate());
 			handle(strategyName, contractMap);
+			statusList.add(latestStatus(strategyName, contractMap));
 		});
 		log.info("Done to handle trade");
+		statusCode = statusList.stream().map(s -> {
+			StringBuilder sb = new StringBuilder();
+			sb.append("<br>").append(s);
+			return sb.toString();
+		}).collect(Collectors.joining("\n"));
 	}
 	
 	public void handle(String strategyName, Map<Security, Contract> contractMap) {
@@ -149,6 +158,12 @@ public class LiveProcessor {
 		Context context = contextMap.get(strategyName);
 		log.info(context.getCurrentTradeDate() + ":\t" + acc.getLatestPositionStatus(contractMap));
 		log.info(context.getCurrentTradeDate() + ":\t" + strategyName + ":" + acc.total(contractMap));
+	}
+	
+	public String latestStatus(String strategyName, Map<Security, Contract> contractMap) {
+		Account acc = accMap.get(strategyName);
+		Context context = contextMap.get(strategyName);
+		return strategyName + " " + context.getCurrentTradeDate() + ":\t" + acc.getLatestPositionStatus(contractMap);
 	}
 	
 	public void afterTrading() {
@@ -184,6 +199,10 @@ public class LiveProcessor {
 				 */
 			}
 		});
+	}
+	
+	public String getStatus() {
+		return statusCode;
 	}
 
 }

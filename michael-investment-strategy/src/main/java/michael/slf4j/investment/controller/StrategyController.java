@@ -104,10 +104,20 @@ public class StrategyController {
 		return "done to initialze:" + strategyName;
 	}
 	
+	/**
+	 * http://localhost:1702/apps/strategy/health
+	 * @return
+	 */
 	@GetMapping(path = "/health")
 	public @ResponseBody String health() {
 		log.info("get request");
 		return "ok";
+	}
+	
+	@GetMapping(path = "/status")
+	public @ResponseBody String status() {
+		log.info("get request to check status");
+		return liveProcessor.getStatus();
 	}
 
 }
