@@ -38,6 +38,7 @@
 		<module>michael-investment-data-loader</module>
 		<module>michael-investment-strategy</module>
 		<module>michael-investment-messagebus</module>
+		<module>michael-notification</module>
 	</modules>
 	
 	<build>
