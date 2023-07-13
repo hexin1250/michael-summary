@@ -4,6 +4,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+import javax.jms.JMSException;
+
+import michael.slf4j.investment.config.TopicConstants;
 import michael.slf4j.investment.model.Account;
 import michael.slf4j.investment.model.Bar;
 import michael.slf4j.investment.model.Context;
@@ -89,7 +92,12 @@ public class ClassicalFutureStrategy extends AbstractStrategy implements IStrate
 			params.put(BUY_PRICE, buyLine);
 			params.put(SELL_PRICE, sellLine);
 			log.info(now() + " " + mainSecurity.getName() + " Buy line:" + buyLine + ", Sell line:" + sellLine);
-			robot.sendWechatMessage(now() + " " + mainSecurity.getName() + " Buy line:" + buyLine + ", Sell line:" + sellLine);
+			String text = now() + " " + mainSecurity.getName() + " Buy line:" + buyLine + ", Sell line:" + sellLine;
+			try {
+				messageService.send(TopicConstants.NOTIFICATION_TOPIC, text);
+			} catch (JMSException e) {
+				log.warn("message to " + TopicConstants.NOTIFICATION_TOPIC + " failed", e);
+			}
 		}
 		double buyLine = (double) params.get(BUY_PRICE);
 		double sellLine = (double) params.get(SELL_PRICE);

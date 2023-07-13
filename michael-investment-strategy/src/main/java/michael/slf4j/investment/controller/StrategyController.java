@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import michael.slf4j.investment.message.service.MessageService;
 import michael.slf4j.investment.model.Account;
 import michael.slf4j.investment.model.RealRun;
 import michael.slf4j.investment.quant.backtest.ClassicalFutureStrategy;
@@ -40,6 +41,9 @@ public class StrategyController {
 	
 	@Autowired
 	private RealRunRepository rrRepo;
+	
+	@Autowired
+	private MessageService messageService;
 	
 	/**
 	 * http://localhost:1702/apps/strategy/mockup?strategy=test&variety=I&startDate=2023-04-17&endDate=2023-05-25&dataScope=1&range=1
@@ -70,6 +74,7 @@ public class StrategyController {
 				break;
 				default:
 			}
+			iStrategy.setMessageService(messageService);
 			map.put(strategy, iStrategy);
 		}
 		process.backtest(runId, acc, iStrategy, start, end);

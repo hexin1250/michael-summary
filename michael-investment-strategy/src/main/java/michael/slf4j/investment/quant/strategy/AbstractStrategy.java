@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 
+import michael.slf4j.investment.message.service.MessageService;
 import michael.slf4j.investment.model.Bar;
 import michael.slf4j.investment.model.Context;
 import michael.slf4j.investment.model.Contract;
@@ -36,6 +37,7 @@ public abstract class AbstractStrategy implements IStrategy {
 	protected Context context;
 	protected Map<Variety, Security> mainSecurityMap = new ConcurrentHashMap<>();
 	protected WeChatRobot robot;
+	protected MessageService messageService;
 	
 	public AbstractStrategy() {
 		repo = SpringContextUtil.getBean("timeseriesRepository", TimeseriesRepository.class);
@@ -75,6 +77,10 @@ public abstract class AbstractStrategy implements IStrategy {
 		}
 		return repo.findSecurities(variety.name(), previousTradeDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
 				.stream().map(security -> new Security(security, variety)).collect(Collectors.toList());
+	}
+	
+	public void setMessageService(MessageService messageService) {
+		this.messageService = messageService;
 	}
 	
 	@Override

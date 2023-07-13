@@ -3,22 +3,24 @@ package michael.slf4j.investment.model;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import javax.jms.JMSException;
+
+import org.apache.log4j.Logger;
+
+import michael.slf4j.investment.config.TopicConstants;
 import michael.slf4j.investment.exception.CashNotEnoughException;
 import michael.slf4j.investment.exception.InvalidCloseException;
+import michael.slf4j.investment.message.service.MessageService;
 import michael.slf4j.investment.repo.RealRunTxnRepository;
 import michael.slf4j.investment.util.DealUtil;
 import michael.slf4j.investment.util.TradeUtil;
-import michael.slf4j.investment.util.WeChatRobot;
 
 public class Account implements Serializable {
 
@@ -26,6 +28,7 @@ public class Account implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	private final static Logger log = Logger.getLogger(Account.class);
 	
 	private RealRunTxnRepository repo;
 	private final long runId;
@@ -34,7 +37,7 @@ public class Account implements Serializable {
 	private Map<Security, Position> positionMap;
 	private List<RealRunTxn> transactionList;
 	private boolean isPersistent = false;
-	private WeChatRobot robot;
+	private MessageService messageService;
 	
 	public Account(long runId, double cash) {
 		this.runId = runId;
@@ -42,7 +45,6 @@ public class Account implements Serializable {
 		this.cash = cash;
 		positionMap = new HashMap<>();
 		transactionList = new ArrayList<>();
-		this.robot = new WeChatRobot();
 	}
 	
 	public Account(long runId, double cash, RealRunTxnRepository repo) {
@@ -102,7 +104,11 @@ public class Account implements Serializable {
 
 		if(isPersistent) {
 			repo.save(rrt);
-			robot.sendWechatMessage(rrt.toString());
+			try {
+				messageService.send(TopicConstants.NOTIFICATION_TOPIC, rrt.toString());
+			} catch (JMSException e) {
+				log.warn("message to " + TopicConstants.NOTIFICATION_TOPIC + " failed", e);
+			}
 		}
 		
 		transactionList.add(rrt);
@@ -188,6 +194,10 @@ public class Account implements Serializable {
 
 	public void setPersistent(boolean isPersistent) {
 		this.isPersistent = isPersistent;
+	}
+
+	public void setMessageService(MessageService messageService) {
+		this.messageService = messageService;
 	}
 
 }

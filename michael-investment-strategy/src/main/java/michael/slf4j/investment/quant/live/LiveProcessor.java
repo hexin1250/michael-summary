@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import michael.slf4j.investment.exception.NotSubscribeException;
+import michael.slf4j.investment.message.service.MessageService;
 import michael.slf4j.investment.model.Account;
 import michael.slf4j.investment.model.Bar;
 import michael.slf4j.investment.model.Context;
@@ -41,6 +42,9 @@ public class LiveProcessor {
 	
 	@Autowired
 	private RealRunTxnRepository realRunTxnRepo;
+	
+	@Autowired
+	private MessageService messageService;
 	
 	private Map<String, StrategyType> centerMap = new ConcurrentHashMap<>();
 	private Map<String, IStrategy> strategyMap = new ConcurrentHashMap<>();
@@ -90,6 +94,7 @@ public class LiveProcessor {
 			}
 			Constructor<IStrategy> constructor = constructors[0];
 			IStrategy strategy = constructor.newInstance();
+			strategy.setMessageService(messageService);
 			strategy.initContext(context);
 			strategy.init();
 			context.init();
