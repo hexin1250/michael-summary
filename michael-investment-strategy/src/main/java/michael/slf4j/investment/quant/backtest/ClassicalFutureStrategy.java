@@ -1,8 +1,11 @@
 package michael.slf4j.investment.quant.backtest;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.jms.JMSException;
 
@@ -37,13 +40,13 @@ public class ClassicalFutureStrategy extends AbstractStrategy implements IStrate
 	private static final String MAIN_SECURITY = "main_security";
 	private static final String OPEN_HANDS = "open_hands";
 	private static final String K = "k";
-	private static final String TARGET_VARIETY = "variety";
 	private static final String TRADING_DIRECTION = "trading_direction";
 	/**
 	 * I/J = 30
 	 * RB = 3
 	 */
 	private static final String OPEN_HANDS_INDEX = "openHandsIndex";
+	private static final String VARIETY_MAP = "varietyMap";
 	
 	@Override
 	public void init() {
@@ -53,32 +56,61 @@ public class ClassicalFutureStrategy extends AbstractStrategy implements IStrate
 //		context.params.put(TARGET_VARIETY, Variety.J);
 //		context.params.put(K, 0.5D);
 //		context.params.put(Context.HISTORICAL_RANGE, 4);
-		context.params.put(TARGET_VARIETY, Variety.RB);
-		context.params.put(K, 0.4D);
+//		context.params.put(TARGET_VARIETY, Variety.RB);
+//		context.params.put(K, 0.4D);
+//		context.params.put(Context.HISTORICAL_RANGE, 5);
+//		context.params.put(OPEN_HANDS_INDEX, 3D);
+		Map<Variety, Map<String, Object>> contextMap = new HashMap<>();
+		Map<String, Object> rbMap = new HashMap<>();
+		rbMap.put(K, 0.4D);
+		rbMap.put(OPEN_HANDS_INDEX, 3D * 2);
+		contextMap.put(Variety.RB, rbMap);
+		
+		Map<String, Object> iMap = new HashMap<>();
+		iMap.put(K, 0.4D);
+		iMap.put(OPEN_HANDS_INDEX, 30D * 2);
+		contextMap.put(Variety.I, iMap);
+		
+		context.params.put(VARIETY_MAP, contextMap);
 		context.params.put(Context.HISTORICAL_RANGE, 5);
-		context.params.put(OPEN_HANDS_INDEX, 3D);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public void before() {
-		if(!context.params.containsKey(TRADING_DIRECTION)) {
-			RealRunTxn txn = context.getAcc().getLatestTxn();
-			DirectionEnum dir = context.getAcc().getLatestDirection(txn);
-			Integer quatity = context.getAcc().getLatestQuantity(txn);
-			Security mainSecurity = context.getAcc().getLatestSecurity(txn);
-			if(dir != null) {
-				context.params.put(TRADING_DIRECTION, dir);
-				context.params.put(OPEN_HANDS, quatity);
-				context.params.put(MAIN_SECURITY, mainSecurity);
+		Map<Variety, Map<String, Object>> contextMap = (Map<Variety, Map<String, Object>>) context.params.get(VARIETY_MAP);
+		for (Entry<Variety, Map<String, Object>> entry : contextMap.entrySet()) {
+			Variety variety = entry.getKey();
+			Map<String, Object> varietyMap = entry.getValue();
+			if(!varietyMap.containsKey(TRADING_DIRECTION)) {
+				RealRunTxn txn = context.getAcc().getLatestTxn(variety.name());
+				DirectionEnum dir = context.getAcc().getLatestDirection(txn);
+				Integer quatity = context.getAcc().getLatestQuantity(txn);
+				Security mainSecurity = context.getAcc().getLatestSecurity(txn);
+				if(dir != null) {
+					varietyMap.put(TRADING_DIRECTION, dir);
+					varietyMap.put(OPEN_HANDS, quatity);
+					varietyMap.put(MAIN_SECURITY, mainSecurity);
+				}
 			}
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void handle(Account acc, Bar bar) {
 		Map<String, Object> params = context.params;
+		Map<Variety, Map<String, Object>> contextMap = (Map<Variety, Map<String, Object>>) params.get(VARIETY_MAP);
+		for (Entry<Variety, Map<String, Object>> entry : contextMap.entrySet()) {
+			Map<String, Object> varietyMap = entry.getValue();
+			Variety variety = entry.getKey();
+			dealMarket(acc, bar, variety, varietyMap);
+		}
+	}
+
+	private void dealMarket(Account acc, Bar bar, Variety variety, Map<String, Object> params) {
 		if(!params.containsKey(CHANGE_DOMINATE)) {
-			changeDominate(acc, bar);
+			changeVarietyDominate(acc, bar, variety, params);
 			params.put(CHANGE_DOMINATE, true);
 		}
 		Security mainSecurity = (Security) params.get(MAIN_SECURITY);
@@ -107,7 +139,7 @@ public class ClassicalFutureStrategy extends AbstractStrategy implements IStrate
 		DirectionEnum dir = (DirectionEnum) params.get(TRADING_DIRECTION);
 		if((closePrice > buyLine && (dir == null || dir == DirectionEnum.sell)) || (closePrice < sellLine && (dir == null || dir == DirectionEnum.buy))) {
 			double total = acc.total(context);
-			int targetQ = (int) (total / (contract.getClose() * (double)(context.params.get(OPEN_HANDS_INDEX))));
+			int targetQ = (int) (total / (contract.getClose() * (double)(params.get(OPEN_HANDS_INDEX))));
 			if(targetQ == 0) {
 				targetQ = 1;
 			}
@@ -137,18 +169,27 @@ public class ClassicalFutureStrategy extends AbstractStrategy implements IStrate
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void after() {
-		context.params.remove(CHANGE_DOMINATE);
-		context.params.remove(BUY_PRICE);
-		context.params.remove(SELL_PRICE);
+		Map<Variety, Map<String, Object>> contextMap = (Map<Variety, Map<String, Object>>) context.params.get(VARIETY_MAP);
+		for (Entry<Variety, Map<String, Object>> entry : contextMap.entrySet()) {
+			Map<String, Object> varietyMap = entry.getValue();
+			varietyMap.remove(CHANGE_DOMINATE);
+			varietyMap.remove(BUY_PRICE);
+			varietyMap.remove(SELL_PRICE);
+		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public List<Security> subscriberList(LocalDate tradeDate) {
-		Map<String, Object> params = context.params;
-		Variety variety = (Variety) params.get(TARGET_VARIETY);
-		return getAllFutures(variety, tradeDate);
+		Map<Variety, Map<String, Object>> contextMap = (Map<Variety, Map<String, Object>>) context.params.get(VARIETY_MAP);
+		List<Security> ret = new ArrayList<>();
+		for (Variety variety : contextMap.keySet()) {
+			ret.addAll(getAllFutures(variety, tradeDate));
+		}
+		return ret;
 	}
 
 	@Override
@@ -156,10 +197,8 @@ public class ClassicalFutureStrategy extends AbstractStrategy implements IStrate
 		Map<String, Object> params = context.params;
 		return (int) params.get(Context.HISTORICAL_RANGE);
 	}
-	
-	private void changeDominate(Account acc, Bar bar) {
-		Map<String, Object> params = context.params;
-		Variety variety = (Variety) params.get(TARGET_VARIETY);
+
+	private void changeVarietyDominate(Account acc, Bar bar, Variety variety, Map<String, Object> params) {
 		Security mainSecurity = getMainFutures(variety, bar);
 		Security previousSecurity = (Security) params.get(MAIN_SECURITY);
 		DirectionEnum dir = (DirectionEnum) params.get(TRADING_DIRECTION);

@@ -3,7 +3,10 @@ package michael.slf4j.investment.model;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -123,6 +126,20 @@ public class Account implements Serializable {
 			return null;
 		}
 		List<RealRunTxn> list = repo.findByRealRunId(runId);
+		RealRunTxn ret = null;
+		if(!list.isEmpty()) {
+			ret = list.get(list.size() - 1);
+		}
+		return ret;
+	}
+	
+	public RealRunTxn getLatestTxn(String variety) {
+		if(repo == null) {
+			return null;
+		}
+		List<RealRunTxn> list = repo.findByRealRunId(runId).stream().filter(txn -> {
+			return txn.getVariety().equalsIgnoreCase(variety);
+		}).collect(Collectors.toList());
 		RealRunTxn ret = null;
 		if(!list.isEmpty()) {
 			ret = list.get(list.size() - 1);

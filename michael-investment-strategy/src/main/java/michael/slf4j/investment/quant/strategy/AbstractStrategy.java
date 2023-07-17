@@ -51,6 +51,9 @@ public abstract class AbstractStrategy implements IStrategy {
 		Security maxSecurity = null;
 		for (Entry<Security, Contract> entry : bar.map.entrySet()) {
 			Security security = entry.getKey();
+			if(security.getVariety() != variety) {
+				continue;
+			}
 			Contract contract = entry.getValue();
 			if(contract == null) {
 				continue;
