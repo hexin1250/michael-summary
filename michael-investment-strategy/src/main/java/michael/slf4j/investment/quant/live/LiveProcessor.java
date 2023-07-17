@@ -101,6 +101,7 @@ public class LiveProcessor {
 			centerMap.put(strategyName, StrategyType.of(rr.getType()));
 			strategyMap.put(strategyName, strategy);
 			contextMap.put(strategyName, context);
+			acc.setMessageService(messageService);
 			accMap.put(strategyName, acc);
 		} catch (SecurityException | ClassNotFoundException | IllegalArgumentException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
 			log.error("This stragety[" + strategyName + ":" + className + "] will not be created", e);
