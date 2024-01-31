@@ -3,6 +3,7 @@ package michael.slf4j.investment.controller;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -121,8 +122,10 @@ public class StrategyController {
 	
 	@GetMapping(path = "/status")
 	public @ResponseBody String status() {
-		log.info("get request to check status");
-		return liveProcessor.getStatus();
+		StringBuffer sb = new StringBuffer();
+		sb.append(new Date()).append("<br>").append(liveProcessor.getStatus());
+		log.info("get request to check status[" + sb.toString() + "]");
+		return sb.toString();
 	}
 
 }
