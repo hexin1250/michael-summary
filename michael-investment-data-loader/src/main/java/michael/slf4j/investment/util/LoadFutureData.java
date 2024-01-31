@@ -76,25 +76,7 @@ public class LoadFutureData {
 									Map<String, TimeseriesModel> tdMap = tradeMap.get(tradeDate);
 									if(tdMap == null) {
 										if(!tradeDates.contains(tradeDate)) {
-											for (Map<String, TimeseriesModel> map : tradeMap.values()) {
-												for (TimeseriesModel tm : map.values()) {
-													ps.setString(1, tm.getSecurity());
-													ps.setString(2, tm.getName());
-													ps.setBigDecimal(3, tm.getOpen());
-													ps.setBigDecimal(4, tm.getHigh());
-													ps.setBigDecimal(5, tm.getLow());
-													ps.setBigDecimal(6, tm.getClose());
-													ps.setBigDecimal(7, tm.getUpLimit());
-													ps.setBigDecimal(8, tm.getDownLimit());
-													ps.setBigDecimal(9, tm.getVolume());
-													ps.setString(10, "1D");
-													ps.setString(11, tm.getTradeDate());
-													ps.setString(12, tm.getTradeTs());
-													ps.setString(13, tm.getSecurity().replaceAll("[\\d]+", ""));
-													ps.setBigDecimal(14, tm.getOpenInterest());
-													ps.addBatch();
-												}
-											}
+											fillBack1D(ps, tradeMap);
 										}
 										tradeMap.clear();
 										
@@ -123,21 +105,7 @@ public class LoadFutureData {
 										tm.setFreq("1MI");
 										
 										if(!tradeDates.contains(tradeDate)) {
-											ps.setString(1, tm.getSecurity());
-											ps.setString(2, tm.getName());
-											ps.setBigDecimal(3, tm.getOpen());
-											ps.setBigDecimal(4, tm.getHigh());
-											ps.setBigDecimal(5, tm.getLow());
-											ps.setBigDecimal(6, tm.getClose());
-											ps.setBigDecimal(7, tm.getUpLimit());
-											ps.setBigDecimal(8, tm.getDownLimit());
-											ps.setBigDecimal(9, tm.getVolume());
-											ps.setString(10, tm.getFreq());
-											ps.setString(11, tm.getTradeDate());
-											ps.setString(12, tm.getTradeTs());
-											ps.setString(13, tm.getSecurity().replaceAll("[\\d]+", ""));
-											ps.setBigDecimal(14, tm.getOpenInterest());
-											ps.addBatch();
+											addPsBatch(ps, tm, tm.getFreq());
 											count++;
 											if (count >= 300) {
 												ps.executeBatch();
@@ -165,6 +133,7 @@ public class LoadFutureData {
 							}
 						}
 					}
+					fillBack1D(ps, tradeMap);
 					if (count > 0) {
 						ps.executeBatch();
 						count = 0;
@@ -176,6 +145,33 @@ public class LoadFutureData {
 			}
 		}
 		System.out.println("Done.");
+	}
+
+	private static void fillBack1D(PreparedStatement ps, Map<String, Map<String, TimeseriesModel>> tradeMap)
+			throws SQLException {
+		for (Map<String, TimeseriesModel> map : tradeMap.values()) {
+			for (TimeseriesModel tm : map.values()) {
+				addPsBatch(ps, tm, "1D");
+			}
+		}
+	}
+
+	private static void addPsBatch(PreparedStatement ps, TimeseriesModel tm, String freq) throws SQLException {
+		ps.setString(1, tm.getSecurity());
+		ps.setString(2, tm.getName());
+		ps.setBigDecimal(3, tm.getOpen());
+		ps.setBigDecimal(4, tm.getHigh());
+		ps.setBigDecimal(5, tm.getLow());
+		ps.setBigDecimal(6, tm.getClose());
+		ps.setBigDecimal(7, tm.getUpLimit());
+		ps.setBigDecimal(8, tm.getDownLimit());
+		ps.setBigDecimal(9, tm.getVolume());
+		ps.setString(10, freq);
+		ps.setString(11, tm.getTradeDate());
+		ps.setString(12, tm.getTradeTs());
+		ps.setString(13, tm.getSecurity().replaceAll("[\\d]+", ""));
+		ps.setBigDecimal(14, tm.getOpenInterest());
+		ps.addBatch();
 	}
 	
 	private static Set<String> getTradeDates(Connection conn, String variety) throws SQLException{
