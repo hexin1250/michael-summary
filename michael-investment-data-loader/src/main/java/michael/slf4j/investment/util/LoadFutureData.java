@@ -45,7 +45,6 @@ public class LoadFutureData {
 				PreparedStatement ps = conn.prepareStatement(SQL_TEMPLATE)) {
 			File dir = new File(dirName);
 			for (File varietyDir : dir.listFiles()) {
-//			Arrays.stream(dir.listFiles()).parallel().forEach(varietyDir -> {
 				try {
 					int count = 0;
 					String variety = varietyDir.getName();
@@ -141,7 +140,6 @@ public class LoadFutureData {
 				} catch(Exception e) {
 					throw new RuntimeException(e);
 				}
-//			});
 			}
 		}
 		System.out.println("Done.");
