@@ -109,6 +109,10 @@ public class AdvancedLoader {
 			f.get();
 		}
 		System.out.println("Done.");
+		while(!(complete && fileMap.isEmpty())) {
+			continue;
+		}
+		System.exit(0);
 	}
 
 	private static TimeseriesModel generateTM(String tradeTs, String tradeDate, String[] futureParts, String security, String freq) {
@@ -251,6 +255,7 @@ public class AdvancedLoader {
 					if(tm1d.getLow().compareTo(tm.getLow()) > 0) {
 						tm1d.setLow(tm.getLow());
 					}
+					tm1d.setClose(tm.getClose());
 				}
 				addPsBatch(ps, tm1d, tm1d.getFreq());
 				ps.executeBatch();
