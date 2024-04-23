@@ -113,4 +113,12 @@ public class TimeseriesModel {
 		return tm;
 	}
 	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(getSecurity()).append(":").append(getTradeDate()).append('\n');
+		sb.append(getOpen()).append(',').append(getClose()).append(',').append(getHigh()).append(',').append(getLow());
+		return sb.toString();
+	}
+	
 }

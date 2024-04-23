@@ -17,3 +17,13 @@ spring:
          hibernate:
             jdbc:
                time_zone: "Asia/Shanghai"
+   activemq:
+      broker-url: "tcp://localhost:61616"
+      user: admin
+      password: admin
+      pool:
+         enabled: true
+         max-connections: 50
+      packages:
+         trust-all: true
+notification.activemq.topic: notification

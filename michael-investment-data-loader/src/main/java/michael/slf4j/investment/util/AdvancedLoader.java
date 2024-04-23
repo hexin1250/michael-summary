@@ -34,6 +34,8 @@ import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.dbcp2.BasicDataSource;
+
 import michael.slf4j.investment.model.FutureSecurityEnum;
 
 public class AdvancedLoader {
@@ -43,13 +45,23 @@ public class AdvancedLoader {
 	private static final String url = "jdbc:mysql://localhost:3306/investment?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai";
 	private static final String user = "springuser";
 	private static final String password = "springuser";
+	private static final String driverClass = "com.mysql.cj.jdbc.Driver";
 
 	private static boolean complete = false;
 	private static Map<String, Map<String, Map<String, List<TimeseriesModel>>>> fileMap = new ConcurrentHashMap<>();
 	
+	private static BasicDataSource ds = null;
+	
+	static {
+		ds = new BasicDataSource();
+		ds.setUrl(url);
+		ds.setUsername(user);
+		ds.setPassword(password);
+		ds.setDriverClassName(driverClass);
+	}
+	
 	public static void main(String[] args)
 			throws FileNotFoundException, IOException, SQLException, ClassNotFoundException, ParseException, InterruptedException, ExecutionException {
-		String driverClass = "com.mysql.cj.jdbc.Driver";
 		Class.forName(driverClass);
 
 		try (Connection conn = DriverManager.getConnection(url, user, password)) {

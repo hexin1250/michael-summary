@@ -11,9 +11,9 @@ import michael.slf4j.investment.model.Contract;
 import michael.slf4j.investment.model.DirectionEnum;
 import michael.slf4j.investment.model.Security;
 import michael.slf4j.investment.model.Variety;
-import michael.slf4j.investment.quant.formula.MACDFormula;
-import michael.slf4j.investment.quant.formula.model.MACDCalculator;
-import michael.slf4j.investment.quant.formula.model.MACDCalculator.MACD;
+import michael.slf4j.investment.quant.formula.calculator.MACDCalculator;
+import michael.slf4j.investment.quant.formula.calculator.MACDCalculator.MACD;
+import michael.slf4j.investment.quant.formula.impl.MACDFormula;
 import michael.slf4j.investment.quant.strategy.AbstractStrategy;
 import michael.slf4j.investment.quant.strategy.IStrategy;
 
@@ -56,53 +56,53 @@ public class MACDStrategy extends AbstractStrategy implements IStrategy {
 
 	@Override
 	public void handle(Account acc, Bar bar) {
-		Map<String, Object> params = context.params;
-		if(!params.containsKey(CHANGE_DOMINATE)) {
-			changeDominate(acc, bar);
-			params.put(CHANGE_DOMINATE, true);
-		}
-		LocalDateTime ldt = now();
-		if(ldt.getHour() == 9 && ldt.getMinute() == 5) {
-			Security mainSecurity = (Security) params.get(MAIN_SECURITY);
-			Contract contract = bar.getContract(mainSecurity);
-			double closePrice = contract.getClose();
-			LocalDate tradeDate = tradeDate();
-			MACDCalculator calculator = macdFormula.getModel(mainSecurity, tradeDate);
-			MACD macd = calculator.calc(closePrice);
-			
-			Variety variety = (Variety) params.get(TARGET_VARIETY);
-			DirectionEnum dir = (DirectionEnum) params.get(TRADING_DIRECTION);
-			if((macd.operate() == 1 && (dir == null || dir == DirectionEnum.sell)) || (macd.operate() == -1 && (dir == null || dir == DirectionEnum.buy))) {
-				double total = acc.total(context);
-				int targetQ = (int) (total * variety.getCal() / (contract.getClose() * 30));
-				if(targetQ == 0) {
-					targetQ = 1;
-				}
-				if(macd.operate() == 1 && (dir == null || dir == DirectionEnum.sell)) {
-					if(dir != null) {
-						int closeQ = (int) params.get(OPEN_HANDS);
-						acc.deal(mainSecurity, DirectionEnum.buy_close, closePrice, closeQ);
-						log.info(now() + " " + mainSecurity + ":" + DirectionEnum.buy_close + ":" + closePrice + ":" + closeQ);
-					}
-					acc.deal(mainSecurity, DirectionEnum.buy, closePrice, targetQ);
-					log.info(now() + " " + mainSecurity + ":" + DirectionEnum.buy + ":" + closePrice + ":" + targetQ);
-					params.put(OPEN_HANDS, targetQ);
-					params.put(TRADING_DIRECTION, DirectionEnum.buy);
-					dir = DirectionEnum.buy;
-				} else {
-					if(dir != null) {
-						int closeQ = (int) params.get(OPEN_HANDS);
-						acc.deal(mainSecurity, DirectionEnum.sell_close, closePrice, closeQ);
-						log.info(now() + " " + mainSecurity + ":" + DirectionEnum.sell_close + ":" + closePrice + ":" + closeQ);
-					}
-					acc.deal(mainSecurity, DirectionEnum.sell, closePrice, targetQ);
-					log.info(now() + " " + mainSecurity + ":" + DirectionEnum.sell + ":" + closePrice + ":" + targetQ);
-					params.put(OPEN_HANDS, targetQ);
-					params.put(TRADING_DIRECTION, DirectionEnum.sell);
-					dir = DirectionEnum.sell;
-				}
-			}
-		}
+//		Map<String, Object> params = context.params;
+//		if(!params.containsKey(CHANGE_DOMINATE)) {
+//			changeDominate(acc, bar);
+//			params.put(CHANGE_DOMINATE, true);
+//		}
+//		LocalDateTime ldt = now();
+//		if(ldt.getHour() == 9 && ldt.getMinute() == 5) {
+//			Security mainSecurity = (Security) params.get(MAIN_SECURITY);
+//			Contract contract = bar.getContract(mainSecurity);
+//			double closePrice = contract.getClose();
+//			LocalDate tradeDate = tradeDate();
+//			MACDCalculator calculator = macdFormula.getModel(mainSecurity, tradeDate);
+//			MACD macd = calculator.calc(closePrice);
+//			
+//			Variety variety = (Variety) params.get(TARGET_VARIETY);
+//			DirectionEnum dir = (DirectionEnum) params.get(TRADING_DIRECTION);
+//			if((macd.operate() == 1 && (dir == null || dir == DirectionEnum.sell)) || (macd.operate() == -1 && (dir == null || dir == DirectionEnum.buy))) {
+//				double total = acc.total(context);
+//				int targetQ = (int) (total * variety.getCal() / (contract.getClose() * 30));
+//				if(targetQ == 0) {
+//					targetQ = 1;
+//				}
+//				if(macd.operate() == 1 && (dir == null || dir == DirectionEnum.sell)) {
+//					if(dir != null) {
+//						int closeQ = (int) params.get(OPEN_HANDS);
+//						acc.deal(mainSecurity, DirectionEnum.buy_close, closePrice, closeQ);
+//						log.info(now() + " " + mainSecurity + ":" + DirectionEnum.buy_close + ":" + closePrice + ":" + closeQ);
+//					}
+//					acc.deal(mainSecurity, DirectionEnum.buy, closePrice, targetQ);
+//					log.info(now() + " " + mainSecurity + ":" + DirectionEnum.buy + ":" + closePrice + ":" + targetQ);
+//					params.put(OPEN_HANDS, targetQ);
+//					params.put(TRADING_DIRECTION, DirectionEnum.buy);
+//					dir = DirectionEnum.buy;
+//				} else {
+//					if(dir != null) {
+//						int closeQ = (int) params.get(OPEN_HANDS);
+//						acc.deal(mainSecurity, DirectionEnum.sell_close, closePrice, closeQ);
+//						log.info(now() + " " + mainSecurity + ":" + DirectionEnum.sell_close + ":" + closePrice + ":" + closeQ);
+//					}
+//					acc.deal(mainSecurity, DirectionEnum.sell, closePrice, targetQ);
+//					log.info(now() + " " + mainSecurity + ":" + DirectionEnum.sell + ":" + closePrice + ":" + targetQ);
+//					params.put(OPEN_HANDS, targetQ);
+//					params.put(TRADING_DIRECTION, DirectionEnum.sell);
+//					dir = DirectionEnum.sell;
+//				}
+//			}
+//		}
 	}
 
 	@Override

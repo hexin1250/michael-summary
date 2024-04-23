@@ -18,3 +18,13 @@ spring:
             jdbc:
                time_zone: "Asia/Shanghai"
             dialect: org.hibernate.dialect.MySQLDialect
+   activemq:
+      broker-url: "tcp://localhost:61616"
+      user: admin
+      password: admin
+      pool:
+         enabled: true
+         max-connections: 50
+      packages:
+         trust-all: true
+notification.activemq.topic: notification

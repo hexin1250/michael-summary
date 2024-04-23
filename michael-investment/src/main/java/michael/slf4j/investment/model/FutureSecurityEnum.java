@@ -34,6 +34,16 @@ public enum FutureSecurityEnum {
 		return ret;
 	}
 	
+	public static boolean isTargetSecurity(String variety, String security) {
+		FutureSecurityEnum securityConf = FutureSecurityEnum.valueOf(variety);
+		for (String item : securityConf.mainList) {
+			if(security.endsWith(item)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	@Override
 	public String toString() {
 		return name();

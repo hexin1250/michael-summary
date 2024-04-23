@@ -218,6 +218,7 @@ public class ClassicalFutureStrategy extends AbstractStrategy implements IStrate
 	}
 
 	private double getRangeValue(List<Contract> list) {
+		log.info(now() + "\tCurrent Range list:" + list);
 		Map<String, Object> params = context.params;
 		int dataRange = (int) params.get(Context.HISTORICAL_RANGE);
 		List<Contract> modelList = list.subList(0, dataRange - 1);
