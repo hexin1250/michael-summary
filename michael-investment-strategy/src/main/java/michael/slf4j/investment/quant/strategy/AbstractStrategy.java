@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.apache.log4j.Logger;
 
 import michael.slf4j.investment.message.service.MessageService;
+import michael.slf4j.investment.model.Account;
 import michael.slf4j.investment.model.Bar;
 import michael.slf4j.investment.model.Context;
 import michael.slf4j.investment.model.Contract;
@@ -86,6 +87,16 @@ public abstract class AbstractStrategy implements IStrategy {
 	@Override
 	public final void initContext(Context context) {
 		this.context = context;
+	}
+	
+	@Override
+	public void freq15M(Security security, List<Contract> list) {
+	}
+	@Override
+	public void freq30M(Account acc, Bar bar, Variety variety, Security security, List<Contract> list) {
+	}
+	@Override
+	public void freq60M(Security security, List<Contract> list) {
 	}
 	
 	public Context getContext() {

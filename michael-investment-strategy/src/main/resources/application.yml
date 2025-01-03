@@ -29,4 +29,6 @@ spring:
 notification.activemq.topic: notification
 
 future.activemq.topic: future-MI-topic
+future.activemq.topic.15M: future-15M-topic
+future.activemq.topic.30M: future-30M-topic
                

@@ -1,5 +1,6 @@
 package michael.slf4j.investment.quant.live;
 
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDate;
@@ -164,6 +165,29 @@ public class LiveProcessor {
 		Context context = contextMap.get(strategyName);
 		log.info(context.getCurrentTradeDate() + ":\t" + acc.getLatestPositionStatus(contractMap));
 		log.info(context.getCurrentTradeDate() + ":\t" + strategyName + ":" + acc.total(contractMap));
+	}
+	
+	public void handleFreq15M(StrategyType type, Security security, List<Contract> list) {
+	}
+	
+	public void handleFreq30M(StrategyType type, Security security, List<Contract> list) {
+		List<String> statusList = new ArrayList<String>();
+		centerMap.entrySet().stream().filter(entry -> entry.getValue() == type).forEach(entry -> {
+			String strategyName = entry.getKey();
+			handleFreq30M(strategyName, security, list);
+		});
+		statusCode = statusList.stream().map(s -> {
+			StringBuilder sb = new StringBuilder();
+			sb.append("<br>").append(s);
+			return sb.toString();
+		}).collect(Collectors.joining("\n"));
+	}
+	
+	public void handleFreq30M(String strategyName, Security security, List<Contract> list) {
+		Account acc = accMap.get(strategyName);
+		Bar bar = barMap.get(strategyName);
+		IStrategy strategy = strategyMap.get(strategyName);
+		strategy.freq30M(acc, bar, security.getVariety(), security, list);
 	}
 	
 	public String latestStatus(String strategyName, Map<Security, Contract> contractMap) {

@@ -47,13 +47,11 @@ public class StrategyController {
 	private MessageService messageService;
 	
 	/**
-	 * http://localhost:1702/apps/strategy/mockup?strategy=test&variety=I&startDate=2023-04-17&endDate=2023-05-25&dataScope=1&range=1
+	 * http://localhost:1702/apps/strategy/mockup?strategy=test&variety=I&startDate=2023-04-17&endDate=2023-05-25
 	 * @param strategy
 	 * @param variety
 	 * @param startDate
 	 * @param endDate
-	 * @param dataScope
-	 * @param range
 	 * @return
 	 */
 	@GetMapping(path = "/mockup")
@@ -63,7 +61,7 @@ public class StrategyController {
 		LocalDate end = LocalDate.parse(endDate);
 		long runId = atom.getAndIncrement();
 		log.info("Run ID:" + runId);
-		Account acc = new Account(runId, 60000D);
+		Account acc = new Account(runId, 33000D);
 		IStrategy iStrategy = map.get(strategy);
 		if(iStrategy == null) {
 			switch(strategy) {
