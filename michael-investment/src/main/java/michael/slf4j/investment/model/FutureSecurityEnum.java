@@ -6,7 +6,7 @@ import java.util.List;
 
 public enum FutureSecurityEnum {
 	I{{mainList = List.of("01", "05", "09");}},
-	J{{mainList = List.of("01", "05", "09");}},
+//	J{{mainList = List.of("01", "05", "09");}},
 	RB{{mainList = List.of("01", "05", "10");}},
 	;
 	

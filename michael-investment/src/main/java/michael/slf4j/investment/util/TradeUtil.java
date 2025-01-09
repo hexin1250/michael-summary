@@ -1,7 +1,9 @@
 package michael.slf4j.investment.util;
 
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.time.DayOfWeek;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -19,6 +21,11 @@ public class TradeUtil {
 	public static LocalDate getLDTradeDate() {
 		Date tradeDate = new Date(getTradeDate());
 		return LocalDate.ofInstant(tradeDate.toInstant(), ZoneId.systemDefault());
+	}
+	
+	public static long getLong(LocalDateTime ldt) {
+		Instant instant = ldt.atZone(ZoneId.systemDefault()).toInstant();
+		return instant.toEpochMilli();
 	}
 	
 	public static long getTradeDate() {
@@ -47,6 +54,11 @@ public class TradeUtil {
 	    return getTradeDate(localDateTime);
 	}
 	
+	public static long getTradeDate(java.util.Date date) {
+	    LocalDateTime localDateTime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+	    return getTradeDate(localDateTime);
+	}
+	
 	public static long getTradeDate(LocalDateTime ld) {
 		int hour = ld.getHour();
 		if (hour >= 20) {
@@ -64,6 +76,14 @@ public class TradeUtil {
 
 	public static boolean isTradingTime() {
 		return isTradingTime(LocalDateTime.now());
+	}
+	
+	public static boolean isUpdate30MinData() {
+		LocalDateTime ldt = LocalDateTime.now();
+		if(ldt.getMinute() == 1 || ldt.getMinute() == 31) {
+			return true;
+		}
+		return false;
 	}
 	
 	public static boolean isTradingTime(LocalDateTime ldt) {
@@ -99,6 +119,12 @@ public class TradeUtil {
 	public static boolean isCompleteMunite() {
 		LocalTime ldt = LocalTime.now();
 		return ldt.getSecond() == 0;
+	}
+	
+	public static LocalDateTime getLocalDateTime(Timestamp timestamp) {
+		long longTime = timestamp.getTime();
+		java.util.Date date = new java.util.Date(longTime);
+		return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
 	}
 	
 	public static String getDateStr(java.sql.Date tradeDate) {
