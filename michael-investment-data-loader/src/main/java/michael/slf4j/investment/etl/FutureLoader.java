@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import michael.slf4j.investment.configuration.FreqEnum;
 import michael.slf4j.investment.constant.Constants;
+import michael.slf4j.investment.model.Security;
 import michael.slf4j.investment.model.Timeseries;
 import michael.slf4j.investment.parse.IParser;
 import michael.slf4j.investment.repo.TimeseriesRepository;
@@ -51,6 +52,37 @@ public class FutureLoader {
 		timeseriesRepository.saveAll(availableSeries);
 		log.info("load[" + sb.toString().trim() + "] for [" + freq + "] successful.");
 		return true;
+	}
+	
+	public boolean loadSecurity(Security security, FreqEnum freq, List<Timeseries> series) {
+		if(!TradeUtil.isTradingTime()) {
+			return false;
+		}
+		List<Timeseries> storedData = timeseriesRepository.findBySecurityFreqLimit(security.getName(), freq.getValue(), 300);
+		for (Timeseries ts : series) {
+			boolean find = false;
+			for (Timeseries tsInDB : storedData) {
+				if(tsInDB.getTradeTs().equals(ts.getTradeTs())) {
+					find = true;
+					tsInDB.setClose(ts.getClose());
+					tsInDB.setHigh(ts.getHigh());
+					tsInDB.setLow(ts.getLow());
+					tsInDB.setOpenInterest(ts.getOpenInterest());
+					tsInDB.setVolume(ts.getVolume());
+					break;
+				}
+			}
+			if(!find) {
+				storedData.add(ts);
+			}
+		}
+		log.info("load[" + security.getName() + "] for [" + freq + "] successful.");
+		timeseriesRepository.saveAll(storedData);
+		return true;
+	}
+	
+	public List<Timeseries> getSecuritySeries(String security, String freq, int limit){
+		return timeseriesRepository.findBySecurityFreqLimit(security, freq, limit);
 	}
 	
 	public void fillBack1D() {

@@ -29,8 +29,6 @@ public class AliSource implements ISource, Closeable {
 	
 	public String getContent(Set<String> securities) throws IOException {
 		log.info("request to Ali server now.");
-//		String[] symbolArr = new String[] {"SH000001","SH600887"};
-//		String[] symbolArr = new String[] {"DCEI2209","DCEI2301","DCEJ2209","DCEJ2301","DCERB2210"};
 		String symbol = securities.stream().map(security -> {
 			if(security.startsWith("I") || security.startsWith("J")) {
 				return "DCE" + security;
@@ -68,7 +66,7 @@ public class AliSource implements ISource, Closeable {
 	
 	public static void main(String[] args) throws IOException {
 		try(AliSource source = new AliSource()){
-			Set<String> securities = Set.of("I2309", "RB2310", "J2309");
+			Set<String> securities = Set.of("I2501", "RB2501", "J2501");
 			String result = source.getContent(securities);
 			String outputFileName = "output/result2.json";
 			try(BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFileName)))){

@@ -10,6 +10,7 @@ import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 
 import michael.slf4j.investment.configuration.FreqEnum;
+import michael.slf4j.investment.model.Security;
 import michael.slf4j.investment.model.Timeseries;
 import michael.slf4j.investment.parse.IParser;
 import michael.slf4j.investment.util.TradeUtil;
@@ -51,6 +52,11 @@ public class AliParser implements IParser {
 			ret.add(m);
 		}
 		return ret;
+	}
+
+	@Override
+	public List<Timeseries> parse(Security security, String content, FreqEnum freq) {
+		throw new UnsupportedOperationException();
 	}
 
 }

@@ -1,11 +1,5 @@
 package michael.slf4j.investment.cron;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Set;
-
-import javax.jms.JMSException;
-
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,14 +8,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
-import michael.slf4j.investment.configuration.FreqEnum;
-import michael.slf4j.investment.etl.FutureLoader;
-import michael.slf4j.investment.message.service.MessageService;
-import michael.slf4j.investment.model.Timeseries;
-import michael.slf4j.investment.parse.IParser;
-import michael.slf4j.investment.source.ISource;
+import michael.slf4j.investment.etl.DataLoaderClient;
 import michael.slf4j.investment.taskmanager.TaskManager;
-import michael.slf4j.investment.util.TradeUtil;
 
 @Component
 @Controller
@@ -34,23 +22,8 @@ public class ScheduleJob {
 	private TaskManager taskManager;
 	
 	@Autowired
-	private FutureLoader futureLoader;
-	
-	@Autowired
-	@Qualifier(value="aliSource")
-	private ISource source;
-	
-	@Autowired
-	@Qualifier(value="aliParser")
-	private IParser parser;
-	
-	@Autowired
-	@Qualifier(value="currentSecurities")
-	private Set<String> futureSecurities;
-	
-	@Autowired
-	MessageService messageService;
-//	private ExecutorService executor = Executors.newFixedThreadPool(30);
+	@Qualifier(value="dataLoaderClient")
+	private DataLoaderClient dataLoaderClient;
 	
 	@Scheduled(cron = "${clean-schedule}")
 	public void cleanData() {
@@ -116,26 +89,12 @@ public class ScheduleJob {
 	
 	@Scheduled(cron = "${update-minute}")
 	public void updateMinuteData() {
-		if(!TradeUtil.isTradingTime()) {
-			return;
-		}
-		taskManager.subscribeSecurities();
-		List<Timeseries> series = null;
-		try {
-			String content = source.getContent(futureSecurities);
-			FreqEnum freq = FreqEnum._1MI;
-			series = parser.parse(content, freq);
-			futureLoader.loadMultiSecurities(series, freq);
-		} catch (IOException e) {
-			/**
-			 * Should not find one security. Ignore this case.
-			 */
-		}
-		try {
-			messageService.send("future-MI-topic", series);
-		} catch (JMSException e) {
-			log.error("Error when sending message to topic", e);
-		}
+		dataLoaderClient.update1MinData();
+	}
+	
+	@Scheduled(cron = "${update-15min}")
+	public void update15MinData() {
+		dataLoaderClient.update15MinData();
 	}
 
 }
