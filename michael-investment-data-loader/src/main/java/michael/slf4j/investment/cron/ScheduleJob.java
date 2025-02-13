@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.etl.DataLoaderClient;
+import michael.slf4j.investment.etl.DataResearch;
 import michael.slf4j.investment.taskmanager.TaskManager;
 
 @Component
@@ -25,6 +26,9 @@ public class ScheduleJob {
 	@Qualifier(value="dataLoaderClient")
 	private DataLoaderClient dataLoaderClient;
 	
+	@Autowired
+	private DataResearch dataResearch;
+	
 	@Scheduled(cron = "${clean-schedule}")
 	public void cleanData() {
 		taskManager.fillBack1D();
@@ -40,8 +44,6 @@ public class ScheduleJob {
 	
 	@Scheduled(cron = "${end-schedule1}")
 	public void endNightSchedule() {
-		log.info("[End Night] unregister all varieties.");
-		taskManager.cancelTasks();
 		log.info("[End Night] Done.");
 	}
 	
@@ -54,8 +56,6 @@ public class ScheduleJob {
 	
 	@Scheduled(cron = "${end-schedule2}")
 	public void endDaySchedule1() {
-		log.info("[End 10:15] unregister all varieties.");
-		taskManager.cancelTasks();
 		log.info("[End 10:15] Done.");
 	}
 	
@@ -68,8 +68,6 @@ public class ScheduleJob {
 	
 	@Scheduled(cron = "${end-schedule3}")
 	public void endDaySchedule2() {
-		log.info("[End 11:30] unregister all varieties.");
-		taskManager.cancelTasks();
 		log.info("[End 11:30] Done.");
 	}
 	
@@ -82,8 +80,6 @@ public class ScheduleJob {
 	
 	@Scheduled(cron = "${end-schedule4}")
 	public void endDaySchedule3() {
-		log.info("[End 15:00] unregister all varieties.");
-		taskManager.cancelTasks();
 		log.info("[End 15:00] Done.");
 	}
 	
@@ -92,9 +88,34 @@ public class ScheduleJob {
 		dataLoaderClient.update1MinData();
 	}
 	
-	@Scheduled(cron = "${update-15min}")
-	public void update15MinData() {
+	@Scheduled(cron = "${update-15-night}")
+	public void updateNightData() {
 		dataLoaderClient.update15MinData();
+	}
+	@Scheduled(cron = "${update-15-morning}")
+	public void updateMorningData() {
+		dataLoaderClient.update15MinData();
+	}
+	@Scheduled(cron = "${update-15-afternoon}")
+	public void updateAfternoonData() {
+		dataLoaderClient.update15MinData();
+	}
+	
+	@Scheduled(cron = "${summary-night}")
+	public void summarizeNightData() {
+		dataResearch.summarize();
+	}
+	@Scheduled(cron = "${summary-morning}")
+	public void summarizeMorningData() {
+		dataResearch.summarize();
+	}
+	@Scheduled(cron = "${summary-afternoon}")
+	public void summarizeAfternoonData() {
+		dataResearch.summarize();
+	}
+	@Scheduled(cron = "${summary-close}")
+	public void summarizeDayData() {
+		dataResearch.summarize();
 	}
 
 }

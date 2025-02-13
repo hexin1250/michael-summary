@@ -78,6 +78,14 @@ public class TradeUtil {
 		return isTradingTime(LocalDateTime.now());
 	}
 	
+	public static boolean isUpdate15MinData() {
+		LocalDateTime ldt = LocalDateTime.now();
+		if(ldt.getMinute() % 15 == 1) {
+			return true;
+		}
+		return false;
+	}
+	
 	public static boolean isUpdate30MinData() {
 		LocalDateTime ldt = LocalDateTime.now();
 		if(ldt.getMinute() == 1 || ldt.getMinute() == 31) {

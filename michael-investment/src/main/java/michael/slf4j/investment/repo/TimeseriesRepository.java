@@ -1,5 +1,6 @@
 package michael.slf4j.investment.repo;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.Query;
@@ -50,5 +51,23 @@ public interface TimeseriesRepository extends CrudRepository<Timeseries, Integer
 	
 	@Query(value = "select * from timeseries where security = :security and trade_date = :tradeDate and freq = :freq order by trade_date desc, trade_ts desc", nativeQuery = true)
 	List<Timeseries> findLatestSecurityByTradeDate(@Param("security") String security, @Param("tradeDate") String tradeDate, @Param("freq") String freq);
+	
+	@Query(value = "select distinct security from timeseries where variety = :variety and trade_date = :tradeDate and freq = '1MI'", nativeQuery = true)
+	List<String> getSecurityList(@Param("variety") String variety, @Param("tradeDate") String tradeDate);
+	
+	@Query(value = "select distinct trade_date from timeseries where variety = :variety and freq = :freq order by trade_date desc limit 2", nativeQuery = true)
+	List<String> getLast2TradeDate(@Param("variety") String variety, @Param("freq") String freq);
+	
+	@Query(value = "select open_interest from timeseries where security = :security and freq = '1MI' order by trade_ts desc limit 1", nativeQuery = true)
+	Double getLastOpenInterest(@Param("security") String security);
+	
+	@Query(value = "select * from timeseries where security = :security and trade_date <= :tradeDate and freq = :freq order by trade_ts asc", nativeQuery = true)
+	List<Timeseries> getAllDataByPeriod(@Param("security") String security, @Param("tradeDate") String tradeDate, @Param("freq") String freq);
+	
+	@Query(value = "select * from timeseries where security = :security and trade_date = :tradeDate and freq = :freq order by trade_ts asc", nativeQuery = true)
+	List<Timeseries> getDataByPeriod(@Param("security") String security, @Param("tradeDate") String tradeDate, @Param("freq") String freq);
+	
+	@Query(value = "select * from timeseries where security = :security and trade_date = :tradeDate and freq = '1MI' and trade_ts = :tradeTs ", nativeQuery = true)
+	Timeseries getTimeseries(@Param("security") String security, @Param("tradeDate") String tradeDate, @Param("tradeTs") Timestamp tradeTs);
 
 }

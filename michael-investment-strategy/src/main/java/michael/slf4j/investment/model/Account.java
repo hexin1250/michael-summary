@@ -17,7 +17,7 @@ import javax.jms.JMSException;
 
 import org.apache.log4j.Logger;
 
-import michael.slf4j.investment.config.TopicConstants;
+import michael.slf4j.investment.constant.TopicConstants;
 import michael.slf4j.investment.exception.CashNotEnoughException;
 import michael.slf4j.investment.exception.InvalidCloseException;
 import michael.slf4j.investment.message.service.MessageService;

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.etl.DataLoaderClient;
+//import michael.slf4j.investment.etl.DataResearch;
 import michael.slf4j.investment.taskmanager.TaskManager;
 import michael.slf4j.investment.util.TradeUtil;
 
@@ -20,6 +21,9 @@ public class InitRunner implements CommandLineRunner {
 	
 	@Autowired
 	private DataLoaderClient dataLoaderClient;
+	
+//	@Autowired
+//	private DataResearch dataResearch;
 
     @Override
     public void run(String... args) throws Exception {
@@ -29,6 +33,7 @@ public class InitRunner implements CommandLineRunner {
 			dataLoaderClient.init15MinData();
 			dataLoaderClient.init30MinData();
     	}
+//    	dataResearch.summarize();
     	log.info("Done to initialize resources.");
     }
 }

@@ -9,7 +9,7 @@ import java.util.Map.Entry;
 
 import javax.jms.JMSException;
 
-import michael.slf4j.investment.config.TopicConstants;
+import michael.slf4j.investment.constant.TopicConstants;
 import michael.slf4j.investment.model.Account;
 import michael.slf4j.investment.model.Bar;
 import michael.slf4j.investment.model.Context;

@@ -55,9 +55,6 @@ public class FutureLoader {
 	}
 	
 	public boolean loadSecurity(Security security, FreqEnum freq, List<Timeseries> series) {
-		if(!TradeUtil.isTradingTime()) {
-			return false;
-		}
 		List<Timeseries> storedData = timeseriesRepository.findBySecurityFreqLimit(security.getName(), freq.getValue(), 300);
 		for (Timeseries ts : series) {
 			boolean find = false;

@@ -42,6 +42,10 @@ public class AliHistoricalDataSource implements ISource, Closeable {
 	}
 	
 	public String getContent(String security, FreqEnum freq) throws IOException {
+		return getContent(security, freq, "1");
+	}
+	
+	public String getContent(String security, FreqEnum freq, String pageNum) throws IOException {
 		String symbol = null;
 		if(security.startsWith("I") || security.startsWith("J")) {
 			symbol = "DCE" + security;
@@ -51,8 +55,8 @@ public class AliHistoricalDataSource implements ISource, Closeable {
 		
 	    Map<String, String> querys = new HashMap<String, String>();
 	    querys.put("period", freq.getValue());
-	    querys.put("pidx", "1");
-	    querys.put("psize", "100");
+	    querys.put("pidx", pageNum);
+	    querys.put("psize", "500");
 	    querys.put("symbol", symbol);
 	    querys.put("withlast", "1");
 	    String params = querys.entrySet().stream()

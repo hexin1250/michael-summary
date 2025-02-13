@@ -1,12 +1,9 @@
 package michael.slf4j.investment.etl;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.Date;
 
 import javax.jms.JMSException;
 
@@ -25,6 +22,7 @@ import michael.slf4j.investment.repo.TimeseriesRepository;
 import michael.slf4j.investment.source.ISource;
 import michael.slf4j.investment.source.impl.AliHistoricalDataSource;
 import michael.slf4j.investment.taskmanager.TaskManager;
+import michael.slf4j.investment.util.DataLoaderUtil;
 import michael.slf4j.investment.util.TradeUtil;
 
 @Component("dataLoaderClient")
@@ -84,12 +82,28 @@ public class DataLoaderClient {
 		} catch (JMSException e) {
 			log.error("Error when sending message to topic", e);
 		}
+		if(TradeUtil.isUpdate15MinData()) {
+			update15MinData();
+		}
+	}
+	
+	public void reload(String securityStr) {
+		try {
+			FreqEnum freq = FreqEnum._15MI;
+			for (int i = 9; i >= 1; i--) {
+				String content = aliHistoricalSource.getContent(securityStr, freq, i + "");
+				Security security = new Security(securityStr, Variety.of(securityStr.substring(0, securityStr.length() - 4)));
+				List<Timeseries> series = aliHistoricalParser.parse(security, content, freq);
+				futureLoader.loadSecurity(security, freq, series);
+				
+				List<Timeseries> min30Series = get30MinBy15Min(security, freq, 500);
+				futureLoader.loadSecurity(security, FreqEnum._30MI, min30Series);
+			}
+		} catch (IOException e) {
+		}
 	}
 	
 	public void update15MinData() {
-		if(!TradeUtil.isTradingTime()) {
-			return;
-		}
 		taskManager.subscribeSecurities();
 		futureSecurities.parallelStream().forEach(securityStr -> {
 			try {
@@ -97,6 +111,14 @@ public class DataLoaderClient {
 				String content = aliHistoricalSource.getContent(securityStr, freq);
 				Security security = new Security(securityStr, Variety.of(securityStr.substring(0, securityStr.length() - 4)));
 				List<Timeseries> series = aliHistoricalParser.parse(security, content, freq);
+				int size = series.size();
+				for (int i = size - 1; i <= size; i++) {
+					Timeseries ts = series.get(i - 1);
+					if(ts.getTradeTs().compareTo(new Date()) <= 0) {
+						Timeseries ts1Min = timeseriesRepository.getTimeseries(securityStr, ts.getTradeDate(), ts.getTradeTs());
+						ts.setVolume(ts1Min.getVolume());
+					}
+				}
 				futureLoader.loadSecurity(security, freq, series);
 				messageService.send("future-15M-topic", series);
 				
@@ -112,35 +134,7 @@ public class DataLoaderClient {
 	
 	private List<Timeseries> get30MinBy15Min(Security security, FreqEnum freq, int limit) {
 		List<Timeseries> series = timeseriesRepository.findBySecurityFreqLimit(security.getName(), freq.getValue(), limit);
-		List<Timeseries> list = new ArrayList<Timeseries>();
-		Timeseries ts = null;
-		for (Timeseries min15Ts : series) {
-			Timestamp timestamp = min15Ts.getTradeTs();
-			LocalDateTime ldt = TradeUtil.getLocalDateTime(timestamp);
-			int hour = ldt.getHour();
-			int min = ldt.getMinute();
-			boolean sameCondition = false;
-			if(min % 30 == 0 || (hour == 10 && min == 15) || ts == null) {
-				ts = min15Ts.copy();
-				if(min % 15 == 0) {
-					ts.setVolume(new BigDecimal(0));
-				}
-				sameCondition = true;
-			}
-			if(min % 30 == 15) {
-				ts.setOpen(min15Ts.getOpen());
-				ts.setHigh(new BigDecimal(Math.max(ts.getHigh().doubleValue(), min15Ts.getHigh().doubleValue())));
-				ts.setLow(new BigDecimal(Math.min(ts.getLow().doubleValue(), min15Ts.getLow().doubleValue())));
-				ts.setVolume(ts.getVolume().add(min15Ts.getVolume()));
-				ts.setFreq(FreqEnum._30MI.getValue());
-				if(sameCondition) {
-					LocalDateTime newLdt = ldt.plusMinutes(15);
-					ts.setTradeTs(new Timestamp(TradeUtil.getLong(newLdt)));
-				}
-				list.add(ts);
-				ts = null;
-			}
-		}
+		List<Timeseries> list = DataLoaderUtil.generate30TsListBy15ForRealTime(series);
 		return list;
 	}
 
