@@ -111,6 +111,8 @@ public class DataResearch {
 			sb.append("最高价:").append(nf.format(ts.getHigh())).append("\n");
 			sb.append("最低价:").append(nf.format(ts.getLow())).append("\n");
 			sb.append("收盘价:").append(nf.format(ts.getClose())).append("\n");
+			sb.append("持仓:").append(nf.format(ts.getOpenInterest())).append("\n");
+			sb.append("成交量:").append(nf.format(ts.getVolume())).append("\n");
 			Map<String, List<Double>> mas = IndicatorUtils.calculateMA(closes);
 			for (Entry<String, List<Double>> entry : mas.entrySet()) {
 				double value = entry.getValue().get(entry.getValue().size() - 1);
