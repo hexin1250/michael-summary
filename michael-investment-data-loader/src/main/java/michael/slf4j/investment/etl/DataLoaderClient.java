@@ -116,7 +116,7 @@ public class DataLoaderClient {
 					Timeseries ts = series.get(i - 1);
 					if(ts.getTradeTs().compareTo(new Date()) <= 0) {
 						Timeseries ts1Min = timeseriesRepository.getTimeseries(securityStr, ts.getTradeDate(), ts.getTradeTs());
-						ts.setVolume(ts1Min.getVolume());
+						ts.setOpenInterest(ts1Min.getOpenInterest());
 					}
 				}
 				futureLoader.loadSecurity(security, freq, series);
