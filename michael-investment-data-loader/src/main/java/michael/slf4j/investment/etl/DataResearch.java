@@ -2,6 +2,7 @@ package michael.slf4j.investment.etl;
 
 import java.math.RoundingMode;
 import java.text.NumberFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +65,10 @@ public class DataResearch {
 		List<Timeseries> realTimeList = timeseriesRepository.getDataByPeriod(mainSecurity, lastTradeDates.get(0), freqStr);
 		summarizeDataByFreq(freqStr, historyList, realTimeList);
 		generate30MinSummary(FreqEnum._30MI.getValue(), historyList, realTimeList);
-		generate1DSummary(FreqEnum._1D.getValue(), mainSecurity, lastTradeDates);
+		LocalDateTime ldt = LocalDateTime.now();
+		if(ldt.getHour() == 15) {
+			generate1DSummary(FreqEnum._1D.getValue(), mainSecurity, lastTradeDates);
+		}
 	}
 	
 	private void generate1DSummary(String freqStr, String mainSecurity, List<String> lastTradeDates) {
@@ -87,22 +91,25 @@ public class DataResearch {
 	}
 
 	private void summarizeDataByFreq(String freqStr, List<Timeseries> historyList, List<Timeseries> realTimeList) {
+		List<Double> opens = new ArrayList<>();
 		List<Double> highs = new ArrayList<>();
-		List<Double> closes = new ArrayList<>();
 		List<Double> lows = new ArrayList<>();
+		List<Double> closes = new ArrayList<>();
 		for (Timeseries ts : historyList) {
+			opens.add(ts.getOpen().doubleValue());
 			highs.add(ts.getHigh().doubleValue());
 			lows.add(ts.getLow().doubleValue());
 			closes.add(ts.getClose().doubleValue());
 		}
-		summarizeDataByFreq(freqStr, realTimeList, highs, closes, lows);
+		summarizeDataByFreq(freqStr, realTimeList, opens, highs, closes, lows);
 	}
 
-	private void summarizeDataByFreq(String freqStr, List<Timeseries> realTimeTsList, List<Double> highs,
+	private void summarizeDataByFreq(String freqStr, List<Timeseries> realTimeTsList, List<Double> opens, List<Double> highs,
 			List<Double> closes, List<Double> lows) {
 		String ret = null;
 		for (Timeseries ts : realTimeTsList) {
 			StringBuffer sb = new StringBuffer();
+			opens.add(ts.getOpen().doubleValue());
 			highs.add(ts.getHigh().doubleValue());
 			lows.add(ts.getLow().doubleValue());
 			closes.add(ts.getClose().doubleValue());
@@ -111,8 +118,8 @@ public class DataResearch {
 			sb.append("最高价:").append(nf.format(ts.getHigh())).append("\n");
 			sb.append("最低价:").append(nf.format(ts.getLow())).append("\n");
 			sb.append("收盘价:").append(nf.format(ts.getClose())).append("\n");
-			sb.append("持仓:").append(nf.format(ts.getOpenInterest())).append("\n");
-			sb.append("成交量:").append(nf.format(ts.getVolume())).append("\n");
+			sb.append("OI:").append(nf.format(ts.getOpenInterest())).append("\n");
+			sb.append("VOLUME:").append(nf.format(ts.getVolume())).append("\n");
 			Map<String, List<Double>> mas = IndicatorUtils.calculateMA(closes);
 			for (Entry<String, List<Double>> entry : mas.entrySet()) {
 				double value = entry.getValue().get(entry.getValue().size() - 1);
@@ -150,6 +157,18 @@ public class DataResearch {
 			sb.append("ATR(15)");
 			Map<String, List<Double>> atr = IndicatorUtils.calculateATR(highs, lows, closes, 15);
 			for (Entry<String, List<Double>> entry : atr.entrySet()) {
+				double value = entry.getValue().get(entry.getValue().size() - 1);
+				sb.append(" ");
+				sb.append(entry.getKey()).append(":").append(nf.format(value));
+			}
+			sb.append("\n");
+			List<Double> cci = IndicatorUtils.calculateCCI(highs, lows, closes, 14);
+			sb.append("CCI(14):").append(nf.format(cci.get(cci.size() - 1)));
+			sb.append("\n");
+			
+			sb.append("ENE(10,11,9):").append(nf.format(cci.get(cci.size() - 1)));
+			Map<String, List<Double>> ene = IndicatorUtils.calculateENE_10_11_9(closes);
+			for (Entry<String, List<Double>> entry : ene.entrySet()) {
 				double value = entry.getValue().get(entry.getValue().size() - 1);
 				sb.append(" ");
 				sb.append(entry.getKey()).append(":").append(nf.format(value));

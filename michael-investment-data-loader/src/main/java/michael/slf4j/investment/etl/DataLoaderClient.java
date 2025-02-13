@@ -111,8 +111,7 @@ public class DataLoaderClient {
 				String content = aliHistoricalSource.getContent(securityStr, freq);
 				Security security = new Security(securityStr, Variety.of(securityStr.substring(0, securityStr.length() - 4)));
 				List<Timeseries> series = aliHistoricalParser.parse(security, content, freq);
-				int size = series.size();
-				for (int i = size - 1; i <= size; i++) {
+				for (int i = 1; i <= 2; i++) {
 					Timeseries ts = series.get(i - 1);
 					if(ts.getTradeTs().compareTo(new Date()) <= 0) {
 						Timeseries ts1Min = timeseriesRepository.getTimeseries(securityStr, ts.getTradeDate(), ts.getTradeTs());
