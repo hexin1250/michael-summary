@@ -1,5 +1,6 @@
 package michael.slf4j.investment.etl;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,7 +16,6 @@ import michael.slf4j.investment.model.Security;
 import michael.slf4j.investment.model.Timeseries;
 import michael.slf4j.investment.parse.IParser;
 import michael.slf4j.investment.repo.TimeseriesRepository;
-import michael.slf4j.investment.util.TradeUtil;
 
 @Component("futureLoader")
 public class FutureLoader {
@@ -27,17 +27,11 @@ public class FutureLoader {
 	private Map<String, Timeseries> previousMap = new ConcurrentHashMap<>();
 	
 	public boolean loadMultiSecurities(IParser parser, String content, FreqEnum freq) {
-		if(!TradeUtil.isTradingTime()) {
-			return false;
-		}
 		List<Timeseries> series = parser.parse(content, freq);
 		return loadMultiSecurities(series, freq);
 	}
 	
 	public boolean loadMultiSecurities(List<Timeseries> series, FreqEnum freq) {
-		if(!TradeUtil.isTradingTime()) {
-			return false;
-		}
 		List<Timeseries> availableSeries = series;
 		if(freq == FreqEnum._TICK) {
 			availableSeries = series.stream().filter(m -> !(previousMap.get(m.getSecurity()) != null && m.equals(previousMap.get(m.getSecurity()))))
@@ -105,6 +99,14 @@ public class FutureLoader {
 						latest = miList.get(miList.size() - 1).copy();
 					}
 					latest.setFreq("1D");
+					List<Timeseries> min15List = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, FreqEnum._15MI.getValue());
+					if(!min15List.isEmpty()) {
+						BigDecimal bd = new BigDecimal(0);
+						for (Timeseries ts : min15List) {
+							bd.add(ts.getVolume());
+						}
+						latest.setVolume(bd);
+					}
 					timeseriesRepository.save(latest);
 					log.info("Update for security[" + security + "," + tradeDate + "]");
 				}

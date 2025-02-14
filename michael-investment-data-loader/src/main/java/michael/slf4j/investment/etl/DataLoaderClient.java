@@ -107,32 +107,37 @@ public class DataLoaderClient {
 		taskManager.subscribeSecurities();
 		futureSecurities.parallelStream().forEach(securityStr -> {
 			try {
-				FreqEnum freq = FreqEnum._15MI;
-				String content = aliHistoricalSource.getContent(securityStr, freq);
-				Security security = new Security(securityStr, Variety.of(securityStr.substring(0, securityStr.length() - 4)));
-				List<Timeseries> series = aliHistoricalParser.parse(security, content, freq);
-				for (int i = 1; i <= 2; i++) {
-					Timeseries ts = series.get(i - 1);
-					if(ts.getTradeTs().compareTo(new Date()) <= 0) {
-						Timeseries ts1Min = timeseriesRepository.getTimeseries(securityStr, ts.getTradeDate(), ts.getTradeTs());
-						ts.setOpenInterest(ts1Min.getOpenInterest());
-					}
-				}
-				futureLoader.loadSecurity(security, freq, series);
-				messageService.send("future-15M-topic", series);
-				
-				List<Timeseries> min30Series = get30MinBy15Min(security, freq, 100);
-				futureLoader.loadSecurity(security, FreqEnum._30MI, min30Series);
-				if(TradeUtil.isUpdate30MinData()) {
-					messageService.send("future-30M-topic", min30Series);
-				}
+				load15MiData(securityStr);
 			} catch (IOException | JMSException e) {
 			}
 		});
 	}
+
+	public void load15MiData(String securityStr) throws IOException, JMSException {
+		FreqEnum freq = FreqEnum._15MI;
+		String content = aliHistoricalSource.getContent(securityStr, freq);
+		Security security = new Security(securityStr, Variety.of(securityStr.substring(0, securityStr.length() - 4)));
+		List<Timeseries> series = aliHistoricalParser.parse(security, content, freq);
+		for (int i = 1; i <= 2; i++) {
+			Timeseries ts = series.get(i - 1);
+			if(ts.getTradeTs().compareTo(new Date()) <= 0) {
+				Timeseries ts1Min = timeseriesRepository.getTimeseries(securityStr, ts.getTradeDate(), ts.getTradeTs());
+				ts.setOpenInterest(ts1Min.getOpenInterest());
+			}
+		}
+		futureLoader.loadSecurity(security, freq, series);
+		messageService.send("future-15M-topic", series);
+		
+		List<Timeseries> min30Series = get30MinBy15Min(security, freq, 20);
+		futureLoader.loadSecurity(security, FreqEnum._30MI, min30Series);
+		if(TradeUtil.isUpdate30MinData()) {
+			messageService.send("future-30M-topic", min30Series);
+		}
+	}
 	
 	private List<Timeseries> get30MinBy15Min(Security security, FreqEnum freq, int limit) {
-		List<Timeseries> series = timeseriesRepository.findBySecurityFreqLimit(security.getName(), freq.getValue(), limit);
+		String tradeDate = TradeUtil.getDateStr(System.currentTimeMillis());
+		List<Timeseries> series = timeseriesRepository.getDataByPeriod(security.getName(), tradeDate, freq.getValue());
 		List<Timeseries> list = DataLoaderUtil.generate30TsListBy15ForRealTime(series);
 		return list;
 	}

@@ -2,8 +2,11 @@ package michael.slf4j.investment.parse.impl;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -23,6 +26,7 @@ public class AliParser implements IParser {
 		List<Timeseries> ret = new ArrayList<>();
 		JSONObject obj = new JSONObject(content);
 		JSONArray arr = obj.getJSONArray("Obj");
+		Map<Timestamp, Timeseries> map = new HashMap<>();
 		for (Object securityObj : arr) {
 			JSONObject security = (JSONObject) securityObj;
 			
@@ -47,9 +51,20 @@ public class AliParser implements IParser {
 			m.setFreq(freq.getValue());
 			
 			m.setTradeDate(TradeUtil.getDateStr(TradeUtil.getTradeDate()));
-			m.setTradeTs(new Timestamp(System.currentTimeMillis()));
-			
-			ret.add(m);
+			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+			m.setTradeTs(timestamp);
+			LocalDateTime ldt = LocalDateTime.now();
+			if(ldt.getHour() == 15) {
+				LocalDateTime newLdt = LocalDateTime.of(ldt.getYear(), ldt.getMonth(), ldt.getDayOfMonth(), 15, 0, 0);
+				timestamp = new Timestamp(TradeUtil.getLong(newLdt));
+				m.setTradeTs(timestamp);
+				map.put(timestamp, m);
+			} else {
+				ret.add(m);
+			}
+		}
+		if(!map.isEmpty()) {
+			map.values().stream().forEach(ts -> ret.add(ts));
 		}
 		return ret;
 	}

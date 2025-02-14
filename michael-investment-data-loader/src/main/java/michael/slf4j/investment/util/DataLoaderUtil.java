@@ -21,25 +21,25 @@ public class DataLoaderUtil {
 			LocalDateTime ldt = TradeUtil.getLocalDateTime(timestamp);
 			int hour = ldt.getHour();
 			int min = ldt.getMinute();
-			boolean sameCondition = false;
-			if(min % 30 == 0 || (hour == 10 && min == 15) || ts == null) {
-				ts = min15Ts.copy();
-				if(min % 15 == 0) {
-					ts.setVolume(new BigDecimal(0));
-				}
-				sameCondition = true;
+			if(ts == null && min % 30 == 0) {
+				continue;
 			}
 			if(min % 30 == 15) {
-				ts.setOpen(min15Ts.getOpen());
+				ts = min15Ts.copy();
+			}
+			if(min % 30 == 0 || (hour == 10 && min == 15)) {
+				ts.setClose(min15Ts.getClose());
 				ts.setHigh(new BigDecimal(Math.max(ts.getHigh().doubleValue(), min15Ts.getHigh().doubleValue())));
 				ts.setLow(new BigDecimal(Math.min(ts.getLow().doubleValue(), min15Ts.getLow().doubleValue())));
-				ts.setVolume(ts.getVolume().add(min15Ts.getVolume()));
 				ts.setFreq(FreqEnum._30MI.getValue());
-				if(sameCondition) {
+				ts.setTradeTs(min15Ts.getTradeTs());
+				if((hour == 10 && min == 15)) {
 					LocalDateTime newLdt = ldt.plusMinutes(15);
 					ts.setTradeTs(new Timestamp(TradeUtil.getLong(newLdt)));
+				} else {
+					ts.setVolume(ts.getVolume().add(min15Ts.getVolume()));
 				}
-				list.add(ts);
+				list.add(ts.copy());
 				ts = null;
 			}
 		}

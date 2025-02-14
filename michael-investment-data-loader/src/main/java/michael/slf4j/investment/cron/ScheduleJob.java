@@ -92,10 +92,6 @@ public class ScheduleJob {
 	public void updateNightData() {
 		dataLoaderClient.update15MinData();
 	}
-	@Scheduled(cron = "${update-15-morning}")
-	public void updateMorningData() {
-		dataLoaderClient.update15MinData();
-	}
 	@Scheduled(cron = "${update-15-afternoon}")
 	public void updateAfternoonData() {
 		dataLoaderClient.update15MinData();
@@ -103,10 +99,6 @@ public class ScheduleJob {
 	
 	@Scheduled(cron = "${summary-night}")
 	public void summarizeNightData() {
-		dataResearch.summarize();
-	}
-	@Scheduled(cron = "${summary-morning}")
-	public void summarizeMorningData() {
 		dataResearch.summarize();
 	}
 	@Scheduled(cron = "${summary-afternoon}")

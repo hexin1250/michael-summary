@@ -107,7 +107,7 @@ public class TradeUtil {
 	public static LocalDate getCurrentTradeDate(LocalDateTime ldt) {
 		LocalDate ld = LocalDate.of(ldt.getYear(), ldt.getMonth(), ldt.getDayOfMonth());
 		int hour = ldt.getHour();
-		if(hour > 15) {
+		if(hour > 19) {
 			return ld.plusDays(1);
 		}
 		return ld;
