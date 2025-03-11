@@ -33,6 +33,7 @@ public class DataLoaderUtil {
 				ts.setLow(new BigDecimal(Math.min(ts.getLow().doubleValue(), min15Ts.getLow().doubleValue())));
 				ts.setFreq(FreqEnum._30MI.getValue());
 				ts.setTradeTs(min15Ts.getTradeTs());
+				ts.setOpenInterest(min15Ts.getOpenInterest());
 				if((hour == 10 && min == 15)) {
 					LocalDateTime newLdt = ldt.plusMinutes(15);
 					ts.setTradeTs(new Timestamp(TradeUtil.getLong(newLdt)));
@@ -43,32 +44,15 @@ public class DataLoaderUtil {
 				ts = null;
 			}
 		}
-		return list;
-	}
-	
-	public static List<Timeseries> generate30TsListBy15ForBack(List<Timeseries> series) {
-		Map<Timestamp, Timeseries> map = new TreeMap<>();
-		for (Timeseries min15Ts : series) {
-			Timestamp timestamp = min15Ts.getTradeTs();
-			LocalDateTime ldt = TradeUtil.getLocalDateTime(timestamp);
-			int min = ldt.getMinute();
-			if(min % 30 == 15) {
-				LocalDateTime newLdt = ldt.plusMinutes(15);
-				timestamp = new Timestamp(TradeUtil.getLong(newLdt));
-			}
-			Timeseries ts = map.get(timestamp);
-			if(ts == null) {
-				ts = min15Ts.copy();
-				ts.setTradeTs(timestamp);
-				map.put(timestamp, ts);
-			} else {
-				ts.setClose(min15Ts.getClose());
-				ts.setHigh(new BigDecimal(Math.max(ts.getHigh().doubleValue(), min15Ts.getHigh().doubleValue())));
-				ts.setLow(new BigDecimal(Math.min(ts.getLow().doubleValue(), min15Ts.getLow().doubleValue())));
-			}
+		if(ts != null) {
 			ts.setFreq(FreqEnum._30MI.getValue());
+			Timestamp timestamp = ts.getTradeTs();
+			LocalDateTime ldt = TradeUtil.getLocalDateTime(timestamp);
+			LocalDateTime newLdt = ldt.plusMinutes(15);
+			ts.setTradeTs(new Timestamp(TradeUtil.getLong(newLdt)));
+			list.add(ts);
 		}
-		return map.entrySet().stream().map(entry -> entry.getValue()).collect(Collectors.toList());
+		return list;
 	}
 	
 	public static List<Timeseries> generate60TsListBy30ForBack(List<Timeseries> series) {
@@ -93,12 +77,41 @@ public class DataLoaderUtil {
 				map.put(timestamp, ts);
 			} else {
 				ts.setClose(min30Ts.getClose());
+				ts.setVolume(ts.getVolume().add(min30Ts.getVolume()));
+				ts.setOpenInterest(min30Ts.getOpenInterest());
 				ts.setHigh(new BigDecimal(Math.max(ts.getHigh().doubleValue(), min30Ts.getHigh().doubleValue())));
 				ts.setLow(new BigDecimal(Math.min(ts.getLow().doubleValue(), min30Ts.getLow().doubleValue())));
 			}
 			ts.setFreq(FreqEnum._1H.getValue());
 		}
 		return map.entrySet().stream().map(entry -> entry.getValue()).collect(Collectors.toList());
+	}
+	
+	public static List<Timeseries> generate2HTsListBy30ForBack(List<Timeseries> series) {
+		List<Timeseries> ret = new ArrayList<>();
+		Timeseries ts = null;
+		for (Timeseries min30Ts : series) {
+			if(ts == null) {
+				ts = min30Ts.copy();
+			} else {
+				ts.setClose(min30Ts.getClose());
+				ts.setHigh(new BigDecimal(Math.max(ts.getHigh().doubleValue(), min30Ts.getHigh().doubleValue())));
+				ts.setLow(new BigDecimal(Math.min(ts.getLow().doubleValue(), min30Ts.getLow().doubleValue())));
+				ts.setVolume(ts.getVolume().add(min30Ts.getVolume()));
+				ts.setOpenInterest(min30Ts.getOpenInterest());
+			}
+			Timestamp timestamp = min30Ts.getTradeTs();
+			LocalDateTime ldt = TradeUtil.getLocalDateTime(timestamp);
+			int hour = ldt.getHour();
+			int min = ldt.getMinute();
+			if((hour == 23 && min == 0) || (hour == 11 && min == 30) || (hour == 15 && min == 0)) {
+				ts.setFreq(FreqEnum._2H.getValue());
+				ts.setTradeTs(min30Ts.getTradeTs());
+				ret.add(ts.copy());
+				ts = null;
+			}
+		}
+		return ret;
 	}
 
 }

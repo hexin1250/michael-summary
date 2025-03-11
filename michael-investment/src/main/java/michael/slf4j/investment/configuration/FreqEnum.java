@@ -5,6 +5,7 @@ public enum FreqEnum {
 	_15MI{{value = "15M";}},
 	_30MI{{value = "30M";}},
 	_1H{{value = "1H";}},
+	_2H{{value = "2H";}},
 	_1D{{value = "1D";}},
 	_TICK{{value = "TICK";}},
 	;

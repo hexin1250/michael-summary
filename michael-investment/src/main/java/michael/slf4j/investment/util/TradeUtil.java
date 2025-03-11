@@ -157,5 +157,10 @@ public class TradeUtil {
 		String dateStr = ldt.format(DateTimeFormatter.ofPattern(pattern));
 		return dateStr;
 	}
+	
+	public static Timestamp getTimestamp(LocalDateTime ldt) {
+		long currentTime = Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant()).getTime();
+		return new Timestamp(currentTime);
+	}
 
 }

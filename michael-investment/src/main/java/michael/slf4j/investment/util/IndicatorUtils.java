@@ -3,6 +3,7 @@ package michael.slf4j.investment.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,13 +41,22 @@ public class IndicatorUtils {
 			lower.add(mean - multiplier * std);
 		}
 
-		return Map.of("MID", mid, "UPPER", upper, "LOWER", lower);
+		Map<String, List<Double>> map = new LinkedHashMap<String, List<Double>>();
+		map.put("LOWER", lower);
+		map.put("MID", mid);
+		map.put("UPPER", upper);
+		return map;
 	}
 
 	// MA指标
 	public static Map<String, List<Double>> calculateMA(List<Double> closes) {
-		return Map.of("MA5", calculateMA(closes, 5), "MA10", calculateMA(closes, 10), "MA20", calculateMA(closes, 20),
-				"MA40", calculateMA(closes, 40), "MA60", calculateMA(closes, 60));
+		Map<String, List<Double>> map = new LinkedHashMap<String, List<Double>>();
+		map.put("MA5", calculateMA(closes, 5));
+		map.put("MA10", calculateMA(closes, 10));
+		map.put("MA20", calculateMA(closes, 20));
+		map.put("MA40", calculateMA(closes, 40));
+		map.put("MA60", calculateMA(closes, 60));
+		return map;
 	}
 
 	// 通用MA计算
@@ -91,14 +101,21 @@ public class IndicatorUtils {
 			bias3.add((closes.get(closeIndex) - ma24.get(i)) / ma24.get(i) * 100);
 		}
 
-		return Map.of("BIAS1", bias1, "BIAS2", bias2, "BIAS3", bias3);
+		Map<String, List<Double>> map = new LinkedHashMap<String, List<Double>>();
+		map.put("BIAS1", bias1);
+		map.put("BIAS2", bias2);
+		map.put("BIAS3", bias3);
+		return map;
 	}
 
 	// WR指标
 	public static Map<String, List<Double>> calculateWR(List<Double> highs, List<Double> lows, List<Double> closes) {
 		List<Double> wr1 = calculateSingleWR(highs, lows, closes, 10);
 		List<Double> wr2 = calculateSingleWR(highs, lows, closes, 6);
-		return Map.of("WR1", wr1, "WR2", wr2);
+		Map<String, List<Double>> map = new LinkedHashMap<String, List<Double>>();
+		map.put("WR1", wr1);
+		map.put("WR2", wr2);
+		return map;
 	}
 
 	private static List<Double> calculateSingleWR(List<Double> highs, List<Double> lows, List<Double> closes,
@@ -127,7 +144,10 @@ public class IndicatorUtils {
 		}
 
 		List<Double> atr = calculateMA(trValues, period);
-		return Map.of("TR", trValues.subList(period - 1, trValues.size()), "ATR", atr);
+		Map<String, List<Double>> map = new LinkedHashMap<String, List<Double>>();
+		map.put("TR", trValues.subList(period - 1, trValues.size()));
+		map.put("ATR", atr);
+		return map;
 	}
 
 	public static List<Double> calculateCCI(List<Double> highs, List<Double> lows, List<Double> closes, int period) {
@@ -161,8 +181,113 @@ public class IndicatorUtils {
 			upper.add(upperValue); // 上轨+11%
 			lower.add(lowerValue); // 下轨-9%
 		}
-
-		return Map.of("UPPER", upper, "LOWER", lower, "ENE", ene);
+		
+		Map<String, List<Double>> map = new LinkedHashMap<String, List<Double>>();
+		map.put("LOWER", lower);
+		map.put("ENE", ene);
+		map.put("UPPER", upper);
+		return map;
 	}
+	
+	/**
+     * 计算指数移动平均线（EMA）
+     * 
+     * @param closes   包含价格数据的数组
+     * @param period EMA周期（例如：12日EMA）
+     * @return EMA数组，长度与输入数据相同。前(period-1)个位置为0，后续为有效EMA值
+     * @throws IllegalArgumentException 如果输入数据不合法
+     */
+    public static double calculateEMA(List<Double> closes, int period) {
+        if (closes == null) {
+            throw new IllegalArgumentException("数据数组不能为null");
+        }
+        if (period < 1) {
+            throw new IllegalArgumentException("周期必须大于等于1");
+        }
+        int size = closes.size();
+        if (size < period) {
+            throw new IllegalArgumentException("数据数组长度必须大于等于周期");
+        }
+
+        double[] ema = new double[size];
+        double sma = 0.0;
+
+        // 计算初始SMA（简单移动平均）
+        for (int i = 0; i < period; i++) {
+            sma += closes.get(i);
+        }
+        sma /= period;
+        ema[period - 1] = sma;
+
+        double alpha = 2.0 / (period + 1); // 平滑系数
+
+        // 计算后续EMA值
+        for (int i = period; i < size; i++) {
+            ema[i] = closes.get(i) * alpha + ema[i - 1] * (1 - alpha);
+        }
+
+        return ema[size - 1];
+    }
+    
+    public static double calculateMFI(List<Double> highs, List<Double> lows, List<Double> closes, List<Double> volumes, int period) {
+        List<Double> mfiValues = new ArrayList<>();
+
+        // 验证输入数据有效性
+        int dataLength = highs.size();
+        if (dataLength != lows.size() || dataLength != closes.size() || dataLength != volumes.size()) {
+            throw new IllegalArgumentException("输入数组长度不一致");
+        }
+        if (dataLength < period + 1) {
+            return -10000D; // 数据不足时返回空列表
+        }
+
+        // 计算典型价格和原始资金流
+        double[] typicalPrices = new double[dataLength];
+        double[] rawMoneyFlow = new double[dataLength];
+        for (int i = 0; i < dataLength; i++) {
+            typicalPrices[i] = (highs.get(i) + lows.get(i) + closes.get(i)) / 3.0;
+            rawMoneyFlow[i] = typicalPrices[i] * volumes.get(i);
+        }
+
+        // 计算正向和负向资金流
+        double[] positiveFlow = new double[dataLength - 1];
+        double[] negativeFlow = new double[dataLength - 1];
+        for (int i = 1; i < dataLength; i++) {
+            if (typicalPrices[i] > typicalPrices[i - 1]) {
+                positiveFlow[i - 1] = rawMoneyFlow[i];
+                negativeFlow[i - 1] = 0;
+            } else if (typicalPrices[i] < typicalPrices[i - 1]) {
+                negativeFlow[i - 1] = rawMoneyFlow[i];
+                positiveFlow[i - 1] = 0;
+            } else {
+                positiveFlow[i - 1] = 0;
+                negativeFlow[i - 1] = 0;
+            }
+        }
+
+        // 计算MFI值
+        for (int i = period - 1; i < positiveFlow.length; i++) {
+            double sumPositive = 0;
+            double sumNegative = 0;
+
+            // 累加周期内的资金流
+            for (int j = 0; j < period; j++) {
+                int index = i - period + 1 + j;
+                sumPositive += positiveFlow[index];
+                sumNegative += negativeFlow[index];
+            }
+
+            // 处理除零情况并计算MFI
+            if (sumNegative == 0) {
+                mfiValues.add(100.0);
+            } else {
+                double ratio = sumPositive / sumNegative;
+                double mfi = 100.0 - (100.0 / (1 + ratio));
+                mfiValues.add(mfi);
+            }
+        }
+
+        return mfiValues.get(mfiValues.size() - 1);
+    }
 
 }
