@@ -19,12 +19,15 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import michael.slf4j.investment.message.service.MessageService;
 import michael.slf4j.investment.model.Account;
 import michael.slf4j.investment.model.RealRun;
+import michael.slf4j.investment.proc.PythonExecutor;
 import michael.slf4j.investment.quant.backtest.ClassicalFutureStrategy;
 import michael.slf4j.investment.quant.backtest.MACDStrategy;
 import michael.slf4j.investment.quant.live.LiveProcessor;
 import michael.slf4j.investment.quant.mockup.MockupProcess;
 import michael.slf4j.investment.quant.strategy.IStrategy;
 import michael.slf4j.investment.repo.RealRunRepository;
+import michael.slf4j.investment.research.DataResearch;
+import michael.slf4j.investment.util.PositionFileUtil;
 
 @Controller
 @RequestMapping(path = "/apps/strategy")
@@ -45,6 +48,9 @@ public class StrategyController {
 	
 	@Autowired
 	private MessageService messageService;
+	
+	@Autowired
+	private DataResearch dataResearch;
 	
 	/**
 	 * http://localhost:1702/apps/strategy/mockup?strategy=test&variety=I&startDate=2023-04-17&endDate=2023-05-25
@@ -123,6 +129,68 @@ public class StrategyController {
 		StringBuffer sb = new StringBuffer();
 		sb.append(new Date()).append("<br>").append(liveProcessor.getStatus());
 		log.info("get request to check status[" + sb.toString() + "]");
+		return sb.toString();
+	}
+	
+	/**
+	 * http://localhost:1702/apps/strategy/research?full=false&isSendMessage=true
+	 * http://localhost:1702/apps/strategy/research?full=true&isSendMessage=false
+	 * @param full
+	 * @return
+	 */
+	@GetMapping(path = "/research")
+	public @ResponseBody String research(@RequestParam(name="full", required=false, defaultValue="false") boolean full,
+			@RequestParam(name="isSendMessage", required=true, defaultValue="false") boolean isSendMessage) {
+		dataResearch.summarize(full, isSendMessage);
+		StringBuffer sb = new StringBuffer();
+		sb.append(new Date()).append("<br>").append("research is done.");
+		log.info("get request to research");
+		return sb.toString();
+	}
+	
+	/**
+	 * http://localhost:1702/apps/strategy/savePosition?direction=-1&price=3330&position=25
+	 * @param direction
+	 * @param price
+	 * @param positionPer
+	 * @return
+	 */
+	@GetMapping(path = "/savePosition")
+	public @ResponseBody String savePosition(@RequestParam(name="direction", required=false, defaultValue="0") int direction,
+			@RequestParam(name="price", required=false, defaultValue="0") int price,
+			@RequestParam(name="position", required=false, defaultValue="0") int positionPer) {
+		PositionFileUtil.savePositionData(direction, price, positionPer);
+		StringBuffer sb = new StringBuffer();
+		sb.append(new Date()).append("<br>").append("Done to save data.");
+		log.info("get request to save position data");
+		return sb.toString();
+	}
+	
+	/**
+	 * http://localhost:1702/apps/strategy/deepseek
+	 * @return
+	 */
+	@GetMapping(path = "/deepseek")
+	public @ResponseBody String deepseek() {
+		log.info("get request to deepseek");
+		int ret = PythonExecutor.executePython();
+		StringBuffer sb = new StringBuffer();
+		if(ret != 0) {
+			sb.append(new Date()).append("<br>").append("Done to deepseek, but request failed, please check.");
+		}
+		sb.append(PositionFileUtil.getDeepseek());
+		return sb.toString();
+	}
+	
+	/**
+	 * http://localhost:1702/apps/strategy/deepseekHistory
+	 * @return
+	 */
+	@GetMapping(path = "/deepseekHistory")
+	public @ResponseBody String deepseekHistory() {
+		log.info("get request to deepseek");
+		StringBuffer sb = new StringBuffer();
+		sb.append(PositionFileUtil.getDeepseek());
 		return sb.toString();
 	}
 

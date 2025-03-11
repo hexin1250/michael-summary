@@ -10,7 +10,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
+import michael.slf4j.investment.proc.PythonExecutor;
 import michael.slf4j.investment.quant.live.LiveProcessor;
+import michael.slf4j.investment.research.DataResearch;
 
 @Component
 @Controller
@@ -21,6 +23,9 @@ public class StrategyInitializedJob {
 	
 	@Autowired
 	private LiveProcessor liveProcessor;
+	
+	@Autowired
+	private DataResearch dataResearch;
 	
 	@Scheduled(cron = "${clean-schedule}")
 	public void cleanData() {
@@ -62,4 +67,21 @@ public class StrategyInitializedJob {
 		liveProcessor.init();
 		log.info("Done to initialize after startup");
 	}
+	
+	@Scheduled(cron = "${summary-night}")
+	public void summarizeNightData() {
+		dataResearch.summarize(true, false);
+		PythonExecutor.executePython();
+	}
+	@Scheduled(cron = "${summary-afternoon}")
+	public void summarizeAfternoonData() {
+		dataResearch.summarize(true, false);
+		PythonExecutor.executePython();
+	}
+	@Scheduled(cron = "${summary-close}")
+	public void summarizeDayData() {
+		dataResearch.summarize(true, false);
+		PythonExecutor.executePython();
+	}
+
 }

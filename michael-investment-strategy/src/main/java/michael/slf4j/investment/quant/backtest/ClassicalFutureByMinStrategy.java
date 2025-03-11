@@ -82,10 +82,11 @@ public class ClassicalFutureByMinStrategy extends AbstractStrategy implements IS
 		if(!security.equals(mainSecurity)) {
 			return;
 		}
-		Contract first = contractList.get(0);
+		int size = contractList.size();
+		Contract last = contractList.get(size - 1);
 		int dataRange = (int) params.get(Context.HISTORICAL_RANGE);
-		double openPrice = first.getOpen();
-		double range = getRangeValue(contractList, 2, 2 + dataRange - 1);
+		double openPrice = last.getOpen();
+		double range = getRangeValue(contractList, dataRange);
 		double k = (double) params.get(K);
 		double buyLine = openPrice + range * k;
 		double sellLine = openPrice - range * k;
@@ -228,12 +229,12 @@ public class ClassicalFutureByMinStrategy extends AbstractStrategy implements IS
 		params.put(MAIN_SECURITY, mainSecurity);
 	}
 	
-	private double getRangeValue(List<Contract> list, int beginning, int end) {
-		int len = end;
-		if(end > list.size()) {
-			len = list.size();
+	private double getRangeValue(List<Contract> list, int dataRange) {
+		int start = 0;
+		if(dataRange < list.size()) {
+			start = list.size() - dataRange;
 		}
-		List<Contract> modelList = list.subList(beginning, len);
+		List<Contract> modelList = list.subList(start, list.size() - 1);
 		double hh = modelList.stream().mapToDouble(m -> m.getHigh()).max().getAsDouble();
 		double ll = modelList.stream().mapToDouble(m -> m.getLow()).min().getAsDouble();
 		double lc = modelList.stream().mapToDouble(m -> m.getClose()).min().getAsDouble();
