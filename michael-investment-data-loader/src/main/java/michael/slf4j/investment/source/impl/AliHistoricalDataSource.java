@@ -56,7 +56,7 @@ public class AliHistoricalDataSource implements ISource, Closeable {
 	    Map<String, String> querys = new HashMap<String, String>();
 	    querys.put("period", freq.getValue());
 	    querys.put("pidx", pageNum);
-	    querys.put("psize", "500");
+	    querys.put("psize", "50");
 	    querys.put("symbol", symbol);
 	    querys.put("withlast", "1");
 	    String params = querys.entrySet().stream()

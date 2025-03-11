@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.etl.DataLoaderClient;
-import michael.slf4j.investment.etl.DataResearch;
 import michael.slf4j.investment.taskmanager.TaskManager;
 
 @Component
@@ -26,9 +25,6 @@ public class ScheduleJob {
 	@Qualifier(value="dataLoaderClient")
 	private DataLoaderClient dataLoaderClient;
 	
-	@Autowired
-	private DataResearch dataResearch;
-	
 	@Scheduled(cron = "${clean-schedule}")
 	public void cleanData() {
 		taskManager.fillBack1D();
@@ -38,7 +34,6 @@ public class ScheduleJob {
 	@Scheduled(cron = "${start-schedule1}")
 	public void startNightSchedule() {
 		log.info("[Start Night] subscribe all varieties.");
-		taskManager.subscribeSecurities();
 		log.info("[Start Night] Done");
 	}
 	
@@ -50,7 +45,6 @@ public class ScheduleJob {
 	@Scheduled(cron = "${start-schedule2}")
 	public void startDaySchedule1() {
 		log.info("[Start Day 9 o'clock] subscribe all varieties.");
-		taskManager.subscribeSecurities();
 		log.info("[Start Day 9 o'clock] Done");
 	}
 	
@@ -62,7 +56,6 @@ public class ScheduleJob {
 	@Scheduled(cron = "${start-schedule3}")
 	public void startDaySchedule2() {
 		log.info("[Start Day 10:30 o'clock] subscribe all varieties.");
-		taskManager.subscribeSecurities();
 		log.info("[Start Day 10:30 o'clock] Done");
 	}
 	
@@ -74,7 +67,6 @@ public class ScheduleJob {
 	@Scheduled(cron = "${start-schedule4}")
 	public void startDaySchedule3() {
 		log.info("[Start Day 13:30 o'clock] subscribe all varieties.");
-		taskManager.subscribeSecurities();
 		log.info("[Start Day 13:30 o'clock] Done");
 	}
 	
@@ -97,17 +89,4 @@ public class ScheduleJob {
 		dataLoaderClient.update15MinData();
 	}
 	
-	@Scheduled(cron = "${summary-night}")
-	public void summarizeNightData() {
-		dataResearch.summarize();
-	}
-	@Scheduled(cron = "${summary-afternoon}")
-	public void summarizeAfternoonData() {
-		dataResearch.summarize();
-	}
-	@Scheduled(cron = "${summary-close}")
-	public void summarizeDayData() {
-		dataResearch.summarize();
-	}
-
 }

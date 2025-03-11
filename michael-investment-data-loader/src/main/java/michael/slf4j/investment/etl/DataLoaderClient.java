@@ -3,6 +3,8 @@ package michael.slf4j.investment.etl;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 
 import javax.jms.JMSException;
@@ -96,7 +98,7 @@ public class DataLoaderClient {
 				List<Timeseries> series = aliHistoricalParser.parse(security, content, freq);
 				futureLoader.loadSecurity(security, freq, series);
 				
-				List<Timeseries> min30Series = get30MinBy15Min(security, freq, 500);
+				List<Timeseries> min30Series = get30MinBy15Min(security, freq, 50);
 				futureLoader.loadSecurity(security, FreqEnum._30MI, min30Series);
 			}
 		} catch (IOException e) {
@@ -118,17 +120,20 @@ public class DataLoaderClient {
 		String content = aliHistoricalSource.getContent(securityStr, freq);
 		Security security = new Security(securityStr, Variety.of(securityStr.substring(0, securityStr.length() - 4)));
 		List<Timeseries> series = aliHistoricalParser.parse(security, content, freq);
-		for (int i = 1; i <= 2; i++) {
+		for (int i = 1; i <= series.size(); i++) {
 			Timeseries ts = series.get(i - 1);
 			if(ts.getTradeTs().compareTo(new Date()) <= 0) {
-				Timeseries ts1Min = timeseriesRepository.getTimeseries(securityStr, ts.getTradeDate(), ts.getTradeTs());
-				ts.setOpenInterest(ts1Min.getOpenInterest());
+				List<Timeseries> list = timeseriesRepository.getTimeseries(securityStr, ts.getTradeDate(), ts.getTradeTs());
+				if(!list.isEmpty()) {
+					Timeseries ts1Min = list.get(list.size() - 1);
+					ts.setOpenInterest(ts1Min.getOpenInterest());
+				}
 			}
 		}
 		futureLoader.loadSecurity(security, freq, series);
 		messageService.send("future-15M-topic", series);
 		
-		List<Timeseries> min30Series = get30MinBy15Min(security, freq, 20);
+		List<Timeseries> min30Series = get30MinBy15Min(security, freq, 50);
 		futureLoader.loadSecurity(security, FreqEnum._30MI, min30Series);
 		if(TradeUtil.isUpdate30MinData()) {
 			messageService.send("future-30M-topic", min30Series);
@@ -136,8 +141,13 @@ public class DataLoaderClient {
 	}
 	
 	private List<Timeseries> get30MinBy15Min(Security security, FreqEnum freq, int limit) {
-		String tradeDate = TradeUtil.getDateStr(System.currentTimeMillis());
-		List<Timeseries> series = timeseriesRepository.getDataByPeriod(security.getName(), tradeDate, freq.getValue());
+		List<Timeseries> series = timeseriesRepository.findBySecurityFreqLimit(security.getName(), freq.getValue(), limit);
+		Collections.sort(series, new Comparator<>() {
+			@Override
+			public int compare(Timeseries o1, Timeseries o2) {
+				return o1.getTradeTs().compareTo(o2.getTradeTs());
+			}
+		});
 		List<Timeseries> list = DataLoaderUtil.generate30TsListBy15ForRealTime(series);
 		return list;
 	}

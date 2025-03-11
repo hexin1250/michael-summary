@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.etl.DataLoaderClient;
-//import michael.slf4j.investment.etl.DataResearch;
 import michael.slf4j.investment.taskmanager.TaskManager;
 import michael.slf4j.investment.util.TradeUtil;
 
@@ -22,18 +21,16 @@ public class InitRunner implements CommandLineRunner {
 	@Autowired
 	private DataLoaderClient dataLoaderClient;
 	
-//	@Autowired
-//	private DataResearch dataResearch;
-
-    @Override
+   @Override
     public void run(String... args) throws Exception {
     	log.info("Initializing...");
+    	taskManager.subscribeSecurities();
     	if(TradeUtil.isTradingTime()) {
-			taskManager.subscribeAll();
 			dataLoaderClient.init15MinData();
 			dataLoaderClient.init30MinData();
     	}
-//    	dataResearch.summarize();
+//    	dataLoaderClient.load15MiData("RB2505");
+//    	dataLoaderClient.reload("RB2505");
     	log.info("Done to initialize resources.");
     }
 }

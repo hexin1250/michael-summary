@@ -49,7 +49,7 @@ public class FutureLoader {
 	}
 	
 	public boolean loadSecurity(Security security, FreqEnum freq, List<Timeseries> series) {
-		List<Timeseries> storedData = timeseriesRepository.findBySecurityFreqLimit(security.getName(), freq.getValue(), 300);
+		List<Timeseries> storedData = timeseriesRepository.findBySecurityFreqLimit(security.getName(), freq.getValue(), 100);
 		for (Timeseries ts : series) {
 			boolean find = false;
 			for (Timeseries tsInDB : storedData) {
