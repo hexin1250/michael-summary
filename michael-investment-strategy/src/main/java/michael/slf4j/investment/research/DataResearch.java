@@ -6,11 +6,14 @@ import java.io.OutputStreamWriter;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.text.NumberFormat;
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +39,49 @@ import michael.slf4j.investment.util.TradeUtil;
 @Component("dataResearch")
 public class DataResearch {
 	private static final Logger log = Logger.getLogger(DataResearch.class);
+	private static final Map<String, String> HEADER_MAP = new LinkedHashMap<String, String>();
+	
+	static {
+		HEADER_MAP.put("time", "时间");
+		HEADER_MAP.put("freq", "周期");
+		HEADER_MAP.put("open", "开盘价");
+		HEADER_MAP.put("high", "最高价");
+		HEADER_MAP.put("low", "最低价");
+		HEADER_MAP.put("close", "收盘价");
+		HEADER_MAP.put("OI", "OI");
+		HEADER_MAP.put("VOLUME", "VOLUME");
+		HEADER_MAP.put("MA1", "MA5");
+		HEADER_MAP.put("MA2", "MA10");
+		HEADER_MAP.put("MA3", "MA20");
+		HEADER_MAP.put("MA4", "MA40");
+		HEADER_MAP.put("MA5", "MA60");
+		HEADER_MAP.put("BOLL LOWER", "BOLL(26,2) LOWER");
+		HEADER_MAP.put("BOLL MID", "BOLL(26,2) MID");
+		HEADER_MAP.put("BOLL UPPER", "BOLL(26,2) UPPER");
+		HEADER_MAP.put("EMA", "EMA(10)");
+		HEADER_MAP.put("BIAS1", "BIAS(6,12,24) BIAS1");
+		HEADER_MAP.put("BIAS2", "BIAS(6,12,24) BIAS2");
+		HEADER_MAP.put("BIAS3", "BIAS(6,12,24) BIAS3");
+		HEADER_MAP.put("WR1", "WR(10,6,-80,-20) WR1");
+		HEADER_MAP.put("WR2", "WR(10,6,-80,-20) WR2");
+		HEADER_MAP.put("TR", "ATR(15) TR");
+		HEADER_MAP.put("ATR", "ATR(15) ATR");
+		HEADER_MAP.put("CCI", "CCI(14)");
+		HEADER_MAP.put("ENE LOWER", "ENE(10,11,9) LOWER");
+		HEADER_MAP.put("ENE ENE", "ENE(10,11,9) ENE");
+		HEADER_MAP.put("ENE UPPER", "ENE(10,11,9) UPPER");
+		HEADER_MAP.put("MFI", "MFI(14)");
+		HEADER_MAP.put("MACD DIFF", "MACD(12,26,9) DIFF");
+		HEADER_MAP.put("MACD DEA", "MACD(12,26,9) DEA");
+		HEADER_MAP.put("MACD MACD", "MACD(12,26,9) MACD");
+		HEADER_MAP.put("K", "KDJ(9,3,3) K");
+		HEADER_MAP.put("D", "KDJ(9,3,3) D");
+		HEADER_MAP.put("J", "KDJ(9,3,3) J");
+		HEADER_MAP.put("RSI1", "RSI(6,12,24) RSI1");
+		HEADER_MAP.put("RSI2", "RSI(6,12,24) RSI2");
+		HEADER_MAP.put("RSI3", "RSI(6,12,24) RSI3");
+
+	}
 
 	private NumberFormat nf;
 
@@ -81,7 +127,9 @@ public class DataResearch {
 		FreqEnum freq = FreqEnum._15MI;
 		List<StringBuffer> formatList = new ArrayList<StringBuffer>();
 		StringBuffer sb = new StringBuffer();
-		sb.append("|时间|周期|开盘价|最高价|最低价|收盘价|OI|VOLUME|MA5|MA10|MA20|MA40|MA60|BOLL(26,2) LOWER|BOLL(26,2) MID|BOLL(26,2) UPPER|EMA(10)|BIAS1|BIAS2|BIAS3|WR1|WR2|TR|ATR|CCI(14)|ENE(10,11,9) LOWER|ENE(10,11,9) ENE|ENE(10,11,9) UPPER|MFI(14)|MACD(12,26,9) DIFF|MACD(12,26,9) DEA|MACD(12,26,9) MACD|KDJ(9,3,3) K|KDJ(9,3,3) D|KDJ(9,3,3) J|RSI(6,12,24) RSI1|RSI(6,12,24) RSI2|RSI(6,12,24) RSI3|");
+		sb.append("|");
+		sb.append(HEADER_MAP.values().stream().collect(Collectors.joining("|")));
+		sb.append("|");
 		sb.append("\n");
 		formatList.add(sb);
 		
@@ -101,8 +149,10 @@ public class DataResearch {
 		if (current.getHour() >= 15 && current.getHour() <= 20) {
 			generate1DSummary(formatList, FreqEnum._1D, current, mainSecurity, lastTradeDates, full);
 		}
-		generateTendency(formatList, mainSecurity, currentTradeDate, current, full);
-		generateTrail(formatList, mainSecurity, current, realTimeList.get(0), realTimeList.get(realTimeList.size() - 1));
+		if(!full) {
+			generateTendency(formatList, mainSecurity, currentTradeDate, current, full);
+		}
+		generateTrail(formatList, mainSecurity, current, realTimeList.get(0), realTimeList.get(realTimeList.size() - 1), full);
 		
 		String fileName = "C:\\Users\\HP\\python-workspace\\myproject\\data\\test.txt";
 		try(BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName)))) {
@@ -118,10 +168,14 @@ public class DataResearch {
 	}
 
 	private void generateTrail(List<StringBuffer> formatList, String mainSecurity,
-			LocalDateTime current, Timeseries firstTs, Timeseries lastTs) {
+			LocalDateTime current, Timeseries firstTs, Timeseries lastTs, boolean full) {
 		StringBuffer sb = new StringBuffer();
-		sb.append("现在时间是").append(TradeUtil.getTimestamp(current)).append(",").append("已经收盘，收盘点位").append(lastTs.getClose().intValue()).append("\n");
-		sb.append("当前文本中包括了从").append(firstTs.getTradeTs()).append("到当前时间下，不同周期指标的数据。其中第二个表格是持仓量的价格的记录，注意持仓量的变化情况").append("\n");
+		sb.append("现在时间是").append(TradeUtil.getTimestamp(current)).append(",").append("已经收盘,收盘点位").append(lastTs.getClose().intValue()).append("\n");
+		sb.append("当前文本中包括了从").append(firstTs.getTradeTs()).append("到当前时间下,不同周期指标的数据.");
+		if(!full) {
+			sb.append("其中第二个表格是持仓量的价格的记录,注意持仓量的变化情况");
+		}
+		sb.append("\n");
 		Map<String, String> map = PositionFileUtil.readPositionData();
 		if(!map.isEmpty()) {
 			sb.append("目前持有").append(map.get(PositionFileUtil.DIRECTION)).append(",");
@@ -132,22 +186,29 @@ public class DataResearch {
 			sb.append("目前空仓");
 		}
 		sb.append("\n");
-		if(current.getHour() >= 23 || current.getHour() <= 8) {
-			sb.append("请根据当前时间的(15M,30M,1H,2H)周期的数据指标以及过往的趋势，分析螺纹钢期货");
+		if(current.getHour() >= 23 || current.getHour() <= 8
+				|| (current.getDayOfWeek() == DayOfWeek.SATURDAY || current.getDayOfWeek() == DayOfWeek.SUNDAY)) {
+			sb.append("请根据当前时间的(15M,30M,1H,2H)周期的所有数据指标以及过往的趋势,分析螺纹钢期货");
+			sb.append("(OI,VOLUME,MA5,MA10,MA20,MA40,MA60,BOLL(26,2) LOWER,BOLL(26,2) MID,BOLL(26,2) UPPER,EMA(10),BIAS(6,12,24) BIAS1,BIAS(6,12,24) BIAS2,BIAS(6,12,24) BIAS3,WR(10,6,-80,-20) WR1,WR(10,6,-80,-20) WR2,ATR(15) TR,ATR(15) ATR,CCI(14),ENE(10,11,9) LOWER,ENE(10,11,9) ENE,ENE(10,11,9) UPPER,MFI(14),MACD(12,26,9) DIFF,MACD(12,26,9) DEA,MACD(12,26,9) MACD,KDJ(9,3,3) K,KDJ(9,3,3) D,KDJ(9,3,3) J,RSI(6,12,24) RSI1,RSI(6,12,24) RSI2,RSI(6,12,24) RSI3)");
+			sb.append("以及过往的趋势,分析螺纹钢期货");
 			sb.append(mainSecurity);
 			sb.append("日盘");
 		} else if(current.getHour() >= 9 && current.getHour() <= 12) {
-			sb.append("请根据当前时间的(15M,30M,1H,2H)周期的数据指标以及过往的趋势，分析螺纹钢期货");
+			sb.append("请根据当前时间的(15M,30M,1H,2H)周期的所有数据指标以及过往的趋势,分析螺纹钢期货");
+			sb.append("(OI,VOLUME,MA5,MA10,MA20,MA40,MA60,BOLL(26,2) LOWER,BOLL(26,2) MID,BOLL(26,2) UPPER,EMA(10),BIAS(6,12,24) BIAS1,BIAS(6,12,24) BIAS2,BIAS(6,12,24) BIAS3,WR(10,6,-80,-20) WR1,WR(10,6,-80,-20) WR2,ATR(15) TR,ATR(15) ATR,CCI(14),ENE(10,11,9) LOWER,ENE(10,11,9) ENE,ENE(10,11,9) UPPER,MFI(14),MACD(12,26,9) DIFF,MACD(12,26,9) DEA,MACD(12,26,9) MACD,KDJ(9,3,3) K,KDJ(9,3,3) D,KDJ(9,3,3) J,RSI(6,12,24) RSI1,RSI(6,12,24) RSI2,RSI(6,12,24) RSI3)");
+			sb.append("以及过往的趋势,分析螺纹钢期货");
 			sb.append(mainSecurity);
 			sb.append("下午日盘");
 		} else if(current.getHour() >= 15 && current.getHour() <= 20) {
-			sb.append("请根据当前时间的(15M,30M,1H,2H,1D)周期的数据指标以及过往的趋势，分析螺纹钢期货");
+			sb.append("请根据当前时间的(15M,30M,1H,2H,1D)周期的所有数据指标以及过往的趋势,分析螺纹钢期货");
+			sb.append("(OI,VOLUME,MA5,MA10,MA20,MA40,MA60,BOLL(26,2) LOWER,BOLL(26,2) MID,BOLL(26,2) UPPER,EMA(10),BIAS(6,12,24) BIAS1,BIAS(6,12,24) BIAS2,BIAS(6,12,24) BIAS3,WR(10,6,-80,-20) WR1,WR(10,6,-80,-20) WR2,ATR(15) TR,ATR(15) ATR,CCI(14),ENE(10,11,9) LOWER,ENE(10,11,9) ENE,ENE(10,11,9) UPPER,MFI(14),MACD(12,26,9) DIFF,MACD(12,26,9) DEA,MACD(12,26,9) MACD,KDJ(9,3,3) K,KDJ(9,3,3) D,KDJ(9,3,3) J,RSI(6,12,24) RSI1,RSI(6,12,24) RSI2,RSI(6,12,24) RSI3)");
+			sb.append("以及过往的趋势,分析螺纹钢期货");
 			sb.append(mainSecurity);
 			sb.append("下一个交易日的夜盘和日盘");
 		}
-		sb.append("的走势预演，和对应的概率，和关键价位预判。基于当前持仓指定执行策略，以及反手条件。");
-		sb.append("分析指标的时候，需标注对应的周期。").append("\n");
-		sb.append("注意：在结果展示中，至少包括以下5几点：多周期技术面共振分析，关键价位预判，主力持仓行为解析，日内走势预演，日内交易策略");
+		sb.append("的走势预演,和对应的概率,和关键价位预判.基于当前持仓指定执行策略,以及反手条件.");
+		sb.append("分析指标的时候,需标注对应的周期.").append("\n");
+		sb.append("注意:在分析过程中,要分析全部技术指标(请仔细检查).在结果展示中,至少包括以下5几点:多周期技术面共振分析,关键价位预判,主力持仓行为解析,日内走势预演,日内交易策略");
 		sb.append("\n");
 		formatList.add(sb);
 	}
@@ -246,82 +307,101 @@ public class DataResearch {
 			if (!accept) {
 				continue;
 			}
-			StringBuffer formatSb = new StringBuffer();
-			formatSb.append("|");
+			Map<String, String> dataMap = new LinkedHashMap<String, String>();
 
-			formatSb.append(ts.getTradeTs()).append("|").append(freq.getValue()).append("|");
-			formatSb.append(nf.format(ts.getOpen())).append("|");
-			formatSb.append(nf.format(ts.getHigh())).append("|");
-			formatSb.append(nf.format(ts.getLow())).append("|");
-			formatSb.append(nf.format(ts.getClose())).append("|");
-			formatSb.append(nf.format(ts.getOpenInterest())).append("|");
-			formatSb.append(nf.format(ts.getVolume())).append("|");
+			Timestamp end = ts.getTradeTs();
+			Timestamp start = new Timestamp(end.getTime() - freq.getPeriod() * 60L * 1000L);
+			LocalDateTime ldt = TradeUtil.getLocalDateTime(end);
+			if(freq == FreqEnum._1H && ldt.getHour() == 14) {
+				start = new Timestamp(end.getTime() - (3 * 60 - 1) * 60L * 1000L);
+			} else if(freq == FreqEnum._2H) {
+				if(ldt.getHour() == 11) {
+					start = new Timestamp(end.getTime() - (150 - 1) * 60L * 1000L);
+				} else if(ldt.getHour() == 15) {
+					start = new Timestamp(end.getTime() - (90 - 1) * 60L * 1000L);
+				}
+			}
+			StringBuffer timeSb = new StringBuffer();
+			timeSb.append(start).append(" - ").append(end);
+			dataMap.put("time", timeSb.toString());
+			dataMap.put("freq", freq.getValue());
+			dataMap.put("open", nf.format(ts.getOpen()));
+			dataMap.put("high", nf.format(ts.getHigh()));
+			dataMap.put("low", nf.format(ts.getLow()));
+			dataMap.put("close", nf.format(ts.getClose()));
+			dataMap.put("OI", nf.format(ts.getOpenInterest()));
+			dataMap.put("VOLUME", nf.format(ts.getVolume()));
 			Map<String, List<Double>> mas = IndicatorUtils.calculateMA(closes);
 			for (Entry<String, List<Double>> entry : mas.entrySet()) {
 				double value = entry.getValue().get(entry.getValue().size() - 1);
-				formatSb.append(nf.format(value)).append("|");
+				dataMap.put(entry.getKey(), nf.format(value));
 			}
 
 			Map<String, List<Double>> boll = IndicatorUtils.calculateBOLL(closes, 26, 2);
 			for (Entry<String, List<Double>> entry : boll.entrySet()) {
 				double value = entry.getValue().get(entry.getValue().size() - 1);
-				formatSb.append(nf.format(value)).append("|");
+				dataMap.put(entry.getKey(), nf.format(value));
 			}
 
 			double ema10 = IndicatorUtils.calculateEMA(closes, 10);
-			formatSb.append(nf.format(ema10)).append("|");
+			dataMap.put("EMA", nf.format(ema10));
 
 			Map<String, List<Double>> bias = IndicatorUtils.calculateBIAS(closes);
 			for (Entry<String, List<Double>> entry : bias.entrySet()) {
 				double value = entry.getValue().get(entry.getValue().size() - 1);
-				formatSb.append(nf.format(value)).append("|");
+				dataMap.put(entry.getKey(), nf.format(value));
 			}
 
 			Map<String, List<Double>> wr = IndicatorUtils.calculateWR(highs, lows, closes);
 			for (Entry<String, List<Double>> entry : wr.entrySet()) {
 				double value = entry.getValue().get(entry.getValue().size() - 1);
-				formatSb.append(nf.format(value * -1)).append("|");
+				dataMap.put(entry.getKey(), nf.format(value * -1));
 			}
 
 			Map<String, List<Double>> atr = IndicatorUtils.calculateATR(highs, lows, closes, 15);
 			for (Entry<String, List<Double>> entry : atr.entrySet()) {
 				double value = entry.getValue().get(entry.getValue().size() - 1);
-				formatSb.append(nf.format(value)).append("|");
+				dataMap.put(entry.getKey(), nf.format(value));
 			}
 			List<Double> cci = IndicatorUtils.calculateCCI(highs, lows, closes, 14);
-			formatSb.append(nf.format(cci.get(cci.size() - 1))).append("|");
+			dataMap.put("CCI", nf.format(cci.get(cci.size() - 1)));
 
 			Map<String, List<Double>> ene = IndicatorUtils.calculateENE_10_11_9(closes);
 			for (Entry<String, List<Double>> entry : ene.entrySet()) {
 				double value = entry.getValue().get(entry.getValue().size() - 1);
-				formatSb.append(nf.format(value)).append("|");
+				dataMap.put(entry.getKey(), nf.format(value));
 			}
 
 			double mfi14 = IndicatorUtils.calculateMFI(highs, lows, closes, volumes, 14);
-			formatSb.append(nf.format(mfi14)).append("|");
+			dataMap.put("MFI", nf.format(mfi14));
 
 			MACDResult macd = TechnicalIndicator.calculateMACD(closes);
-			formatSb.append(nf.format(macd.dif)).append("|");
-			formatSb.append(nf.format(macd.dea)).append("|");
-			formatSb.append(nf.format(macd.macd)).append("|");
+			dataMap.put("MACD DIFF", nf.format(macd.dif));
+			dataMap.put("MACD DEA", nf.format(macd.dea));
+			dataMap.put("MACD MACD", nf.format(macd.macd));
 
 			KDJResult kdj = TechnicalIndicator.calculateKDJ(highs, lows, closes);
-			formatSb.append(nf.format(kdj.k)).append("|");
-			formatSb.append(nf.format(kdj.d)).append("|");
-			formatSb.append(nf.format(kdj.j)).append("|");
+			dataMap.put("K", nf.format(kdj.k));
+			dataMap.put("D", nf.format(kdj.d));
+			dataMap.put("J", nf.format(kdj.j));
 			
 			RSIResult rsi = StockIndicatorCalculator.calculateRSI(dataList);
-			formatSb.append(nf.format(rsi.getRsi6())).append("|");
-			formatSb.append(nf.format(rsi.getRsi12())).append("|");
-			formatSb.append(nf.format(rsi.getRsi24())).append("|");
-			formatSb.append('\n');
+			dataMap.put("RSI1", nf.format(rsi.getRsi6()));
+			dataMap.put("RSI2", nf.format(rsi.getRsi12()));
+			dataMap.put("RSI3", nf.format(rsi.getRsi24()));
+			
+			StringBuffer dataSb = new StringBuffer();
+			dataSb.append("|");
+			dataSb.append(HEADER_MAP.keySet().stream().map(key -> dataMap.get(key)).collect(Collectors.joining("|")));
+			dataSb.append("|");
+			dataSb.append('\n');
 			
 			StringBuffer currentSb = formatList.get(formatList.size() - 1);
-			if(currentSb.length() + formatSb.length() <= 1900) {
-				currentSb.append(formatSb);
+			if(currentSb.length() + dataSb.length() <= 1900) {
+				currentSb.append(dataSb);
 			} else {
 				StringBuffer newSb = new StringBuffer();
-				newSb.append(formatSb);
+				newSb.append(dataSb);
 				formatList.add(newSb);
 			}
 		}

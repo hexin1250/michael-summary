@@ -25,6 +25,7 @@ public class CurveInvestigation {
 	private static final String TS_SQL = "select variety,security,open,high,low,close,open_interest,trade_date,trade_ts from timeseries where freq='1D' and variety=? order by trade_date";
 
 	public static void main(String[] args) throws SQLException {
+		String targetSecurity = args[0];
 		/**
 		 * Map<Security, Map<TradeDate, Timeseries>>
 		 */
@@ -65,7 +66,7 @@ public class CurveInvestigation {
 			kdjMap.put(security, ret);
 		}
 		Map<String, Map<String, DirectionTimeseriesWrapper>> map = investigateMap(securityMap);
-		investigateSecurity("I2409", kdjMap, map, securityMap);
+		investigateSecurity(targetSecurity, kdjMap, map, securityMap);
 	}
 
 	private static void investigateSecurity(String security, Map<String, Map<String, Map<String, KDJ>>> kdjMap,

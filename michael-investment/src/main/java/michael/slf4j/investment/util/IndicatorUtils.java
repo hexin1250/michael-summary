@@ -42,20 +42,20 @@ public class IndicatorUtils {
 		}
 
 		Map<String, List<Double>> map = new LinkedHashMap<String, List<Double>>();
-		map.put("LOWER", lower);
-		map.put("MID", mid);
-		map.put("UPPER", upper);
+		map.put("BOLL LOWER", lower);
+		map.put("BOLL MID", mid);
+		map.put("BOLL UPPER", upper);
 		return map;
 	}
 
 	// MA指标
 	public static Map<String, List<Double>> calculateMA(List<Double> closes) {
 		Map<String, List<Double>> map = new LinkedHashMap<String, List<Double>>();
-		map.put("MA5", calculateMA(closes, 5));
-		map.put("MA10", calculateMA(closes, 10));
-		map.put("MA20", calculateMA(closes, 20));
-		map.put("MA40", calculateMA(closes, 40));
-		map.put("MA60", calculateMA(closes, 60));
+		map.put("MA1", calculateMA(closes, 5));
+		map.put("MA2", calculateMA(closes, 10));
+		map.put("MA3", calculateMA(closes, 20));
+		map.put("MA4", calculateMA(closes, 40));
+		map.put("MA5", calculateMA(closes, 60));
 		return map;
 	}
 
@@ -183,9 +183,9 @@ public class IndicatorUtils {
 		}
 		
 		Map<String, List<Double>> map = new LinkedHashMap<String, List<Double>>();
-		map.put("LOWER", lower);
-		map.put("ENE", ene);
-		map.put("UPPER", upper);
+		map.put("ENE LOWER", lower);
+		map.put("ENE ENE", ene);
+		map.put("ENE UPPER", upper);
 		return map;
 	}
 	

@@ -193,5 +193,17 @@ public class StrategyController {
 		sb.append(PositionFileUtil.getDeepseek());
 		return sb.toString();
 	}
+	
+	/**
+	 * http://localhost:1702/apps/strategy/question
+	 * @return
+	 */
+	@GetMapping(path = "/question")
+	public @ResponseBody String question() {
+		log.info("get request to deepseek");
+		StringBuffer sb = new StringBuffer();
+		sb.append(PositionFileUtil.getQuestion());
+		return sb.toString();
+	}
 
 }

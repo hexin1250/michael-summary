@@ -61,6 +61,17 @@ public class PositionFileUtil {
         Date date = new Date(timestamp);
 		StringBuffer sb = new StringBuffer();
 		sb.append("<br>").append(date);
+		sb.append(readFile(fileName));
+		return sb;
+	}
+	
+	public static StringBuffer getQuestion() {
+		String fileName = "C:/Users/HP/python-workspace/myproject/data/test.txt";
+		return readFile(fileName);
+	}
+
+	private static StringBuffer readFile(String fileName) {
+		StringBuffer sb = new StringBuffer();
 		try {
 			List<String> list = getAllLines(fileName);
 			list.stream().forEach(line -> {
