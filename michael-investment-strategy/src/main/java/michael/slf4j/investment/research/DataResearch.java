@@ -170,7 +170,8 @@ public class DataResearch {
 	private void generateTrail(List<StringBuffer> formatList, String mainSecurity,
 			LocalDateTime current, Timeseries firstTs, Timeseries lastTs, boolean full) {
 		StringBuffer sb = new StringBuffer();
-		sb.append("现在时间是").append(TradeUtil.getTimestamp(current)).append(",").append("已经收盘,收盘点位").append(lastTs.getClose().intValue()).append("\n");
+		int closePrice = lastTs.getClose().intValue();
+		sb.append("现在时间是").append(TradeUtil.getTimestamp(current)).append(",").append("已经收盘,收盘点位").append(closePrice).append("\n");
 		sb.append("当前文本中包括了从").append(firstTs.getTradeTs()).append("到当前时间下,不同周期指标的数据.");
 		if(!full) {
 			sb.append("其中第二个表格是持仓量的价格的记录,注意持仓量的变化情况");
@@ -408,10 +409,13 @@ public class DataResearch {
 	}
 
 	private boolean pickupData(LocalDateTime current, Timeseries ts, boolean full) {
+		LocalDateTime lt = TradeUtil.getLocalDateTime(ts.getTradeTs());
+		if(lt.compareTo(current) > 0) {
+			return false;
+		}
 		if(full) {
 			return true;
 		}
-		LocalDateTime lt = TradeUtil.getLocalDateTime(ts.getTradeTs());
 		boolean accept = false;
 		if (lt.getHour() >= 21 && (current.getHour() <= 8 || current.getHour() >= 21)) {
 			accept = true;
