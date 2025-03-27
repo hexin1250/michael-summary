@@ -145,8 +145,14 @@ public class IndicatorUtils {
 
 		List<Double> atr = calculateMA(trValues, period);
 		Map<String, List<Double>> map = new LinkedHashMap<String, List<Double>>();
-		map.put("TR", trValues.subList(period - 1, trValues.size()));
-		map.put("ATR", atr);
+		List<Double> trList = new ArrayList<Double>();
+		List<Double> atrList = new ArrayList<Double>();
+		if(period <= trValues.size()) {
+			trList = trValues.subList(period - 1, trValues.size());
+			atrList = atr;
+		}
+		map.put("TR", trList);
+		map.put("ATR", atrList);
 		return map;
 	}
 

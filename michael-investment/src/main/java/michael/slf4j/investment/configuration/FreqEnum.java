@@ -7,6 +7,7 @@ public enum FreqEnum {
 	_1H{{value = "1H"; period = 60 - 1;}},
 	_2H{{value = "2H"; period = 120 - 1;}},
 	_1D{{value = "1D"; period = 60 * 18 - 1;}},
+	_1W{{value = "1W";period = 4 * 24 * 60 + 6 * 60 - 1;}},
 	_TICK{{value = "TICK";}},
 	;
 	

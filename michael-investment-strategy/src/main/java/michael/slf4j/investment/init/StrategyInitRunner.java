@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.quant.live.LiveProcessor;
-import michael.slf4j.investment.research.DataResearch;
+import michael.slf4j.investment.research.DataResearchV2;
 import michael.slf4j.investment.util.HolidayUtil;
 
 @Component
@@ -17,9 +17,9 @@ public class StrategyInitRunner implements CommandLineRunner {
 	
 	@Autowired
 	private LiveProcessor liveProcessor;
-
+	
 	@Autowired
-	private DataResearch dataResearch;
+	private DataResearchV2 dataResearchV2;
 
  	@Override
 	public void run(String... args) throws Exception {
@@ -28,6 +28,7 @@ public class StrategyInitRunner implements CommandLineRunner {
     	LocalDateTime ldt = LocalDateTime.now();
 //    	ldt = ldt.minusHours(6);
 //    	dataResearch.summarize(ldt, true);
+//    	dataResearchV2.summarize();
 	}
 
 }

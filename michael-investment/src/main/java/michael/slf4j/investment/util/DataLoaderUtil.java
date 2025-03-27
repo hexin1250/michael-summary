@@ -2,7 +2,9 @@ package michael.slf4j.investment.util;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -112,6 +114,56 @@ public class DataLoaderUtil {
 			}
 		}
 		return ret;
+	}
+	
+	public static List<Timeseries> generate1DTsListBy30ForBack(List<Timeseries> series) {
+		Map<String, Timeseries> map = new TreeMap<>();
+		for (Timeseries min30Ts : series) {
+			String tradeDate = min30Ts.getTradeDate();
+			Timeseries ts = map.get(tradeDate);
+			if(ts == null) {
+				ts = min30Ts.copy();
+				ts.setFreq(FreqEnum._1D.getValue());
+				LocalDate ld = TradeUtil.getTradeDate(ts.getTradeDate());
+				LocalTime lt = LocalTime.of(15, 0);
+				LocalDateTime ldt = LocalDateTime.of(ld, lt);
+				ts.setTradeTs(TradeUtil.getTimestamp(ldt));
+				map.put(tradeDate, ts);
+				continue;
+			}
+			ts.setClose(min30Ts.getClose());
+			ts.setHigh(new BigDecimal(Math.max(ts.getHigh().doubleValue(), min30Ts.getHigh().doubleValue())));
+			ts.setLow(new BigDecimal(Math.min(ts.getLow().doubleValue(), min30Ts.getLow().doubleValue())));
+			ts.setVolume(ts.getVolume().add(min30Ts.getVolume()));
+			ts.setOpenInterest(min30Ts.getOpenInterest());
+		}
+		return new ArrayList<>(map.values());
+	}
+	
+	public static List<Timeseries> generate1WTsListBy1D(List<Timeseries> series) {
+		Map<LocalDate, Timeseries> map = new TreeMap<>();
+		for (Timeseries ts1D : series) {
+			LocalDate ld = TradeUtil.getTradeDate(ts1D.getTradeDate());
+			int dayOfWeek = ld.getDayOfWeek().getValue();
+			ld = ld.plusDays(5 - dayOfWeek);
+			
+			Timeseries ts = map.get(ld);
+			if(ts == null) {
+				ts = ts1D.copy();
+				ts.setFreq(FreqEnum._1W.getValue());
+				LocalTime lt = LocalTime.of(15, 0);
+				LocalDateTime ldt = LocalDateTime.of(ld, lt);
+				ts.setTradeTs(TradeUtil.getTimestamp(ldt));
+				map.put(ld, ts);
+				continue;
+			}
+			ts.setClose(ts1D.getClose());
+			ts.setHigh(new BigDecimal(Math.max(ts.getHigh().doubleValue(), ts1D.getHigh().doubleValue())));
+			ts.setLow(new BigDecimal(Math.min(ts.getLow().doubleValue(), ts1D.getLow().doubleValue())));
+			ts.setVolume(ts.getVolume().add(ts1D.getVolume()));
+			ts.setOpenInterest(ts1D.getOpenInterest());
+		}
+		return new ArrayList<>(map.values());
 	}
 
 }

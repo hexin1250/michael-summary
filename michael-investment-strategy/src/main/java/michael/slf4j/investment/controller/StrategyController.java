@@ -26,7 +26,7 @@ import michael.slf4j.investment.quant.live.LiveProcessor;
 import michael.slf4j.investment.quant.mockup.MockupProcess;
 import michael.slf4j.investment.quant.strategy.IStrategy;
 import michael.slf4j.investment.repo.RealRunRepository;
-import michael.slf4j.investment.research.DataResearch;
+import michael.slf4j.investment.research.DataResearchV2;
 import michael.slf4j.investment.util.PositionFileUtil;
 
 @Controller
@@ -50,7 +50,7 @@ public class StrategyController {
 	private MessageService messageService;
 	
 	@Autowired
-	private DataResearch dataResearch;
+	private DataResearchV2 dataResearchV2;
 	
 	/**
 	 * http://localhost:1702/apps/strategy/mockup?strategy=test&variety=I&startDate=2023-04-17&endDate=2023-05-25
@@ -135,13 +135,15 @@ public class StrategyController {
 	/**
 	 * http://localhost:1702/apps/strategy/research?full=false&isSendMessage=true
 	 * http://localhost:1702/apps/strategy/research?full=true&isSendMessage=false
+	 * http://localhost:1702/apps/strategy/research
 	 * @param full
 	 * @return
 	 */
 	@GetMapping(path = "/research")
 	public @ResponseBody String research(@RequestParam(name="full", required=false, defaultValue="false") boolean full,
 			@RequestParam(name="isSendMessage", required=true, defaultValue="false") boolean isSendMessage) {
-		dataResearch.summarize(full, isSendMessage);
+//		dataResearch.summarize(full, isSendMessage);
+		dataResearchV2.summarize();
 		StringBuffer sb = new StringBuffer();
 		sb.append(new Date()).append("<br>").append("research is done.");
 		log.info("get request to research");

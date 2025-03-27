@@ -1,5 +1,13 @@
 package michael.slf4j.investment.cron;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.jms.JMSException;
+
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -10,9 +18,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
+import michael.slf4j.investment.constant.TopicConstants;
+import michael.slf4j.investment.message.service.MessageService;
 import michael.slf4j.investment.proc.PythonExecutor;
 import michael.slf4j.investment.quant.live.LiveProcessor;
-import michael.slf4j.investment.research.DataResearch;
+import michael.slf4j.investment.research.DataResearchV2;
 
 @Component
 @Controller
@@ -25,7 +35,10 @@ public class StrategyInitializedJob {
 	private LiveProcessor liveProcessor;
 	
 	@Autowired
-	private DataResearch dataResearch;
+	private DataResearchV2 dataResearchV2;
+	
+	@Autowired
+	MessageService messageService;
 	
 	@Scheduled(cron = "${clean-schedule}")
 	public void cleanData() {
@@ -70,18 +83,64 @@ public class StrategyInitializedJob {
 	
 	@Scheduled(cron = "${summary-night}")
 	public void summarizeNightData() {
-		dataResearch.summarize(true, false);
+//		dataResearch.summarize(true, false);
+		dataResearchV2.summarize();
 		PythonExecutor.executePython();
+//		sendMessage();
 	}
 	@Scheduled(cron = "${summary-afternoon}")
 	public void summarizeAfternoonData() {
-		dataResearch.summarize(true, false);
+//		dataResearch.summarize(true, false);
+		dataResearchV2.summarize();
 		PythonExecutor.executePython();
+//		sendMessage();
 	}
 	@Scheduled(cron = "${summary-close}")
 	public void summarizeDayData() {
-		dataResearch.summarize(true, false);
+//		dataResearch.summarize(true, false);
+		dataResearchV2.summarize();
 		PythonExecutor.executePython();
+//		sendMessage();
+	}
+	
+	private void sendMessage() {
+		List<String> list = readFile();
+		for (String line : list) {
+			try {
+				messageService.send(TopicConstants.NOTIFICATION_TOPIC, line);
+			} catch (JMSException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private List<String> readFile(){
+		String fileName = "C:/Users/HP/python-workspace/myproject/data/reason_output.txt";
+		return readFile(fileName);
+	}
+	
+	private static List<String> readFile(String fileName) {
+		List<String> ret = new ArrayList<String>();
+		StringBuffer sb = new StringBuffer();
+		try {
+			List<String> list = getAllLines(fileName);
+			for (String line : list) {
+				if(sb.length() + line.length() > 1900) {
+					ret.add(sb.toString());
+					sb = new StringBuffer();
+				}
+				sb.append(line);
+			}
+			ret.add(sb.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
+			sb.append("Issue happened:").append(e.getMessage());
+		}
+		return ret;
+	}
+	
+	private static List<String> getAllLines(String fileName) throws IOException{
+		return Files.readAllLines(new File(fileName).toPath());
 	}
 
 }

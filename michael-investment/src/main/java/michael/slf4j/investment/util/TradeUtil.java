@@ -23,6 +23,10 @@ public class TradeUtil {
 		return LocalDate.ofInstant(tradeDate.toInstant(), ZoneId.systemDefault());
 	}
 	
+	public static LocalDate getTradeDate(String tradeDate) {
+		return LocalDate.parse(tradeDate);
+	}
+	
 	public static long getLong(LocalDateTime ldt) {
 		Instant instant = ldt.atZone(ZoneId.systemDefault()).toInstant();
 		return instant.toEpochMilli();
