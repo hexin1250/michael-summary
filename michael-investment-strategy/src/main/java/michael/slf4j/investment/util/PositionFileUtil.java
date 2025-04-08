@@ -17,6 +17,7 @@ public class PositionFileUtil {
 	private static final String POSITION_FILE_NAME = "C:/Users/HP/python-workspace/myproject/data/position.properties";
 	
 	public static final String DIRECTION = "direction";
+	public static final String DIRECTION_INT = "directionInt";
 	public static final String PRICE = "price";
 	public static final String POSITION_PER = "positionPer";
 	
@@ -46,6 +47,7 @@ public class PositionFileUtil {
             	return ret;
             }
             ret.put(DIRECTION, direction == 1 ? "多单" : "空单");
+            ret.put(DIRECTION_INT, direction + "");
             ret.put(PRICE, prop.getProperty(PRICE));
             ret.put(POSITION_PER, prop.getProperty(POSITION_PER));
             return ret;
