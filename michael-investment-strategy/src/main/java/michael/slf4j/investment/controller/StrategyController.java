@@ -33,27 +33,28 @@ import michael.slf4j.investment.util.PositionFileUtil;
 @RequestMapping(path = "/apps/strategy")
 public class StrategyController {
 	private static final Logger log = Logger.getLogger(StrategyController.class);
-	
+
 	private final Map<String, IStrategy> map = new HashMap<>();
 	private AtomicInteger atom = new AtomicInteger();
-	
+
 	@Autowired
 	private MockupProcess process;
-	
+
 	@Autowired
 	private LiveProcessor liveProcessor;
-	
+
 	@Autowired
 	private RealRunRepository rrRepo;
-	
+
 	@Autowired
 	private MessageService messageService;
-	
+
 	@Autowired
 	private DataResearchV2 dataResearchV2;
-	
+
 	/**
 	 * http://localhost:1702/apps/strategy/mockup?strategy=test&variety=I&startDate=2023-04-17&endDate=2023-05-25
+	 * 
 	 * @param strategy
 	 * @param variety
 	 * @param startDate
@@ -61,23 +62,23 @@ public class StrategyController {
 	 * @return
 	 */
 	@GetMapping(path = "/mockup")
-	public @ResponseBody String schedule(@RequestParam String strategy, @RequestParam String variety, @RequestParam String startDate,
-			@RequestParam String endDate) {
+	public @ResponseBody String schedule(@RequestParam String strategy, @RequestParam String variety,
+			@RequestParam String startDate, @RequestParam String endDate) {
 		LocalDate start = LocalDate.parse(startDate);
 		LocalDate end = LocalDate.parse(endDate);
 		long runId = atom.getAndIncrement();
 		log.info("Run ID:" + runId);
 		Account acc = new Account(runId, 33000D);
 		IStrategy iStrategy = map.get(strategy);
-		if(iStrategy == null) {
-			switch(strategy) {
+		if (iStrategy == null) {
+			switch (strategy) {
 			case "macd":
 				iStrategy = new MACDStrategy();
 				break;
 			case "test":
 				iStrategy = new ClassicalFutureStrategy();
 				break;
-				default:
+			default:
 			}
 			iStrategy.setMessageService(messageService);
 			map.put(strategy, iStrategy);
@@ -85,9 +86,10 @@ public class StrategyController {
 		process.backtest(runId, acc, iStrategy, start, end);
 		return "ok";
 	}
-	
+
 	/**
 	 * http://localhost:1702/apps/strategy/live?strategyName=future&className=michael.slf4j.investment.quant.backtest.ClassicalFutureStrategy&initCash=60000&type=2
+	 * 
 	 * @param strategyName
 	 * @param className
 	 * @param initCash
@@ -95,14 +97,13 @@ public class StrategyController {
 	 * @return
 	 */
 	@GetMapping(path = "/live")
-	public @ResponseBody String startLive(@RequestParam String strategyName,
-			@RequestParam String className, @RequestParam Double initCash,
-			@RequestParam int type) {
+	public @ResponseBody String startLive(@RequestParam String strategyName, @RequestParam String className,
+			@RequestParam Double initCash, @RequestParam int type) {
 		RealRun rr = rrRepo.findByName(strategyName);
-		if(rr != null) {
+		if (rr != null) {
 			return "Strategy[" + strategyName + "] already exists";
 		}
-		
+
 		rr = new RealRun();
 		rr.setName(strategyName);
 		rr.setClassName(className);
@@ -113,9 +114,10 @@ public class StrategyController {
 		liveProcessor.initStrategy(rr);
 		return "done to initialze:" + strategyName;
 	}
-	
+
 	/**
 	 * http://localhost:1702/apps/strategy/health
+	 * 
 	 * @return
 	 */
 	@GetMapping(path = "/health")
@@ -123,7 +125,7 @@ public class StrategyController {
 		log.info("get request");
 		return "ok";
 	}
-	
+
 	@GetMapping(path = "/status")
 	public @ResponseBody String status() {
 		StringBuffer sb = new StringBuffer();
@@ -131,45 +133,49 @@ public class StrategyController {
 		log.info("get request to check status[" + sb.toString() + "]");
 		return sb.toString();
 	}
-	
+
 	/**
-	 * http://localhost:1702/apps/strategy/research?full=false&isSendMessage=true
-	 * http://localhost:1702/apps/strategy/research?full=true&isSendMessage=false
 	 * http://localhost:1702/apps/strategy/research
+	 * http://localhost:1702/apps/strategy/research?security=RB2510
+	 * http://localhost:1702/apps/strategy/research?latest=true
+	 * 
 	 * @param full
 	 * @return
 	 */
 	@GetMapping(path = "/research")
-	public @ResponseBody String research(@RequestParam(name="full", required=false, defaultValue="false") boolean full,
-			@RequestParam(name="isSendMessage", required=true, defaultValue="false") boolean isSendMessage) {
-//		dataResearch.summarize(full, isSendMessage);
-		dataResearchV2.summarize();
+	public @ResponseBody String research(
+			@RequestParam(name = "security", required = false, defaultValue = "") String security,
+			@RequestParam(name = "latest", required = false, defaultValue = "false") boolean onlyLatestData) {
+		dataResearchV2.summarize(security, onlyLatestData);
 		StringBuffer sb = new StringBuffer();
 		sb.append(new Date()).append("<br>").append("research is done.");
-		log.info("get request to research");
+		log.info("Do research");
 		return sb.toString();
 	}
-	
+
 	/**
 	 * http://localhost:1702/apps/strategy/savePosition?direction=-1&price=3330&position=25
+	 * 
 	 * @param direction
 	 * @param price
 	 * @param positionPer
 	 * @return
 	 */
 	@GetMapping(path = "/savePosition")
-	public @ResponseBody String savePosition(@RequestParam(name="direction", required=false, defaultValue="0") int direction,
-			@RequestParam(name="price", required=false, defaultValue="0") int price,
-			@RequestParam(name="position", required=false, defaultValue="0") int positionPer) {
+	public @ResponseBody String savePosition(
+			@RequestParam(name = "direction", required = false, defaultValue = "0") int direction,
+			@RequestParam(name = "price", required = false, defaultValue = "0") int price,
+			@RequestParam(name = "position", required = false, defaultValue = "0") int positionPer) {
 		PositionFileUtil.savePositionData(direction, price, positionPer);
 		StringBuffer sb = new StringBuffer();
 		sb.append(new Date()).append("<br>").append("Done to save data.");
-		log.info("get request to save position data");
+		log.info("Save position data");
 		return sb.toString();
 	}
-	
+
 	/**
 	 * http://localhost:1702/apps/strategy/deepseek
+	 * 
 	 * @return
 	 */
 	@GetMapping(path = "/deepseek")
@@ -177,32 +183,34 @@ public class StrategyController {
 		log.info("get request to deepseek");
 		int ret = PythonExecutor.executePython();
 		StringBuffer sb = new StringBuffer();
-		if(ret != 0) {
+		if (ret != 0) {
 			sb.append(new Date()).append("<br>").append("Done to deepseek, but request failed, please check.");
 		}
 		sb.append(PositionFileUtil.getDeepseek());
 		return sb.toString();
 	}
-	
+
 	/**
 	 * http://localhost:1702/apps/strategy/deepseekHistory
+	 * 
 	 * @return
 	 */
 	@GetMapping(path = "/deepseekHistory")
 	public @ResponseBody String deepseekHistory() {
-		log.info("get request to deepseek");
+		log.info("Check deepseek history");
 		StringBuffer sb = new StringBuffer();
 		sb.append(PositionFileUtil.getDeepseek());
 		return sb.toString();
 	}
-	
+
 	/**
 	 * http://localhost:1702/apps/strategy/question
+	 * 
 	 * @return
 	 */
 	@GetMapping(path = "/question")
 	public @ResponseBody String question() {
-		log.info("get request to deepseek");
+		log.info("Get question");
 		StringBuffer sb = new StringBuffer();
 		sb.append(PositionFileUtil.getQuestion());
 		return sb.toString();

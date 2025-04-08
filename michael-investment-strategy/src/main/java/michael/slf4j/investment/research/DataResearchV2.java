@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
+import java.util.TreeMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
@@ -59,7 +60,7 @@ public class DataResearchV2 {
 		HEADER_MAP.put("BOLL LOWER", "BOLL(26,2) LOWER");
 		HEADER_MAP.put("BOLL MID", "BOLL(26,2) MID");
 		HEADER_MAP.put("BOLL UPPER", "BOLL(26,2) UPPER");
-		HEADER_MAP.put("EMA", "EMA(10)");
+//		HEADER_MAP.put("EMA", "EMA(10)");
 		HEADER_MAP.put("BIAS1", "BIAS(6,12,24) BIAS1");
 		HEADER_MAP.put("BIAS2", "BIAS(6,12,24) BIAS2");
 		HEADER_MAP.put("BIAS3", "BIAS(6,12,24) BIAS3");
@@ -97,10 +98,11 @@ public class DataResearchV2 {
 	MessageService messageService;
 
 	public void summarize() {
-		summarize(LocalDateTime.now());
+		summarize("", false);
 	}
 
-	public void summarize(LocalDateTime current) {
+	public void summarize(String securityStr, boolean onlyLatestData) {
+		LocalDateTime current = LocalDateTime.now();
 		Variety variety = Variety.RB;
 		Timestamp ts = TradeUtil.getTimestamp(current);
 		List<String> lastTradeDates = timeseriesRepository.getLast2TradeDate(variety.name(), FreqEnum._1MI.getValue(),
@@ -120,6 +122,9 @@ public class DataResearchV2 {
 				maxOpenInterest = openInterest;
 			}
 		}
+		if (securityStr != null && !securityStr.isBlank()) {
+			mainSecurity = securityStr;
+		}
 
 		FreqEnum freq = FreqEnum._15MI;
 		List<StringBuffer> formatList = new ArrayList<StringBuffer>();
@@ -135,45 +140,55 @@ public class DataResearchV2 {
 		 */
 		List<Timeseries> realTimeList = timeseriesRepository.getAllDataByPeriod(mainSecurity, tTradeDate,
 				freq.getValue());
-		Queue<StringBuffer> queue15M = summarizeDataByFreq(freq, current, realTimeList, 23);
+		Map<Timestamp, Timeseries> map = new TreeMap<>();
+		for (Timeseries timeseries : realTimeList) {
+			map.put(timeseries.getTradeTs(), timeseries);
+		}
+		List<Timeseries> adjustList = new ArrayList<>();
+		for (Entry<Timestamp, Timeseries> entry : map.entrySet()) {
+			adjustList.add(entry.getValue());
+		}
+		Queue<StringBuffer> queue15M = summarizeDataByFreq(freq, current, adjustList, 23);
 		queue15M.stream().forEach(currentSb -> formatList.add(currentSb));
-		
+
 		/**
 		 * 30M frequence data
 		 */
-		List<Timeseries> realTimeList30M = DataLoaderUtil.generate30TsListBy15ForRealTime(realTimeList);
+		List<Timeseries> realTimeList30M = DataLoaderUtil.generate30TsListBy15ForRealTime(adjustList);
 		Queue<StringBuffer> queue30M = summarizeDataByFreq(FreqEnum._30MI, current, realTimeList30M, 24);
 		queue30M.stream().forEach(currentSb -> formatList.add(currentSb));
-		
-		/**
-		 * 1H frequence data
-		 */
-		List<Timeseries> realTimeList60M = DataLoaderUtil.generate60TsListBy30ForBack(realTimeList30M);
-		Queue<StringBuffer> queue60M = summarizeDataByFreq(FreqEnum._1H, current, realTimeList60M, 12);
-		queue60M.stream().forEach(currentSb -> formatList.add(currentSb));
-		
-		/**
-		 * 2H frequence data
-		 */
-//		List<Timeseries> realTimeList2H = DataLoaderUtil.generate2HTsListBy30ForBack(realTimeList30M);
-//		Queue<StringBuffer> queue2H = summarizeDataByFreq(FreqEnum._2H, current, realTimeList2H, 12);
-//		queue2H.stream().forEach(currentSb -> formatList.add(currentSb));
-		
-		/**
-		 * 1D frequence data
-		 */
-		List<Timeseries> realTimeList1D = DataLoaderUtil.generate1DTsListBy30ForBack(realTimeList30M);
-		Queue<StringBuffer> queue1D = summarizeDataByFreq(FreqEnum._1D, current, realTimeList1D, 10);
-		queue1D.stream().forEach(currentSb -> formatList.add(currentSb));
-		
-		/**
-		 * 1W frequence data
-		 */
-		List<Timeseries> realTimeList1W = DataLoaderUtil.generate1WTsListBy1D(realTimeList1D);
-		Queue<StringBuffer> queue1W = summarizeDataByFreq(FreqEnum._1W, current, realTimeList1W, 10);
-		queue1W.stream().forEach(currentSb -> formatList.add(currentSb));
-		
-		generateTrail(formatList, mainSecurity, current, realTimeList.get(0), realTimeList.get(realTimeList.size() - 1));
+
+		if (!onlyLatestData) {
+			/**
+			 * 1H frequence data
+			 */
+			List<Timeseries> realTimeList60M = DataLoaderUtil.generate60TsListBy30ForBack(realTimeList30M);
+			Queue<StringBuffer> queue60M = summarizeDataByFreq(FreqEnum._1H, current, realTimeList60M, 24);
+			queue60M.stream().forEach(currentSb -> formatList.add(currentSb));
+
+			/**
+			 * 2H frequence data
+			 */
+			List<Timeseries> realTimeList2H = DataLoaderUtil.generate2HTsListBy30ForBack(realTimeList30M);
+//			Queue<StringBuffer> queue2H = summarizeDataByFreq(FreqEnum._2H, current, realTimeList2H, 12);
+//			queue2H.stream().forEach(currentSb -> formatList.add(currentSb));
+
+			/**
+			 * 1D frequence data
+			 */
+			List<Timeseries> realTimeList1D = DataLoaderUtil.generate1DTsListBy30ForBack(realTimeList30M);
+			Queue<StringBuffer> queue1D = summarizeDataByFreq(FreqEnum._1D, current, realTimeList1D, 24);
+			queue1D.stream().forEach(currentSb -> formatList.add(currentSb));
+
+			/**
+			 * 1W frequence data
+			 */
+			List<Timeseries> realTimeList1W = DataLoaderUtil.generate1WTsListBy1D(realTimeList1D);
+			Queue<StringBuffer> queue1W = summarizeDataByFreq(FreqEnum._1W, current, realTimeList1W, 16);
+			queue1W.stream().forEach(currentSb -> formatList.add(currentSb));
+
+			generateTrail(formatList, mainSecurity, current, realTimeList2H.get(realTimeList2H.size() - 1));
+		}
 
 		String fileName = "C:/Users/HP/python-workspace/myproject/data/test.txt";
 		try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName)))) {
@@ -186,7 +201,7 @@ public class DataResearchV2 {
 	}
 
 	private void generateTrail(List<StringBuffer> formatList, String mainSecurity, LocalDateTime current,
-			Timeseries firstTs, Timeseries lastTs) {
+			Timeseries lastTs) {
 		StringBuffer sb = new StringBuffer();
 		int closePrice = lastTs.getClose().intValue();
 		sb.append("现在时间是").append(TradeUtil.getTimestamp(current)).append(",").append("已经收盘,收盘点位").append(closePrice)
@@ -195,8 +210,17 @@ public class DataResearchV2 {
 		sb.append("\n");
 		Map<String, String> map = PositionFileUtil.readPositionData();
 		if (!map.isEmpty()) {
+			int v = Integer.valueOf(map.get(PositionFileUtil.PRICE));
 			sb.append("目前持有").append(map.get(PositionFileUtil.DIRECTION)).append(",");
-			sb.append("成本").append(map.get(PositionFileUtil.PRICE)).append(",");
+			sb.append("浮");
+			int direction = Integer.valueOf(map.get(PositionFileUtil.DIRECTION_INT));
+			if (direction * (closePrice - v) >= 0) {
+				sb.append("盈");
+			} else {
+				sb.append("亏");
+			}
+			sb.append(Math.abs(closePrice - v));
+			sb.append("点,");
 			sb.append("仓位").append(map.get(PositionFileUtil.POSITION_PER)).append("%").append(".");
 			sb.append("注意仓位方向");
 		} else {
@@ -205,7 +229,7 @@ public class DataResearchV2 {
 		sb.append("\n");
 		sb.append("请根据当前时间的(15M,30M,1H,1D,1W)周期的所有数据指标以及过往的趋势,分析螺纹钢期货");
 		sb.append(
-				"(OI,VOLUME,MA5,MA10,MA20,MA40,MA60,BOLL(26,2),EMA(10),BIAS(6,12,24),WR(10,6,-80,-20),ATR(15),CCI(14),MFI(14),MACD(12,26,9),KDJ(9,3,3),RSI(6,12,24)");
+				"(OI,VOLUME,MA5,MA10,MA20,MA40,MA60,BOLL(26,2),BIAS(6,12,24),WR(10,6,-80,-20),ATR(15),CCI(14),MFI(14),MACD(12,26,9),KDJ(9,3,3),RSI(6,12,24)");
 		sb.append("以及过往的趋势,分析螺纹钢期货");
 		sb.append(mainSecurity);
 		if (current.getHour() >= 23 || current.getHour() <= 8
@@ -216,9 +240,11 @@ public class DataResearchV2 {
 		} else if (current.getHour() >= 15 && current.getHour() <= 20) {
 			sb.append("下一个交易日的夜盘和日盘");
 		}
-		sb.append("的走势预演,和对应的概率,和关键价位预判.基于当前持仓指定执行策略,以及反手条件.");
+		sb.append("的走势预演,和对应的概率,和关键价位预判.基于当前持仓制定策略.");
 		sb.append("分析指标的时候,需标注对应的周期.").append("\n");
-		sb.append("注意:在分析过程中,要分析全部技术指标(请仔细检查).在结果展示中,至少包括以下几点:多周期技术面共振分析,关键价位预判,主力持仓行为解析,日内走势预演,日内交易策略");
+		sb.append("注意:在分析过程中,要分析全部技术指标(请仔细检查).在结果展示中,至少包括以下几点:多周期技术面共振分析,关键价位预判,主力持仓行为解析,日内走势预演,日内交易策略,量化指标验证矩阵(包括周期/趋势方向[用↓⬆表示]/动能强度[用★☆表示]/反转信号)");
+		sb.append("\n");
+		sb.append("数据说明:NA代表当前数据缺失");
 		sb.append("\n");
 		formatList.add(sb);
 	}
@@ -232,10 +258,7 @@ public class DataResearchV2 {
 		List<Double> volumes = new ArrayList<Double>();
 		List<StockData> dataList = new ArrayList<>();
 		Queue<StringBuffer> ret = new LinkedBlockingQueue<>();
-		int count = 0;
 		for (Timeseries ts : realTimeTsList) {
-			count++;
-			
 			opens.add(ts.getOpen().doubleValue());
 			highs.add(ts.getHigh().doubleValue());
 			lows.add(ts.getLow().doubleValue());
@@ -247,11 +270,7 @@ public class DataResearchV2 {
 			}
 			dataList.add(new StockData(ts.getOpen().doubleValue(), ts.getHigh().doubleValue(),
 					ts.getLow().doubleValue(), ts.getClose().doubleValue(), ts.getVolume().doubleValue(), preClose));
-			
-			if(count < realTimeTsList.size() - limit - 10 || ts.getOpenInterest().intValue() == 0) {
-				continue;
-			}
-			
+
 			Map<String, String> dataMap = new LinkedHashMap<String, String>();
 
 			Timestamp end = ts.getTradeTs();
@@ -267,7 +286,7 @@ public class DataResearchV2 {
 				}
 			}
 			StringBuffer timeSb = new StringBuffer();
-			if(end.compareTo(TradeUtil.getTimestamp(current)) >= 0) {
+			if (end.compareTo(TradeUtil.getTimestamp(current)) >= 0) {
 				end = TradeUtil.getTimestamp(current);
 			}
 			timeSb.append(start).append(" - ").append(end);
@@ -282,7 +301,7 @@ public class DataResearchV2 {
 			Map<String, List<Double>> mas = IndicatorUtils.calculateMA(closes);
 			for (Entry<String, List<Double>> entry : mas.entrySet()) {
 				String v = "NA";
-				if(!entry.getValue().isEmpty()) {
+				if (!entry.getValue().isEmpty()) {
 					double value = entry.getValue().get(entry.getValue().size() - 1);
 					v = nf.format(value);
 				}
@@ -292,7 +311,7 @@ public class DataResearchV2 {
 			Map<String, List<Double>> boll = IndicatorUtils.calculateBOLL(closes, 26, 2);
 			for (Entry<String, List<Double>> entry : boll.entrySet()) {
 				String v = "NA";
-				if(!entry.getValue().isEmpty()) {
+				if (!entry.getValue().isEmpty()) {
 					double value = entry.getValue().get(entry.getValue().size() - 1);
 					v = nf.format(value);
 				}
@@ -300,7 +319,7 @@ public class DataResearchV2 {
 			}
 
 			String emaV = "NA";
-			if(closes.size() >= 10) {
+			if (closes.size() >= 10) {
 				double ema10 = IndicatorUtils.calculateEMA(closes, 10);
 				emaV = nf.format(ema10);
 			}
@@ -309,7 +328,7 @@ public class DataResearchV2 {
 			Map<String, List<Double>> bias = IndicatorUtils.calculateBIAS(closes);
 			for (Entry<String, List<Double>> entry : bias.entrySet()) {
 				String v = "NA";
-				if(!entry.getValue().isEmpty()) {
+				if (!entry.getValue().isEmpty()) {
 					double value = entry.getValue().get(entry.getValue().size() - 1);
 					v = nf.format(value);
 				}
@@ -319,7 +338,7 @@ public class DataResearchV2 {
 			Map<String, List<Double>> wr = IndicatorUtils.calculateWR(highs, lows, closes);
 			for (Entry<String, List<Double>> entry : wr.entrySet()) {
 				String v = "NA";
-				if(!entry.getValue().isEmpty()) {
+				if (!entry.getValue().isEmpty()) {
 					double value = entry.getValue().get(entry.getValue().size() - 1);
 					v = nf.format(value * -1);
 				}
@@ -329,7 +348,7 @@ public class DataResearchV2 {
 			Map<String, List<Double>> atr = IndicatorUtils.calculateATR(highs, lows, closes, 15);
 			for (Entry<String, List<Double>> entry : atr.entrySet()) {
 				String v = "NA";
-				if(!entry.getValue().isEmpty()) {
+				if (!entry.getValue().isEmpty()) {
 					double value = entry.getValue().get(entry.getValue().size() - 1);
 					v = nf.format(value);
 				}
@@ -337,7 +356,7 @@ public class DataResearchV2 {
 			}
 			List<Double> cci = IndicatorUtils.calculateCCI(highs, lows, closes, 14);
 			String cciV = "NA";
-			if(!cci.isEmpty()) {
+			if (!cci.isEmpty()) {
 				cciV = nf.format(cci.get(cci.size() - 1));
 			}
 			dataMap.put("CCI", cciV);
@@ -348,7 +367,7 @@ public class DataResearchV2 {
 			String difV = "NA";
 			String deaV = "NA";
 			String macdV = "NA";
-			if(closes.size() >= 26) {
+			if (closes.size() >= 26) {
 				MACDResult macd = TechnicalIndicator.calculateMACD(closes);
 				difV = nf.format(macd.dif);
 				deaV = nf.format(macd.dea);
@@ -366,9 +385,9 @@ public class DataResearchV2 {
 			String rsiV6 = "NA";
 			String rsiV12 = "NA";
 			String rsiV24 = "NA";
-			if(dataList.size() > 24) {
+			if (dataList.size() > 24) {
 				RSIResult rsi = StockIndicatorCalculator.calculateRSI(dataList);
-				if(rsi.getRsi6() != null && rsi.getRsi12() != null && rsi.getRsi24() != null) {
+				if (rsi.getRsi6() != null && rsi.getRsi12() != null && rsi.getRsi24() != null) {
 					rsiV6 = nf.format(rsi.getRsi6());
 					rsiV12 = nf.format(rsi.getRsi12());
 					rsiV24 = nf.format(rsi.getRsi24());
@@ -384,7 +403,7 @@ public class DataResearchV2 {
 			dataSb.append("|");
 			dataSb.append('\n');
 
-			if(ret.size() == limit) {
+			if (ret.size() == limit) {
 				ret.poll();
 			}
 			ret.add(dataSb);
