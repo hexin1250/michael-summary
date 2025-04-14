@@ -1,11 +1,18 @@
 package michael.slf4j.investment.etl;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Set;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.jms.JMSException;
 
@@ -16,6 +23,7 @@ import org.springframework.stereotype.Component;
 
 import michael.slf4j.investment.configuration.FreqEnum;
 import michael.slf4j.investment.message.service.MessageService;
+import michael.slf4j.investment.model.FutureSecurityEnum;
 import michael.slf4j.investment.model.Security;
 import michael.slf4j.investment.model.Timeseries;
 import michael.slf4j.investment.model.Variety;
@@ -63,6 +71,26 @@ public class DataLoaderClient {
 	@Autowired
 	MessageService messageService;
 	
+	private Map<FutureSecurityEnum, String> mainSecurityMap = new HashMap<>();
+	private Map<FutureSecurityEnum, List<String>> securitiesMap = new HashMap<>();
+	
+	public void init() {
+		Arrays.stream(FutureSecurityEnum.values()).parallel().forEach(e -> {
+			List<String> securityList = e.getSecurities();
+			String mainSecurity = getMainSecurity(securityList);
+			mainSecurityMap.put(e, mainSecurity);
+			Iterator<String> it = securityList.iterator();
+			while(it.hasNext()) {
+				String security = it.next();
+				if(security.compareTo(mainSecurity) < 0) {
+					it.remove();
+				}
+			}
+			securitiesMap.put(e, securityList);
+		});
+		log.info("Current security list:" + securitiesMap);
+	}
+	
 	public void update1MinData() {
 		if(!TradeUtil.isTradingTime()) {
 			return;
@@ -106,10 +134,11 @@ public class DataLoaderClient {
 	}
 	
 	public void update15MinData() {
-		taskManager.subscribeSecurities();
-		futureSecurities.parallelStream().forEach(securityStr -> {
+		securitiesMap.entrySet().parallelStream().forEach(entry -> {
 			try {
-				load15MiData(securityStr);
+				for (String securityStr : entry.getValue()) {
+					load15MiData(securityStr);
+				}
 			} catch (IOException | JMSException e) {
 			}
 		});
@@ -123,9 +152,9 @@ public class DataLoaderClient {
 		for (int i = 1; i <= series.size(); i++) {
 			Timeseries ts = series.get(i - 1);
 			if(ts.getTradeTs().compareTo(new Date()) <= 0) {
-				List<Timeseries> list = timeseriesRepository.getTimeseries(securityStr, ts.getTradeDate(), ts.getTradeTs());
+				List<Timeseries> list = timeseriesRepository.getTimeseries(securityStr, ts.getTradeTs());
 				if(!list.isEmpty()) {
-					Timeseries ts1Min = list.get(list.size() - 1);
+					Timeseries ts1Min = list.get(0);
 					ts.setOpenInterest(ts1Min.getOpenInterest());
 				}
 			}
@@ -174,6 +203,72 @@ public class DataLoaderClient {
 				log.error("Error when sending message to topic", e);
 			}
 		}
+	}
+	
+	public void cleanup() {
+		Arrays.stream(FutureSecurityEnum.values()).forEach(e -> {
+			String mainSecurity = getMainSecurity(e.getSecurities());
+			log.info("Start to cleanup:" + mainSecurity);
+			String freq = FreqEnum._15MI.getValue();
+			List<Timestamp> timestampList = timeseriesRepository.getDeplicatedTS(mainSecurity, freq);
+			log.info("There are " + timestampList.size() + " to be deleted.");
+			List<Timeseries> deleteList = new ArrayList<>();
+			for (Timestamp timestamp : timestampList) {
+				List<Timeseries> tsList = timeseriesRepository.getBySecurityFreqTs(mainSecurity, freq, timestamp);
+				for (int i = 0; i < tsList.size() - 1; i++) {
+					deleteList.add(tsList.get(i));
+					if(deleteList.size() % 100 == 0) {
+						log.info("Identify " + deleteList.size() + ".");
+					}
+				}
+			}
+			log.info("Final size:" + deleteList.size());
+			timeseriesRepository.deleteAll(deleteList);
+			log.info("Complete to cleanup:" + mainSecurity);
+			
+			List<Timeseries> staledList = timeseriesRepository.getStaledData(mainSecurity, freq);
+			log.info("There are " + staledList.size() + " staled data");
+			for (Timeseries ts : staledList) {
+				List<Timeseries> min1List = timeseriesRepository.getTimeseries(mainSecurity, ts.getTradeTs());
+				ts.setOpenInterest(min1List.get(0).getOpenInterest());
+			}
+			timeseriesRepository.saveAll(staledList);
+			log.info("Complete to update staled data:" + mainSecurity);
+			
+			log.info("Correct 15Min data:" + mainSecurity);
+			Timestamp timestamp = TradeUtil.getTimestamp(LocalDateTime.now());
+			List<String> lastTradeDates = timeseriesRepository.getLast2TradeDate(e.name(), FreqEnum._1MI.getValue(), timestamp);
+			String latestTradeDate = lastTradeDates.get(0);
+			List<Timeseries> min15List = timeseriesRepository.findByTradeDateWithPeriod(mainSecurity, latestTradeDate, freq);
+			for (Timeseries ts : min15List) {
+				List<Timeseries> min1List = timeseriesRepository.getTimeseries(mainSecurity, ts.getTradeTs());
+				ts.setOpenInterest(min1List.get(0).getOpenInterest());
+			}
+			timeseriesRepository.saveAll(min15List);
+			log.info("Done to correct 15Min data:" + mainSecurity);
+		});
+	}
+	
+	private String getMainSecurity(List<String> securityList) {
+		return getMainSecurity(LocalDateTime.now(), securityList);
+	}
+	
+	private String getMainSecurity(LocalDateTime current, List<String> securityList) {
+		Timestamp ts = TradeUtil.getTimestamp(current);
+		String mainSecurity = null;
+		double maxOpenInterest = 0D;
+		for (String security : securityList) {
+			Double openInterest = timeseriesRepository.getLastOpenInterest(security, ts);
+			if (mainSecurity == null) {
+				mainSecurity = security;
+				maxOpenInterest = openInterest;
+			}
+			if (openInterest > maxOpenInterest) {
+				mainSecurity = security;
+				maxOpenInterest = openInterest;
+			}
+		}
+		return mainSecurity;
 	}
 
 }
