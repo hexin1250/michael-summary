@@ -3,12 +3,15 @@ package michael.slf4j.investment.research;
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +45,11 @@ import michael.slf4j.investment.util.TradeUtil;
 public class DataResearchV2 {
 	private static final Logger log = Logger.getLogger(DataResearchV2.class);
 	private static final Map<String, String> HEADER_MAP = new LinkedHashMap<String, String>();
+	private static final String FULL = "full";
+	private static final String MONTH = "month";
+	private static final String WEEK = "week";
+	private static final String HIGH = "high";
+	private static final String LOW = "low";
 
 	static {
 		HEADER_MAP.put("time", "时间");
@@ -98,10 +106,11 @@ public class DataResearchV2 {
 	MessageService messageService;
 
 	public void summarize() {
-		summarize("", false);
+		summarize("");
 	}
 
-	public void summarize(String securityStr, boolean onlyLatestData) {
+	public void summarize(String securityStr) {
+		log.info("Start to get new research");
 		LocalDateTime current = LocalDateTime.now();
 		Variety variety = Variety.RB;
 		Timestamp ts = TradeUtil.getTimestamp(current);
@@ -148,58 +157,122 @@ public class DataResearchV2 {
 		for (Entry<Timestamp, Timeseries> entry : map.entrySet()) {
 			adjustList.add(entry.getValue());
 		}
-		Queue<StringBuffer> queue15M = summarizeDataByFreq(freq, current, adjustList, 23);
+		Queue<StringBuffer> queue15M = summarizeDataByFreq(freq, current, adjustList, 24);
 		queue15M.stream().forEach(currentSb -> formatList.add(currentSb));
 
 		/**
 		 * 30M frequence data
 		 */
 		List<Timeseries> realTimeList30M = DataLoaderUtil.generate30TsListBy15ForRealTime(adjustList);
-		Queue<StringBuffer> queue30M = summarizeDataByFreq(FreqEnum._30MI, current, realTimeList30M, 24);
+		Queue<StringBuffer> queue30M = summarizeDataByFreq(FreqEnum._30MI, current, realTimeList30M, 12);
 		queue30M.stream().forEach(currentSb -> formatList.add(currentSb));
 
-		if (!onlyLatestData) {
-			/**
-			 * 1H frequence data
-			 */
-			List<Timeseries> realTimeList60M = DataLoaderUtil.generate60TsListBy30ForBack(realTimeList30M);
-			Queue<StringBuffer> queue60M = summarizeDataByFreq(FreqEnum._1H, current, realTimeList60M, 24);
-			queue60M.stream().forEach(currentSb -> formatList.add(currentSb));
+		/**
+		 * 1H frequence data
+		 */
+		List<Timeseries> realTimeList60M = DataLoaderUtil.generate60TsListBy30ForBack(realTimeList30M);
+		Queue<StringBuffer> queue60M = summarizeDataByFreq(FreqEnum._1H, current, realTimeList60M, 6);
+		queue60M.stream().forEach(currentSb -> formatList.add(currentSb));
 
-			/**
-			 * 2H frequence data
-			 */
-			List<Timeseries> realTimeList2H = DataLoaderUtil.generate2HTsListBy30ForBack(realTimeList30M);
-//			Queue<StringBuffer> queue2H = summarizeDataByFreq(FreqEnum._2H, current, realTimeList2H, 12);
-//			queue2H.stream().forEach(currentSb -> formatList.add(currentSb));
+		/**
+		 * 2H frequence data
+		 */
+		List<Timeseries> realTimeList2H = DataLoaderUtil.generate2HTsListBy30ForBack(realTimeList30M);
+//		Queue<StringBuffer> queue2H = summarizeDataByFreq(FreqEnum._2H, current, realTimeList2H, 12);
+//		queue2H.stream().forEach(currentSb -> formatList.add(currentSb));
 
-			/**
-			 * 1D frequence data
-			 */
-			List<Timeseries> realTimeList1D = DataLoaderUtil.generate1DTsListBy30ForBack(realTimeList30M);
-			Queue<StringBuffer> queue1D = summarizeDataByFreq(FreqEnum._1D, current, realTimeList1D, 24);
-			queue1D.stream().forEach(currentSb -> formatList.add(currentSb));
+		/**
+		 * 1D frequence data
+		 */
+		List<Timeseries> realTimeList1D = DataLoaderUtil.generate1DTsListBy30ForBack(realTimeList30M);
+		Queue<StringBuffer> queue1D = summarizeDataByFreq(FreqEnum._1D, current, realTimeList1D, 3);
+		queue1D.stream().forEach(currentSb -> formatList.add(currentSb));
 
-			/**
-			 * 1W frequence data
-			 */
-			List<Timeseries> realTimeList1W = DataLoaderUtil.generate1WTsListBy1D(realTimeList1D);
-			Queue<StringBuffer> queue1W = summarizeDataByFreq(FreqEnum._1W, current, realTimeList1W, 16);
-			queue1W.stream().forEach(currentSb -> formatList.add(currentSb));
+		/**
+		 * 1W frequence data
+		 */
+		List<Timeseries> realTimeList1W = DataLoaderUtil.generate1WTsListBy1D(realTimeList1D);
+		Queue<StringBuffer> queue1W = summarizeDataByFreq(FreqEnum._1W, current, realTimeList1W, 3);
+		queue1W.stream().forEach(currentSb -> formatList.add(currentSb));
 
-			generateTrail(formatList, mainSecurity, current, realTimeList2H.get(realTimeList2H.size() - 1));
-		}
+		generateKeyPoints(formatList, realTimeList1D);
+		generateTrail(formatList, mainSecurity, current, realTimeList2H.get(realTimeList2H.size() - 1));
 
 		String fileName = "C:/Users/HP/python-workspace/myproject/data/test.txt";
 		try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName)))) {
 			for (StringBuffer strb : formatList) {
 				bw.write(strb.toString());
+				bw.flush();
 			}
+			log.info("Latest information is generated");
 		} catch (Exception e) {
 			log.error("Error when sending message to topic", e);
 		}
 	}
+	
+	private void generateKeyPoints(List<StringBuffer> formatList, List<Timeseries> realTimeList) {
+		Timeseries lastTs = realTimeList.get(realTimeList.size() - 1);
+		String latestTradeDate = lastTs.getTradeDate();
+		LocalDate lastLd = TradeUtil.getTradeDate(latestTradeDate);
+		Map<String, Map<String, BigDecimal>> map = new HashMap<>();
+		for (int i = 0; i < realTimeList.size() - 1; i++) {
+			Timeseries ts = realTimeList.get(i);
+			updateMap(map, FULL, ts);
+			
+			String tradeDate = ts.getTradeDate();
+			LocalDate ld = TradeUtil.getTradeDate(tradeDate);
+			if(ld.plusDays(35).compareTo(lastLd) >= 0) {
+				updateMap(map, MONTH, ts);
+			}
+			if(ld.plusDays(7).compareTo(lastLd) >= 0) {
+				updateMap(map, WEEK, ts);
+			}
+		}
+		StringBuffer sb = generateKeyInfo(map);
+		formatList.add(sb);
+	}
+	
+	private StringBuffer generateKeyInfo(Map<String, Map<String, BigDecimal>> map) {
+		StringBuffer sb = new StringBuffer();
+		Map<String, BigDecimal> fullMap = map.get(FULL);
+		Map<String, BigDecimal> monthMap = map.get(MONTH);
+		Map<String, BigDecimal> weekMap = map.get(WEEK);
+		sb.append("历史最高点:").append(fullMap.get(HIGH)).append(",历史最低点:").append(fullMap.get(LOW));
+		sb.append("\n");
+		sb.append("月内最高点:").append(monthMap.get(HIGH)).append(",月内最低点:").append(monthMap.get(LOW));
+		sb.append("\n");
+		sb.append("周内最高点:").append(weekMap.get(HIGH)).append(",周内最低点:").append(weekMap.get(LOW));
+		sb.append("\n");
+		return sb;
+	}
 
+	private void updateMap(Map<String, Map<String, BigDecimal>> map, String freq, Timeseries ts) {
+		Map<String, BigDecimal> freqMap = getMap(map, freq);
+		updateMap(freqMap, ts);
+	}
+	
+	private Map<String, BigDecimal> getMap(Map<String, Map<String, BigDecimal>> map, String freq){
+		Map<String, BigDecimal> freqMap = map.get(freq);
+		if(freqMap == null) {
+			freqMap = new LinkedHashMap<String, BigDecimal>();
+			freqMap.put(HIGH, new BigDecimal(0));
+			freqMap.put(LOW, new BigDecimal("100000000000000000000"));
+			map.put(freq, freqMap);
+		}
+		return freqMap;
+	}
+	
+	private void updateMap(Map<String, BigDecimal> map, Timeseries ts) {
+		BigDecimal high = map.get(HIGH);
+		BigDecimal low = map.get(LOW);
+		if(high.compareTo(ts.getHigh()) < 0) {
+			map.put(HIGH, ts.getHigh());
+		}
+		if(low.compareTo(ts.getLow()) > 0) {
+			map.put(LOW, ts.getLow());
+		}
+	}
+	
 	private void generateTrail(List<StringBuffer> formatList, String mainSecurity, LocalDateTime current,
 			Timeseries lastTs) {
 		StringBuffer sb = new StringBuffer();
@@ -242,9 +315,13 @@ public class DataResearchV2 {
 		}
 		sb.append("的走势预演,和对应的概率,和关键价位预判.基于当前持仓制定策略.");
 		sb.append("分析指标的时候,需标注对应的周期.").append("\n");
-		sb.append("注意:在分析过程中,要分析全部技术指标(请仔细检查).在结果展示中,至少包括以下几点:多周期技术面共振分析,关键价位预判,主力持仓行为解析,日内走势预演,日内交易策略,量化指标验证矩阵(包括周期/趋势方向[用↓⬆表示]/动能强度[用★☆表示]/反转信号)");
+		sb.append("注意:在分析过程中,要分析全部技术指标(请仔细检查).在结果展示中,至少包括以下几点:多周期技术面共振分析,关键价位预判,主力持仓行为解析,日内走势预演,日内交易策略,量化指标验证矩阵(包括周期/趋势方向[用↓↑表示]/动能强度[用★☆表示]/反转信号​​)");
 		sb.append("\n");
 		sb.append("数据说明:NA代表当前数据缺失");
+		sb.append("\n");
+		sb.append("格式说明:不能出现table格式,量化指标验证矩阵用代码块的标记语法");
+		sb.append("\n");
+		sb.append("内容说明:量化指标验证矩阵一定要存在于结果中");
 		sb.append("\n");
 		formatList.add(sb);
 	}

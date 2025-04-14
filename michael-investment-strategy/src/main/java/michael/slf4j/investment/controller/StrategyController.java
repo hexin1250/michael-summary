@@ -1,5 +1,10 @@
 package michael.slf4j.investment.controller;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -11,6 +16,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,6 +34,7 @@ import michael.slf4j.investment.quant.mockup.MockupProcess;
 import michael.slf4j.investment.quant.strategy.IStrategy;
 import michael.slf4j.investment.repo.RealRunRepository;
 import michael.slf4j.investment.research.DataResearchV2;
+import michael.slf4j.investment.util.MarkdownUtil;
 import michael.slf4j.investment.util.PositionFileUtil;
 
 @Controller
@@ -144,9 +152,8 @@ public class StrategyController {
 	 */
 	@GetMapping(path = "/research")
 	public @ResponseBody String research(
-			@RequestParam(name = "security", required = false, defaultValue = "") String security,
-			@RequestParam(name = "latest", required = false, defaultValue = "false") boolean onlyLatestData) {
-		dataResearchV2.summarize(security, onlyLatestData);
+			@RequestParam(name = "security", required = false, defaultValue = "") String security) {
+		dataResearchV2.summarize(security);
 		StringBuffer sb = new StringBuffer();
 		sb.append(new Date()).append("<br>").append("research is done.");
 		log.info("Do research");
@@ -194,9 +201,38 @@ public class StrategyController {
 	 * http://localhost:1702/apps/strategy/deepseekHistory
 	 * 
 	 * @return
+	 * @throws IOException
+	 * @throws FileNotFoundException
 	 */
 	@GetMapping(path = "/deepseekHistory")
-	public @ResponseBody String deepseekHistory() {
+	public String deepseekHistory(Model model) throws Exception {
+		log.info("Check new deepseek history page");
+		File file = new File("C:/Users/HP/python-workspace/myproject/data/reason_output.txt");
+		try (InputStream is = new FileInputStream(file)) {
+			long timestamp = file.lastModified(); // 获取时间戳（毫秒）
+			Date date = new Date(timestamp);
+			StringBuffer sb = new StringBuffer();
+			sb.append("## ");
+			sb.append(date);
+			sb.append("\n");
+			byte[] a = sb.toString().getBytes();
+			byte[] b = FileCopyUtils.copyToByteArray(is);
+			byte[] bytes = new byte[a.length + b.length];
+			System.arraycopy(a, 0, bytes, 0, a.length);
+			System.arraycopy(b, 0, bytes, a.length, b.length);
+
+			String markdown = new String(bytes, "UTF-8");
+
+			// 转换为HTML
+			String htmlContent = MarkdownUtil.convertToHtml(markdown);
+			model.addAttribute("content", htmlContent);
+
+			return "markdown-page";
+		}
+	}
+
+	@GetMapping(path = "/deepseekHistoryV2")
+	public @ResponseBody String deepseekHistoryV2() {
 		log.info("Check deepseek history");
 		StringBuffer sb = new StringBuffer();
 		sb.append(PositionFileUtil.getDeepseek());
