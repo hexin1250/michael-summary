@@ -67,7 +67,19 @@ public interface TimeseriesRepository extends CrudRepository<Timeseries, Integer
 	@Query(value = "select * from timeseries where security = :security and trade_date >= :tradeDate and freq = :freq order by trade_ts asc", nativeQuery = true)
 	List<Timeseries> getDataByPeriod(@Param("security") String security, @Param("tradeDate") String tradeDate, @Param("freq") String freq);
 	
-	@Query(value = "select * from timeseries where security = :security and trade_date = :tradeDate and freq = '1MI' and trade_ts = :tradeTs order by id", nativeQuery = true)
-	List<Timeseries> getTimeseries(@Param("security") String security, @Param("tradeDate") String tradeDate, @Param("tradeTs") Timestamp tradeTs);
+	@Query(value = "select * from timeseries where security = :security and freq = '1MI' and trade_ts <= :tradeTs order by trade_ts desc limit 20", nativeQuery = true)
+	List<Timeseries> getTimeseries(@Param("security") String security, @Param("tradeTs") Timestamp tradeTs);
+	
+	@Query(value = "select * from timeseries where security = :security and freq = :freq", nativeQuery = true)
+	List<Timeseries> getTimeseriesBySecurityFreq(@Param("security") String security, @Param("freq") String freq);
+	
+	@Query(value = "select trade_ts from timeseries where security = :security and freq = :freq group by trade_ts having count(1) > 1 order by trade_ts", nativeQuery = true)
+	List<Timestamp> getDeplicatedTS(@Param("security") String security, @Param("freq") String freq);
+	
+	@Query(value = "select * from timeseries where security = :security and freq = :freq and trade_ts = :tradeTs order by id", nativeQuery = true)
+	List<Timeseries> getBySecurityFreqTs(@Param("security") String security, @Param("freq") String freq, @Param("tradeTs") Timestamp tradeTs);
+	
+	@Query(value = "select * from timeseries where security = :security and freq = :freq and open_interest > 4000000 order by id", nativeQuery = true)
+	List<Timeseries> getStaledData(@Param("security") String security, @Param("freq") String freq);
 
 }

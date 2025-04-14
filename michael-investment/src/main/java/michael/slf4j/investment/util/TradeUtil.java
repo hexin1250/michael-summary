@@ -11,6 +11,8 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 public class TradeUtil {
+	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+	
 	public static LocalTime[][] periods = new LocalTime[][] {
 		{LocalTime.of(21, 1, 0), LocalTime.of(23, 0, 0)},
 		{LocalTime.of(9, 1, 0), LocalTime.of(10, 15, 0)},
@@ -166,5 +168,21 @@ public class TradeUtil {
 		long currentTime = Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant()).getTime();
 		return new Timestamp(currentTime);
 	}
+	
+	public static String getTradeDateByLDT(LocalDateTime ldt) {
+		String tradeDate = ldt.format(formatter);
+		int hour = ldt.getHour();
+		if(hour > 20) {
+			int dw = ldt.getDayOfWeek().getValue();
+			if(dw == 5) {
+				ldt = ldt.plusDays(3);
+			} else {
+				ldt = ldt.plusDays(1);
+			}
+			tradeDate = ldt.format(DateTimeFormatter.ISO_DATE);
+		}
+		return tradeDate;
+	}
+
 
 }

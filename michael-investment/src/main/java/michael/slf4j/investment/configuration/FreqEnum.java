@@ -21,6 +21,15 @@ public enum FreqEnum {
 	public long getPeriod() {
 		return period;
 	}
+	
+	public static FreqEnum getFreq(String value) {
+		for (FreqEnum freq : values()) {
+			if(value.equals(freq.getValue())) {
+				return freq;
+			}
+		}
+		return null;
+	}
 
 	@Override
 	public String toString() {
