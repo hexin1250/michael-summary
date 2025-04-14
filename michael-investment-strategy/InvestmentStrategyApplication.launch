@@ -16,4 +16,5 @@
     <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="michael-investment-strategy"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="michael-investment-strategy"/>
     <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx2G"/>
 </launchConfiguration>
