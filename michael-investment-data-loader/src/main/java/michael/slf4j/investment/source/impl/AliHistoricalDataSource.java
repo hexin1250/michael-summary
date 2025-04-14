@@ -63,7 +63,9 @@ public class AliHistoricalDataSource implements ISource, Closeable {
 	    		.map(entry -> entry.getKey() + "=" + entry.getValue())
 	    		.collect(Collectors.joining("&"));
 		
-		HttpGet httpGet = new HttpGet("http://alirmgbft.market.alicloudapi.com/query/comkm?" + params);
+	    String url = "http://alirmgbft.market.alicloudapi.com/query/comkm?" + params;
+		HttpGet httpGet = new HttpGet(url);
+//		log.info("Current URL:" + url);
 		Map<String, String> headers = new HashMap<String, String>();
 	    //最后在header中的格式(中间是英文空格)为Authorization:APPCODE 83359fd73fe94948385f570e3c139105
 	    headers.put("Authorization", "APPCODE dbf34af5855347bd81e71d077d932522");

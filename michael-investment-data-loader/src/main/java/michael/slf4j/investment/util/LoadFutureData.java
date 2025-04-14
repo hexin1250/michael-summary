@@ -16,7 +16,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,7 +28,6 @@ import java.util.regex.Pattern;
 public class LoadFutureData {
 	private static final Pattern pattern = Pattern.compile("(.*)([\\s]+INFO[\\s]+)");
 	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-	private static final SimpleDateFormat dateSdf = new SimpleDateFormat("yyyy-MM-dd");
 	private static final String SQL_TEMPLATE = "insert into timeseries(security,security_name,open,high,low,close,up_limit,down_limit,volume,freq,trade_date,trade_ts,variety,open_interest) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 	public static void main(String[] args)
@@ -60,18 +58,8 @@ public class LoadFutureData {
 								if (m.matches()) {
 									String tradeTs = m.group(1);
 									Date date = sdf.parse(tradeTs);
-									LocalDateTime ld = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-									String tradeDate = dateSdf.format(date);
-									int hour = ld.getHour();
-									if(hour > 20) {
-										int dw = ld.getDayOfWeek().getValue();
-										if(dw == 5) {
-											ld = ld.plusDays(3);
-										} else {
-											ld = ld.plusDays(1);
-										}
-										tradeDate = ld.format(DateTimeFormatter.ISO_DATE);
-									}
+									LocalDateTime ldt = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+									String tradeDate = TradeUtil.getTradeDateByLDT(ldt);
 									Map<String, TimeseriesModel> tdMap = tradeMap.get(tradeDate);
 									if(tdMap == null) {
 										if(!tradeDates.contains(tradeDate)) {

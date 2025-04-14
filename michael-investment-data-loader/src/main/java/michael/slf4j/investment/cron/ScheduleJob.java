@@ -40,6 +40,7 @@ public class ScheduleJob {
 	@Scheduled(cron = "${end-schedule1}")
 	public void endNightSchedule() {
 		log.info("[End Night] Done.");
+    	dataLoaderClient.cleanup();
 	}
 	
 	@Scheduled(cron = "${start-schedule2}")
@@ -51,6 +52,7 @@ public class ScheduleJob {
 	@Scheduled(cron = "${end-schedule2}")
 	public void endDaySchedule1() {
 		log.info("[End 10:15] Done.");
+		dataLoaderClient.cleanup();
 	}
 	
 	@Scheduled(cron = "${start-schedule3}")
@@ -62,6 +64,7 @@ public class ScheduleJob {
 	@Scheduled(cron = "${end-schedule3}")
 	public void endDaySchedule2() {
 		log.info("[End 11:30] Done.");
+		dataLoaderClient.cleanup();
 	}
 	
 	@Scheduled(cron = "${start-schedule4}")
@@ -73,6 +76,7 @@ public class ScheduleJob {
 	@Scheduled(cron = "${end-schedule4}")
 	public void endDaySchedule3() {
 		log.info("[End 15:00] Done.");
+		dataLoaderClient.cleanup();
 	}
 	
 	@Scheduled(cron = "${update-minute}")

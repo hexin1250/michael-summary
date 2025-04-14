@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.etl.DataLoaderClient;
 import michael.slf4j.investment.taskmanager.TaskManager;
+import michael.slf4j.investment.util.LoadFreqFutureData;
 import michael.slf4j.investment.util.TradeUtil;
 
 @Component
@@ -21,16 +22,25 @@ public class InitRunner implements CommandLineRunner {
 	@Autowired
 	private DataLoaderClient dataLoaderClient;
 	
-   @Override
+	@Autowired
+	private LoadFreqFutureData loader;
+	
+	@Override
     public void run(String... args) throws Exception {
+//		log.info("Start loading data...");
+//		loader.loadFreqData();
+//		log.info("Done to load data");
+		
     	log.info("Initializing...");
     	taskManager.subscribeSecurities();
+    	dataLoaderClient.init();
     	if(TradeUtil.isTradingTime()) {
 			dataLoaderClient.init15MinData();
 			dataLoaderClient.init30MinData();
     	}
-//    	dataLoaderClient.load15MiData("RB2505");
-//    	dataLoaderClient.reload("RB2505");
+//    	dataLoaderClient.load15MiData("RB2510");
+//    	dataLoaderClient.reload("RB2510");
     	log.info("Done to initialize resources.");
+    	dataLoaderClient.cleanup();
     }
 }
