@@ -73,7 +73,7 @@ public class AdvancedLoader {
 				try {
 					String variety = varietyDir.getName();
 					Set<String> tradeDates = getTradeDates(conn, variety);
-					Arrays.stream(varietyDir.listFiles()).parallel().forEach(file -> {
+					Arrays.stream(varietyDir.listFiles()).parallel().filter(file -> !file.isDirectory()).forEach(file -> {
 						Map<String, Map<String, List<TimeseriesModel>>> map = new ConcurrentHashMap<>();
 						System.out.println("Start to read file[" + file.getName() + "].");
 						String line = null;

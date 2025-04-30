@@ -86,6 +86,7 @@ public class DataLoaderClient {
 					it.remove();
 				}
 			}
+			Collections.sort(securityList);
 			securitiesMap.put(e, securityList);
 		});
 		log.info("Current security list:" + securitiesMap);
