@@ -68,7 +68,6 @@ public class DataResearchV2 {
 		HEADER_MAP.put("BOLL LOWER", "BOLL(26,2) LOWER");
 		HEADER_MAP.put("BOLL MID", "BOLL(26,2) MID");
 		HEADER_MAP.put("BOLL UPPER", "BOLL(26,2) UPPER");
-//		HEADER_MAP.put("EMA", "EMA(10)");
 		HEADER_MAP.put("BIAS1", "BIAS(6,12,24) BIAS1");
 		HEADER_MAP.put("BIAS2", "BIAS(6,12,24) BIAS2");
 		HEADER_MAP.put("BIAS3", "BIAS(6,12,24) BIAS3");
@@ -315,7 +314,7 @@ public class DataResearchV2 {
 		}
 		sb.append("的走势预演,和对应的概率,和关键价位预判.基于当前持仓制定策略.");
 		sb.append("分析指标的时候,需标注对应的周期.").append("\n");
-		sb.append("注意:在分析过程中,要分析全部技术指标(请仔细检查).在结果展示中,至少包括以下几点:多周期技术面共振分析,关键价位预判,主力持仓行为解析,日内走势预演,日内交易策略,量化指标验证矩阵(包括周期/趋势方向[用↓↑表示]/动能强度[用★☆表示]/反转信号​​)");
+		sb.append("注意:在分析过程中,要分析全部技术指标(请仔细检查).在结果展示中,至少包括以下几点:多周期技术面共振分析,关键价位预判,主力持仓行为解析,日内走势预演,日内交易策略,量化指标验证矩阵(包括周期/趋势方向[用↓↑表示]/动能强度[用★☆表示]/反转信号​​),多空争夺点位");
 		sb.append("\n");
 		sb.append("数据说明:NA代表当前数据缺失");
 		sb.append("\n");
