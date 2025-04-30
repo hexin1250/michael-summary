@@ -209,7 +209,7 @@ public class DataResearchV2 {
 			log.error("Error when sending message to topic", e);
 		}
 	}
-	
+
 	private void generateKeyPoints(List<StringBuffer> formatList, List<Timeseries> realTimeList) {
 		Timeseries lastTs = realTimeList.get(realTimeList.size() - 1);
 		String latestTradeDate = lastTs.getTradeDate();
