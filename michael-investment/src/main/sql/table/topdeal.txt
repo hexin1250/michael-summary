@@ -1,0 +1,15 @@
+/*
+drop table top_deal;
+*/
+
+create table top_deal (
+	id Bigint NOT NULL AUTO_INCREMENT,
+	variety varchar(10) NOT NULL,
+	security varchar(20) NOT NULL,
+	trade_date varchar(10) NOT null,
+	top int NOT NULL,
+	client varchar(20) NOT NULL,
+	volume int NOT NULL,
+	type varchar(20) NOT NULL,
+	PRIMARY KEY (id)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
