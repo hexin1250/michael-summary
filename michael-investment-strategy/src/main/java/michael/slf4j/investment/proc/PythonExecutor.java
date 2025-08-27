@@ -19,6 +19,11 @@ public class PythonExecutor {
 	 * @return 执行结果（0为成功，非0为失败）
 	 */
 	public static int executePython() {
+		log.info("Waiting 10 seconds...");
+		try {
+			Thread.sleep(10000);
+		} catch (InterruptedException e) {
+		}
 		log.info("Start Deepseek");
 		
 		String pythonPath = "C:\\Program Files\\Python310\\python.exe"; // 或指定完整路径如 "/usr/bin/python3"

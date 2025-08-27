@@ -80,7 +80,11 @@ public class LiveProcessor {
 			Variety variety = Variety.of(rrt.getVariety());
 			Security security = new Security(rrt.getSecurity(), variety);
 			DirectionEnum direction = DirectionEnum.of(rrt.getDirection());
-			acc.deal(security, direction, rrt.getDealPrice().doubleValue(), rrt.getDealCount(), rrt.getTradeDate(), rrt.getTradeTs());
+			try {
+				acc.deal(security, direction, rrt.getDealPrice().doubleValue(), rrt.getDealCount(), rrt.getTradeDate(), rrt.getTradeTs());
+			} catch(RuntimeException e) {
+				throw new RuntimeException("Run:" + runId + ", Txn:" + rrt.getId(), e);
+			}
 		});
 		acc.setPersistent(true);
 		/**

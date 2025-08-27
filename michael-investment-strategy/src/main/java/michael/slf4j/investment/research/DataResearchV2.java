@@ -13,23 +13,29 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import michael.slf4j.investment.configuration.FreqEnum;
 import michael.slf4j.investment.message.service.MessageService;
 import michael.slf4j.investment.model.Timeseries;
+import michael.slf4j.investment.model.TopDeal;
 import michael.slf4j.investment.model.Variety;
 import michael.slf4j.investment.repo.TimeseriesRepository;
+import michael.slf4j.investment.repo.TopDealRepository;
+import michael.slf4j.investment.service.FileService;
 import michael.slf4j.investment.util.DataLoaderUtil;
 import michael.slf4j.investment.util.IndicatorUtils;
 import michael.slf4j.investment.util.PositionFileUtil;
@@ -44,7 +50,7 @@ import michael.slf4j.investment.util.TradeUtil;
 @Component("dataResearchV2")
 public class DataResearchV2 {
 	private static final Logger log = Logger.getLogger(DataResearchV2.class);
-	private static final Map<String, String> HEADER_MAP = new LinkedHashMap<String, String>();
+	private static final Map<String, String> HEADER_MAP = new LinkedHashMap<>();
 	private static final String FULL = "full";
 	private static final String MONTH = "month";
 	private static final String WEEK = "week";
@@ -86,9 +92,23 @@ public class DataResearchV2 {
 		HEADER_MAP.put("RSI1", "RSI(6,12,24) RSI1");
 		HEADER_MAP.put("RSI2", "RSI(6,12,24) RSI2");
 		HEADER_MAP.put("RSI3", "RSI(6,12,24) RSI3");
-
 	}
 
+	@Autowired
+	private TimeseriesRepository timeseriesRepository;
+
+	@Autowired
+	private TopDealRepository topDealRepo;
+
+	@Autowired
+	MessageService messageService;
+	
+	@Value("${chat.history.folder}")
+	private String folderName;
+	
+	@Autowired
+	private FileService fileService;
+	
 	private NumberFormat nf;
 
 	public DataResearchV2() {
@@ -98,11 +118,6 @@ public class DataResearchV2 {
 		nf.setGroupingUsed(false);
 	}
 
-	@Autowired
-	private TimeseriesRepository timeseriesRepository;
-
-	@Autowired
-	MessageService messageService;
 
 	public void summarize() {
 		summarize("");
@@ -113,7 +128,7 @@ public class DataResearchV2 {
 		LocalDateTime current = LocalDateTime.now();
 		Variety variety = Variety.RB;
 		Timestamp ts = TradeUtil.getTimestamp(current);
-		List<String> lastTradeDates = timeseriesRepository.getLast2TradeDate(variety.name(), FreqEnum._1MI.getValue(),
+		List<String> lastTradeDates = timeseriesRepository.getLast5TradeDate(variety.name(), FreqEnum._1MI.getValue(),
 				ts);
 		String tTradeDate = lastTradeDates.get(0);
 		List<String> securityList = timeseriesRepository.getSecurityList(variety.name(), lastTradeDates.get(0));
@@ -134,9 +149,13 @@ public class DataResearchV2 {
 			mainSecurity = securityStr;
 		}
 
-		FreqEnum freq = FreqEnum._15MI;
 		List<StringBuffer> formatList = new ArrayList<StringBuffer>();
+		generateTopDeal(current, formatList, variety, mainSecurity, lastTradeDates);
+
+		FreqEnum freq = FreqEnum._15MI;
 		StringBuffer sb = new StringBuffer();
+		sb.append("下面表格包括了不同周期指标的数据:");
+		sb.append("\n");
 		sb.append("|");
 		sb.append(HEADER_MAP.values().stream().collect(Collectors.joining("|")));
 		sb.append("|");
@@ -163,15 +182,13 @@ public class DataResearchV2 {
 		 * 30M frequence data
 		 */
 		List<Timeseries> realTimeList30M = DataLoaderUtil.generate30TsListBy15ForRealTime(adjustList);
-		Queue<StringBuffer> queue30M = summarizeDataByFreq(FreqEnum._30MI, current, realTimeList30M, 12);
-		queue30M.stream().forEach(currentSb -> formatList.add(currentSb));
+		Queue<StringBuffer> queue30M = summarizeDataByFreq(FreqEnum._30MI, current, realTimeList30M, 13);
 
 		/**
 		 * 1H frequence data
 		 */
 		List<Timeseries> realTimeList60M = DataLoaderUtil.generate60TsListBy30ForBack(realTimeList30M);
 		Queue<StringBuffer> queue60M = summarizeDataByFreq(FreqEnum._1H, current, realTimeList60M, 6);
-		queue60M.stream().forEach(currentSb -> formatList.add(currentSb));
 
 		/**
 		 * 2H frequence data
@@ -183,29 +200,114 @@ public class DataResearchV2 {
 		/**
 		 * 1D frequence data
 		 */
+//		List<Timeseries> realTimeList1D = timeseriesRepository.getAllDataByPeriod(mainSecurity, tTradeDate,
+//				FreqEnum._1D.getValue());
 		List<Timeseries> realTimeList1D = DataLoaderUtil.generate1DTsListBy30ForBack(realTimeList30M);
-		Queue<StringBuffer> queue1D = summarizeDataByFreq(FreqEnum._1D, current, realTimeList1D, 3);
-		queue1D.stream().forEach(currentSb -> formatList.add(currentSb));
+		List<Timeseries> realTimeList1DAdj = adjust(realTimeList1D);
+		Queue<StringBuffer> queue1D = summarizeDataByFreq(FreqEnum._1D, current, realTimeList1DAdj, 20);
 
 		/**
 		 * 1W frequence data
 		 */
 		List<Timeseries> realTimeList1W = DataLoaderUtil.generate1WTsListBy1D(realTimeList1D);
-		Queue<StringBuffer> queue1W = summarizeDataByFreq(FreqEnum._1W, current, realTimeList1W, 3);
-		queue1W.stream().forEach(currentSb -> formatList.add(currentSb));
+		Queue<StringBuffer> queue1W = summarizeDataByFreq(FreqEnum._1W, current, realTimeList1W, 4);
+
+		if (!TradeUtil.isTradingTime()) {
+			queue30M.stream().forEach(currentSb -> formatList.add(currentSb));
+			queue60M.stream().forEach(currentSb -> formatList.add(currentSb));
+			queue1D.stream().forEach(currentSb -> formatList.add(currentSb));
+			queue1W.stream().forEach(currentSb -> formatList.add(currentSb));
+		}
 
 		generateKeyPoints(formatList, realTimeList1D);
 		generateTrail(formatList, mainSecurity, current, realTimeList2H.get(realTimeList2H.size() - 1));
 
-		String fileName = "C:/Users/HP/python-workspace/myproject/data/test.txt";
+		String fileName = folderName + "/" + tTradeDate + ".question.txt";
 		try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName)))) {
 			for (StringBuffer strb : formatList) {
 				bw.write(strb.toString());
 				bw.flush();
 			}
 			log.info("Latest information is generated");
+			fileService.getFileStatus();
 		} catch (Exception e) {
 			log.error("Error when sending message to topic", e);
+		}
+	}
+
+	private List<Timeseries> adjust(List<Timeseries> list) {
+		List<Timeseries> ret = new ArrayList<>();
+		int size = list.size();
+		Timeseries prev = list.get(0);
+		int direction = 0;
+		ret.add(prev);
+		for (int i = 1; i < size; i++) {
+			Timeseries ts = list.get(i);
+			if(size - i <= 5) {
+				ret.add(ts);
+				continue;
+			}
+			int currentDir = ts.getClose().compareTo(prev.getClose());
+			if(direction == 0 || currentDir == 0) {
+				direction = currentDir;
+			} else if(direction * currentDir < 0) {
+				direction = currentDir;
+				ret.add(prev);
+			}
+			prev = ts;
+		}
+		return ret;
+	}
+
+	private void generateTopDeal(LocalDateTime current, List<StringBuffer> formatList, Variety variety,
+			String mainSecurity, List<String> lastTradeDates) {
+		int hour = current.getHour();
+		if(hour < 15 || hour > 21) {
+			return;
+		}
+		List<TopDeal> topDeals = topDealRepo.findSecuritiesBySecurities(mainSecurity, lastTradeDates);
+		Map<String, Map<String, Map<String, Integer>>> map = new HashMap<>();
+		Set<String> set = new LinkedHashSet<>();
+		for (TopDeal topDeal : topDeals) {
+			String tradeDate = topDeal.getTradeDate();
+			if (set.size() == 2 && !set.contains(tradeDate)) {
+				continue;
+			}
+			String type = topDeal.getType();
+			Map<String, Map<String, Integer>> typeMap = map.get(type);
+			if (typeMap == null) {
+				typeMap = new LinkedHashMap<>();
+				map.put(type, typeMap);
+			}
+			String client = topDeal.getClient();
+			Map<String, Integer> clientMap = typeMap.get(client);
+			if (clientMap == null) {
+				clientMap = new HashMap<>();
+				typeMap.put(client, clientMap);
+			}
+			clientMap.put(tradeDate, topDeal.getVolume());
+			set.add(tradeDate);
+		}
+
+		for (Entry<String, Map<String, Map<String, Integer>>> mapEntry : map.entrySet()) {
+			String type = mapEntry.getKey();
+			Map<String, Map<String, Integer>> typeMap = mapEntry.getValue();
+			StringBuffer sb = new StringBuffer();
+			sb.append("下面的表格包括机构近几日").append(type).append("龙虎榜的变化情况(第一行为header):");
+			sb.append("\n");
+			sb.append("|").append("机构").append("|");
+			set.stream().forEach(tradeDate -> sb.append(tradeDate).append("|"));
+			sb.append("\n");
+
+			for (Entry<String, Map<String, Integer>> clientEntry : typeMap.entrySet()) {
+				String client = clientEntry.getKey();
+				Map<String, Integer> tradeDateMap = clientEntry.getValue();
+				sb.append("|").append(client).append("|");
+				set.stream().forEach(tradeDate -> sb.append(tradeDateMap.get(tradeDate)).append("|"));
+				sb.append("\n");
+			}
+			sb.append("\n");
+			formatList.add(sb);
 		}
 	}
 
@@ -217,25 +319,26 @@ public class DataResearchV2 {
 		for (int i = 0; i < realTimeList.size() - 1; i++) {
 			Timeseries ts = realTimeList.get(i);
 			updateMap(map, FULL, ts);
-			
+
 			String tradeDate = ts.getTradeDate();
 			LocalDate ld = TradeUtil.getTradeDate(tradeDate);
-			if(ld.plusDays(35).compareTo(lastLd) >= 0) {
+			if (ld.plusDays(35).compareTo(lastLd) >= 0) {
 				updateMap(map, MONTH, ts);
 			}
-			if(ld.plusDays(7).compareTo(lastLd) >= 0) {
+			if (ld.plusDays(7).compareTo(lastLd) >= 0) {
 				updateMap(map, WEEK, ts);
 			}
 		}
 		StringBuffer sb = generateKeyInfo(map);
 		formatList.add(sb);
 	}
-	
+
 	private StringBuffer generateKeyInfo(Map<String, Map<String, BigDecimal>> map) {
 		StringBuffer sb = new StringBuffer();
 		Map<String, BigDecimal> fullMap = map.get(FULL);
 		Map<String, BigDecimal> monthMap = map.get(MONTH);
 		Map<String, BigDecimal> weekMap = map.get(WEEK);
+		sb.append("\n");
 		sb.append("历史最高点:").append(fullMap.get(HIGH)).append(",历史最低点:").append(fullMap.get(LOW));
 		sb.append("\n");
 		sb.append("月内最高点:").append(monthMap.get(HIGH)).append(",月内最低点:").append(monthMap.get(LOW));
@@ -249,10 +352,10 @@ public class DataResearchV2 {
 		Map<String, BigDecimal> freqMap = getMap(map, freq);
 		updateMap(freqMap, ts);
 	}
-	
-	private Map<String, BigDecimal> getMap(Map<String, Map<String, BigDecimal>> map, String freq){
+
+	private Map<String, BigDecimal> getMap(Map<String, Map<String, BigDecimal>> map, String freq) {
 		Map<String, BigDecimal> freqMap = map.get(freq);
-		if(freqMap == null) {
+		if (freqMap == null) {
 			freqMap = new LinkedHashMap<String, BigDecimal>();
 			freqMap.put(HIGH, new BigDecimal(0));
 			freqMap.put(LOW, new BigDecimal("100000000000000000000"));
@@ -260,46 +363,40 @@ public class DataResearchV2 {
 		}
 		return freqMap;
 	}
-	
+
 	private void updateMap(Map<String, BigDecimal> map, Timeseries ts) {
 		BigDecimal high = map.get(HIGH);
 		BigDecimal low = map.get(LOW);
-		if(high.compareTo(ts.getHigh()) < 0) {
+		if (high.compareTo(ts.getHigh()) < 0) {
 			map.put(HIGH, ts.getHigh());
 		}
-		if(low.compareTo(ts.getLow()) > 0) {
+		if (low.compareTo(ts.getLow()) > 0) {
 			map.put(LOW, ts.getLow());
 		}
 	}
-	
+
 	private void generateTrail(List<StringBuffer> formatList, String mainSecurity, LocalDateTime current,
 			Timeseries lastTs) {
 		StringBuffer sb = new StringBuffer();
 		int closePrice = lastTs.getClose().intValue();
-		sb.append("现在时间是").append(TradeUtil.getTimestamp(current)).append(",").append("已经收盘,收盘点位").append(closePrice)
-				.append("\n");
-		sb.append("当前文本中包括了不同周期指标的数据.");
+		sb.append("现在时间是").append(TradeUtil.getTimestamp(current)).append(",").append("已经收盘,收盘点位").append(closePrice);
 		sb.append("\n");
+		sb.append("目前处于移仓换月期\n");
 		Map<String, String> map = PositionFileUtil.readPositionData();
 		if (!map.isEmpty()) {
 			int v = Integer.valueOf(map.get(PositionFileUtil.PRICE));
 			sb.append("目前持有").append(map.get(PositionFileUtil.DIRECTION)).append(",");
-			sb.append("浮");
-			int direction = Integer.valueOf(map.get(PositionFileUtil.DIRECTION_INT));
-			if (direction * (closePrice - v) >= 0) {
-				sb.append("盈");
-			} else {
-				sb.append("亏");
-			}
-			sb.append(Math.abs(closePrice - v));
-			sb.append("点,");
+			sb.append("开仓价").append(v).append(",");
 			sb.append("仓位").append(map.get(PositionFileUtil.POSITION_PER)).append("%").append(".");
-			sb.append("注意仓位方向");
 		} else {
 			sb.append("目前空仓");
 		}
 		sb.append("\n");
-		sb.append("请根据当前时间的(15M,30M,1H,1D,1W)周期的所有数据指标以及过往的趋势,分析螺纹钢期货");
+		if (!TradeUtil.isTradingTime()) {
+			sb.append("请根据当前时间的(15M,30M,1H,1D,1W)周期的所有数据指标以及过往的趋势,分析螺纹钢期货");
+		} else {
+			sb.append("请根据当前时间的(15M)周期的所有数据指标以及过往的趋势,分析螺纹钢期货");
+		}
 		sb.append(
 				"(OI,VOLUME,MA5,MA10,MA20,MA40,MA60,BOLL(26,2),BIAS(6,12,24),WR(10,6,-80,-20),ATR(15),CCI(14),MFI(14),MACD(12,26,9),KDJ(9,3,3),RSI(6,12,24)");
 		sb.append("以及过往的趋势,分析螺纹钢期货");
@@ -308,19 +405,21 @@ public class DataResearchV2 {
 				|| (current.getDayOfWeek() == DayOfWeek.SATURDAY || current.getDayOfWeek() == DayOfWeek.SUNDAY)) {
 			sb.append("日盘");
 		} else if (current.getHour() >= 9 && current.getHour() <= 12) {
-			sb.append("下午日盘");
+			sb.append("剩余日盘");
 		} else if (current.getHour() >= 15 && current.getHour() <= 20) {
 			sb.append("下一个交易日的夜盘和日盘");
 		}
 		sb.append("的走势预演,和对应的概率,和关键价位预判.基于当前持仓制定策略.");
 		sb.append("分析指标的时候,需标注对应的周期.").append("\n");
-		sb.append("注意:在分析过程中,要分析全部技术指标(请仔细检查).在结果展示中,至少包括以下几点:多周期技术面共振分析,关键价位预判,主力持仓行为解析,日内走势预演,日内交易策略,量化指标验证矩阵(包括周期/趋势方向[用↓↑表示]/动能强度[用★☆表示]/反转信号​​),多空争夺点位");
+//		sb.append("注意:在分析过程中,要分析全部技术指标(请仔细检查).在结果展示中,至少包括以下几点:多周期技术面共振分析,日线级别趋势分析,关键价位预判,主力持仓行为解析,日内走势预演,日内交易策略,量化指标验证矩阵(包括周期/趋势方向[用↓↑表示]/动能强度[用★☆表示]/反转信号​​),多空争夺点位");
+		sb.append(
+				"注意:在分析过程中,要分析全部技术指标(请仔细检查).在结果展示中,至少包括以下几点:日线级别顶底分析(双顶底,多顶底),多空争夺点位,主力持仓行为解析,日内走势预演,周内基于点位的交易策略");
 		sb.append("\n");
 		sb.append("数据说明:NA代表当前数据缺失");
 		sb.append("\n");
-		sb.append("格式说明:不能出现table格式,量化指标验证矩阵用代码块的标记语法");
+		sb.append("格式说明:不能出现table格式");
 		sb.append("\n");
-		sb.append("内容说明:量化指标验证矩阵一定要存在于结果中");
+		sb.append("交易时间说明:夜盘21:00-23:00,日盘9:00-10:15,10:30-11:30,13:30-15:00");
 		sb.append("\n");
 		formatList.add(sb);
 	}
@@ -482,7 +581,11 @@ public class DataResearchV2 {
 			if (ret.size() == limit) {
 				ret.poll();
 			}
-			ret.add(dataSb);
+			LocalDateTime currentLDT = TradeUtil.getLocalDateTime(ts.getTradeTs());
+			if ((TradeUtil.isTradingTime() && freq == FreqEnum._15MI && current.minusMinutes(150).isBefore(currentLDT))
+					|| !TradeUtil.isTradingTime()) {
+				ret.add(dataSb);
+			}
 		}
 		return ret;
 	}

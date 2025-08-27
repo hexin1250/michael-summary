@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,24 +54,8 @@ public class PositionFileUtil {
         	return ret;
         }
 	}
-	
-	public static StringBuffer getDeepseek() {
-		String fileName = "C:/Users/HP/python-workspace/myproject/data/reason_output.txt";
-		File file = new File(fileName);
-        long timestamp = file.lastModified(); // 获取时间戳（毫秒）
-        Date date = new Date(timestamp);
-		StringBuffer sb = new StringBuffer();
-		sb.append("<br>").append(date);
-		sb.append(readFile(fileName));
-		return sb;
-	}
-	
-	public static StringBuffer getQuestion() {
-		String fileName = "C:/Users/HP/python-workspace/myproject/data/test.txt";
-		return readFile(fileName);
-	}
 
-	private static StringBuffer readFile(String fileName) {
+	public static StringBuffer readFile(String fileName) {
 		StringBuffer sb = new StringBuffer();
 		try {
 			List<String> list = getAllLines(fileName);

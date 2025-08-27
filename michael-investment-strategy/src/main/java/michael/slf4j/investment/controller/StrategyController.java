@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.FileCopyUtils;
@@ -26,7 +27,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import michael.slf4j.investment.message.service.MessageService;
 import michael.slf4j.investment.model.Account;
 import michael.slf4j.investment.model.RealRun;
-import michael.slf4j.investment.proc.PythonExecutor;
 import michael.slf4j.investment.quant.backtest.ClassicalFutureStrategy;
 import michael.slf4j.investment.quant.backtest.MACDStrategy;
 import michael.slf4j.investment.quant.live.LiveProcessor;
@@ -34,6 +34,8 @@ import michael.slf4j.investment.quant.mockup.MockupProcess;
 import michael.slf4j.investment.quant.strategy.IStrategy;
 import michael.slf4j.investment.repo.RealRunRepository;
 import michael.slf4j.investment.research.DataResearchV2;
+import michael.slf4j.investment.service.FileService;
+import michael.slf4j.investment.service.StatelessChatService;
 import michael.slf4j.investment.util.MarkdownUtil;
 import michael.slf4j.investment.util.PositionFileUtil;
 
@@ -44,6 +46,9 @@ public class StrategyController {
 
 	private final Map<String, IStrategy> map = new HashMap<>();
 	private AtomicInteger atom = new AtomicInteger();
+	
+	@Value("${chat.history.folder}")
+	private String folderName;
 
 	@Autowired
 	private MockupProcess process;
@@ -59,6 +64,12 @@ public class StrategyController {
 
 	@Autowired
 	private DataResearchV2 dataResearchV2;
+	
+	@Autowired
+	private StatelessChatService statelessChatService;
+	
+	@Autowired
+	private FileService fileService;
 
 	/**
 	 * http://localhost:1702/apps/strategy/mockup?strategy=test&variety=I&startDate=2023-04-17&endDate=2023-05-25
@@ -184,17 +195,15 @@ public class StrategyController {
 	 * http://localhost:1702/apps/strategy/deepseek
 	 * 
 	 * @return
+	 * @throws IOException 
+	 * @throws FileNotFoundException 
 	 */
 	@GetMapping(path = "/deepseek")
-	public @ResponseBody String deepseek() {
+	public @ResponseBody String deepseek() throws FileNotFoundException, IOException {
 		log.info("get request to deepseek");
-		int ret = PythonExecutor.executePython();
-		StringBuffer sb = new StringBuffer();
-		if (ret != 0) {
-			sb.append(new Date()).append("<br>").append("Done to deepseek, but request failed, please check.");
-		}
-		sb.append(PositionFileUtil.getDeepseek());
-		return sb.toString();
+		statelessChatService.doResearch();
+		log.info("Done to get response from deepseek");
+		return "ok";
 	}
 
 	/**
@@ -207,7 +216,7 @@ public class StrategyController {
 	@GetMapping(path = "/deepseekHistory")
 	public String deepseekHistory(Model model) throws Exception {
 		log.info("Check new deepseek history page");
-		File file = new File("C:/Users/HP/python-workspace/myproject/data/reason_output.txt");
+		File file = new File(fileService.getAnswerFileName());
 		try (InputStream is = new FileInputStream(file)) {
 			long timestamp = file.lastModified(); // 获取时间戳（毫秒）
 			Date date = new Date(timestamp);
@@ -231,14 +240,6 @@ public class StrategyController {
 		}
 	}
 
-	@GetMapping(path = "/deepseekHistoryV2")
-	public @ResponseBody String deepseekHistoryV2() {
-		log.info("Check deepseek history");
-		StringBuffer sb = new StringBuffer();
-		sb.append(PositionFileUtil.getDeepseek());
-		return sb.toString();
-	}
-
 	/**
 	 * http://localhost:1702/apps/strategy/question
 	 * 
@@ -248,8 +249,36 @@ public class StrategyController {
 	public @ResponseBody String question() {
 		log.info("Get question");
 		StringBuffer sb = new StringBuffer();
-		sb.append(PositionFileUtil.getQuestion());
+		sb.append(PositionFileUtil.readFile(fileService.getQuestionFileName()));
 		return sb.toString();
+	}
+	
+	/**
+	 * http://localhost:1702/apps/strategy/convert
+	 * 
+	 * @return
+	 * @throws IOException 
+	 */
+	@GetMapping(path = "/convert")
+	public String convert(Model model) throws IOException {
+		log.info("Converting...");
+		File file = new File("C:/Users/HP/python-workspace/myproject/data/convert.txt");
+		try (InputStream is = new FileInputStream(file)) {
+			StringBuffer sb = new StringBuffer();
+			byte[] a = sb.toString().getBytes();
+			byte[] b = FileCopyUtils.copyToByteArray(is);
+			byte[] bytes = new byte[a.length + b.length];
+			System.arraycopy(a, 0, bytes, 0, a.length);
+			System.arraycopy(b, 0, bytes, a.length, b.length);
+
+			String markdown = new String(bytes, "UTF-8");
+
+			// 转换为HTML
+			String htmlContent = MarkdownUtil.convertToHtml(markdown);
+			model.addAttribute("content", htmlContent);
+
+			return "markdown-page";
+		}
 	}
 
 }

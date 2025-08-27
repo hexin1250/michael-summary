@@ -86,7 +86,9 @@ public class Account implements Serializable {
 				break;
 		}
 		if(expectedCash > cash) {
-			throw new CashNotEnoughException(expectedCash + " is needed, but " + cash + " is left.");
+			String message = "Current Run:" + runId + ". " + expectedCash + " is needed, but " + cash + " is left.";
+			log.warn(message);
+//			throw new CashNotEnoughException(message);
 		}
 		ProfitLoss pnl = position.deal(dir, dealPrice, quantity);
 		

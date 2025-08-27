@@ -1,5 +1,8 @@
 package michael.slf4j.investment.cron;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -10,10 +13,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
-import michael.slf4j.investment.message.service.MessageService;
-import michael.slf4j.investment.proc.PythonExecutor;
 import michael.slf4j.investment.quant.live.LiveProcessor;
 import michael.slf4j.investment.research.DataResearchV2;
+import michael.slf4j.investment.service.StatelessChatService;
 
 @Component
 @Controller
@@ -29,7 +31,7 @@ public class StrategyInitializedJob {
 	private DataResearchV2 dataResearchV2;
 	
 	@Autowired
-	MessageService messageService;
+	private StatelessChatService statelessChatService;
 	
 	@Scheduled(cron = "${clean-schedule}")
 	public void cleanData() {
@@ -75,17 +77,15 @@ public class StrategyInitializedJob {
 	@Scheduled(cron = "${summary-night}")
 	public void summarizeNightData() {
 		dataResearchV2.summarize();
-		PythonExecutor.executePython();
 	}
 	@Scheduled(cron = "${summary-afternoon}")
 	public void summarizeAfternoonData() {
 		dataResearchV2.summarize();
-		PythonExecutor.executePython();
 	}
-	@Scheduled(cron = "${summary-close}")
-	public void summarizeDayData() {
+	@Scheduled(cron = "${top-deal-close}")
+	public void summarizeDayData() throws FileNotFoundException, IOException {
 		dataResearchV2.summarize();
-		PythonExecutor.executePython();
+		statelessChatService.doResearch();
 	}
 
 }
