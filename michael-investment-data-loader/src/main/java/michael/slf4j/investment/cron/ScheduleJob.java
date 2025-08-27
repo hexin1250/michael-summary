@@ -76,6 +76,12 @@ public class ScheduleJob {
 	@Scheduled(cron = "${end-schedule4}")
 	public void endDaySchedule3() {
 		log.info("[End 15:00] Done.");
+	}
+	
+	@Scheduled(cron = "${end-schedule5}")
+	public void endDaySchedule4() {
+		log.info("[End 16:40] Done.");
+		dataLoaderClient.loadMainTopDeal();
 		dataLoaderClient.cleanup();
 	}
 	
@@ -86,11 +92,20 @@ public class ScheduleJob {
 	
 	@Scheduled(cron = "${update-15-night}")
 	public void updateNightData() {
-		dataLoaderClient.update15MinData();
+		try {
+			dataLoaderClient.update15MinData();
+		} catch (Exception e) {
+			log.error("Error when updating night data", e);
+		}
 	}
+	
 	@Scheduled(cron = "${update-15-afternoon}")
 	public void updateAfternoonData() {
-		dataLoaderClient.update15MinData();
+		try {
+			dataLoaderClient.update15MinData();
+		} catch (Exception e) {
+			log.error("Error when updating morning data", e);
+		}
 	}
 	
 }

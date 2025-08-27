@@ -16,6 +16,10 @@ import michael.slf4j.investment.util.TradeUtil;
 public class InitRunner implements CommandLineRunner {
 	private static final Logger log = Logger.getLogger(InitRunner.class);
 	
+	static {
+		System.setProperty("webdriver.chrome.driver", "C:\\software\\chrome\\chromedriver.exe");
+	}
+
 	@Autowired
 	private TaskManager taskManager;
 	
@@ -30,17 +34,16 @@ public class InitRunner implements CommandLineRunner {
 //		log.info("Start loading data...");
 //		loader.loadFreqData();
 //		log.info("Done to load data");
-		
+
     	log.info("Initializing...");
     	taskManager.subscribeSecurities();
     	dataLoaderClient.init();
-    	if(TradeUtil.isTradingTime()) {
-			dataLoaderClient.init15MinData();
-			dataLoaderClient.init30MinData();
-    	}
-//    	dataLoaderClient.load15MiData("RB2510");
-//    	dataLoaderClient.reload("RB2510");
     	log.info("Done to initialize resources.");
     	dataLoaderClient.cleanup();
+    	log.info("Done to cleanup.");
+    	
+//    	log.info("Start to initialize top deal data.");
+//    	dataLoaderClient.loadMainTopDeal();
+//    	log.info("Done to load top deal data.");
     }
 }
