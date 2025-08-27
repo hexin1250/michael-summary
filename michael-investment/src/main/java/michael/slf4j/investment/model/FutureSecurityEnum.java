@@ -5,12 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public enum FutureSecurityEnum {
-	I{{mainList = List.of("01", "05", "09");}},
+	I{{mainList = List.of("01", "05", "09"); broker = "dl";}},
 //	J{{mainList = List.of("01", "05", "09");}},
-	RB{{mainList = List.of("01", "05", "10");}},
+	RB{{mainList = List.of("01", "05", "10"); broker = "sh";}},
 	;
 	
 	public List<String> mainList;
+	public String broker;
 
 	public List<String> getSecurities() {
 		List<String> ret = new ArrayList<>();
