@@ -203,8 +203,8 @@ public class DataResearchV2 {
 //		List<Timeseries> realTimeList1D = timeseriesRepository.getAllDataByPeriod(mainSecurity, tTradeDate,
 //				FreqEnum._1D.getValue());
 		List<Timeseries> realTimeList1D = DataLoaderUtil.generate1DTsListBy30ForBack(realTimeList30M);
-		List<Timeseries> realTimeList1DAdj = adjust(realTimeList1D);
-		Queue<StringBuffer> queue1D = summarizeDataByFreq(FreqEnum._1D, current, realTimeList1DAdj, 20);
+//		List<Timeseries> realTimeList1DAdj = adjust(realTimeList1D);
+		Queue<StringBuffer> queue1D = summarizeDataByFreq(FreqEnum._1D, current, realTimeList1D, 20);
 
 		/**
 		 * 1W frequence data
@@ -233,30 +233,6 @@ public class DataResearchV2 {
 		} catch (Exception e) {
 			log.error("Error when sending message to topic", e);
 		}
-	}
-
-	private List<Timeseries> adjust(List<Timeseries> list) {
-		List<Timeseries> ret = new ArrayList<>();
-		int size = list.size();
-		Timeseries prev = list.get(0);
-		int direction = 0;
-		ret.add(prev);
-		for (int i = 1; i < size; i++) {
-			Timeseries ts = list.get(i);
-			if(size - i <= 5) {
-				ret.add(ts);
-				continue;
-			}
-			int currentDir = ts.getClose().compareTo(prev.getClose());
-			if(direction == 0 || currentDir == 0) {
-				direction = currentDir;
-			} else if(direction * currentDir < 0) {
-				direction = currentDir;
-				ret.add(prev);
-			}
-			prev = ts;
-		}
-		return ret;
 	}
 
 	private void generateTopDeal(LocalDateTime current, List<StringBuffer> formatList, Variety variety,
@@ -433,7 +409,14 @@ public class DataResearchV2 {
 		List<Double> volumes = new ArrayList<Double>();
 		List<StockData> dataList = new ArrayList<>();
 		Queue<StringBuffer> ret = new LinkedBlockingQueue<>();
-		for (Timeseries ts : realTimeTsList) {
+		
+		Timeseries prev = null;
+		StringBuffer prevData = null;
+		int direction = 0;
+		int size = realTimeTsList.size();
+
+		for (int i = 0; i < size; i++) {
+			Timeseries ts = realTimeTsList.get(i);
 			opens.add(ts.getOpen().doubleValue());
 			highs.add(ts.getHigh().doubleValue());
 			lows.add(ts.getLow().doubleValue());
@@ -582,7 +565,23 @@ public class DataResearchV2 {
 				ret.poll();
 			}
 			LocalDateTime currentLDT = TradeUtil.getLocalDateTime(ts.getTradeTs());
-			if ((TradeUtil.isTradingTime() && freq == FreqEnum._15MI && current.minusMinutes(150).isBefore(currentLDT))
+			if(freq == FreqEnum._1D) {
+				if(size - i <= 5) {
+					ret.add(dataSb);
+				} else if(prev != null) {
+					int currentDir = ts.getClose().compareTo(prev.getClose());
+					if(direction == 0 || currentDir == 0) {
+						direction = currentDir;
+					} else if(direction * currentDir < 0) {
+						direction = currentDir;
+						ret.add(prevData);
+					}
+				} else {
+					ret.add(dataSb);
+				}
+				prev = ts;
+				prevData = dataSb;
+			} else if ((TradeUtil.isTradingTime() && freq == FreqEnum._15MI && current.minusMinutes(150).isBefore(currentLDT))
 					|| !TradeUtil.isTradingTime()) {
 				ret.add(dataSb);
 			}
