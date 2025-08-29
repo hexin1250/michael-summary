@@ -207,7 +207,7 @@ public class DataResearchV2 {
 		 * 1W frequence data
 		 */
 		List<Timeseries> realTimeList1W = DataLoaderUtil.generate1WTsListBy1D(realTimeList1D);
-		Queue<StringBuffer> queue1W = summarizeDataByFreq(FreqEnum._1W, current, realTimeList1W, 20);
+		Queue<StringBuffer> queue1W = summarizeDataByFreq(FreqEnum._1W, current, realTimeList1W, 50);
 
 		if (!TradeUtil.isTradingTime()) {
 			queue30M.stream().forEach(currentSb -> formatList.add(currentSb));
