@@ -207,7 +207,7 @@ public class DataResearchV2 {
 		 * 1W frequence data
 		 */
 		List<Timeseries> realTimeList1W = DataLoaderUtil.generate1WTsListBy1D(realTimeList1D);
-		Queue<StringBuffer> queue1W = summarizeDataByFreq(FreqEnum._1W, current, realTimeList1W, 4);
+		Queue<StringBuffer> queue1W = summarizeDataByFreq(FreqEnum._1W, current, realTimeList1W, 20);
 
 		if (!TradeUtil.isTradingTime()) {
 			queue30M.stream().forEach(currentSb -> formatList.add(currentSb));
@@ -553,7 +553,7 @@ public class DataResearchV2 {
 				ret.poll();
 			}
 			LocalDateTime currentLDT = TradeUtil.getLocalDateTime(ts.getTradeTs());
-			if (freq == FreqEnum._1D) {
+			if (freq == FreqEnum._1D || freq == FreqEnum._1W) {
 				if (size - i <= 5) {
 					ret.add(dataSb);
 				} else if (prev != null) {
