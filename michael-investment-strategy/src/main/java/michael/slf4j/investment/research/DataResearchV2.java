@@ -13,12 +13,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
@@ -102,13 +100,13 @@ public class DataResearchV2 {
 
 	@Autowired
 	MessageService messageService;
-	
+
 	@Value("${chat.history.folder}")
 	private String folderName;
-	
+
 	@Autowired
 	private FileService fileService;
-	
+
 	private NumberFormat nf;
 
 	public DataResearchV2() {
@@ -117,7 +115,6 @@ public class DataResearchV2 {
 		nf.setRoundingMode(RoundingMode.HALF_UP);
 		nf.setGroupingUsed(false);
 	}
-
 
 	public void summarize() {
 		summarize("");
@@ -150,7 +147,7 @@ public class DataResearchV2 {
 		}
 
 		List<StringBuffer> formatList = new ArrayList<StringBuffer>();
-		generateTopDeal(current, formatList, variety, mainSecurity, lastTradeDates);
+		generateTopDeal(current, formatList, variety, mainSecurity, tTradeDate);
 
 		FreqEnum freq = FreqEnum._15MI;
 		StringBuffer sb = new StringBuffer();
@@ -236,52 +233,44 @@ public class DataResearchV2 {
 	}
 
 	private void generateTopDeal(LocalDateTime current, List<StringBuffer> formatList, Variety variety,
-			String mainSecurity, List<String> lastTradeDates) {
+			String mainSecurity, String tradeDate) {
 		int hour = current.getHour();
-		if(hour < 15 || hour > 21) {
+		if (hour < 15 || hour > 21) {
 			return;
 		}
-		List<TopDeal> topDeals = topDealRepo.findSecuritiesBySecurities(mainSecurity, lastTradeDates);
-		Map<String, Map<String, Map<String, Integer>>> map = new HashMap<>();
-		Set<String> set = new LinkedHashSet<>();
+		List<TopDeal> topDeals = topDealRepo.findSecuritiesBySecurities(mainSecurity, tradeDate);
+		Map<String, List<TopDeal>> map = new HashMap<>();
 		for (TopDeal topDeal : topDeals) {
-			String tradeDate = topDeal.getTradeDate();
-			if (set.size() == 2 && !set.contains(tradeDate)) {
-				continue;
-			}
 			String type = topDeal.getType();
-			Map<String, Map<String, Integer>> typeMap = map.get(type);
-			if (typeMap == null) {
-				typeMap = new LinkedHashMap<>();
-				map.put(type, typeMap);
+			List<TopDeal> list = map.get(type);
+			if(list == null) {
+				list = new ArrayList<>();
+				map.put(type, list);
 			}
-			String client = topDeal.getClient();
-			Map<String, Integer> clientMap = typeMap.get(client);
-			if (clientMap == null) {
-				clientMap = new HashMap<>();
-				typeMap.put(client, clientMap);
-			}
-			clientMap.put(tradeDate, topDeal.getVolume());
-			set.add(tradeDate);
+			list.add(topDeal);
 		}
+		for (Entry<String, List<TopDeal>> entry : map.entrySet()) {
+			String type = entry.getKey();
 
-		for (Entry<String, Map<String, Map<String, Integer>>> mapEntry : map.entrySet()) {
-			String type = mapEntry.getKey();
-			Map<String, Map<String, Integer>> typeMap = mapEntry.getValue();
 			StringBuffer sb = new StringBuffer();
-			sb.append("下面的表格包括机构近几日").append(type).append("龙虎榜的变化情况(第一行为header):");
+			sb.append("下面的表格包括").append(mainSecurity).append("机构今日【").append(type).append("】的变化情况(第一行为header):");
 			sb.append("\n");
-			sb.append("|").append("机构").append("|");
-			set.stream().forEach(tradeDate -> sb.append(tradeDate).append("|"));
+			sb.append("|机构|名次|净量|增减|");
 			sb.append("\n");
 
-			for (Entry<String, Map<String, Integer>> clientEntry : typeMap.entrySet()) {
-				String client = clientEntry.getKey();
-				Map<String, Integer> tradeDateMap = clientEntry.getValue();
-				sb.append("|").append(client).append("|");
-				set.stream().forEach(tradeDate -> sb.append(tradeDateMap.get(tradeDate)).append("|"));
+			List<TopDeal> deals = entry.getValue();
+			int sumVolume = 0;
+			int sumOffset = 0;
+			for (TopDeal topDeal : deals) {
+				sumVolume += topDeal.getVolume();
+				sumOffset += topDeal.getOffset();
+				sb.append("|").append(topDeal.getClient()).append("|").append(topDeal.getTop()).append("|")
+						.append(topDeal.getVolume()).append("|").append(topDeal.getOffset()).append("|");
 				sb.append("\n");
 			}
+			sb.append("\n");
+			sb.append(type).append("总持仓:").append(sumVolume).append(",总增减:").append(sumOffset);
+			sb.append("\n");
 			sb.append("\n");
 			formatList.add(sb);
 		}
@@ -388,8 +377,7 @@ public class DataResearchV2 {
 		sb.append("的走势预演,和对应的概率,和关键价位预判.基于当前持仓制定策略.");
 		sb.append("分析指标的时候,需标注对应的周期.").append("\n");
 //		sb.append("注意:在分析过程中,要分析全部技术指标(请仔细检查).在结果展示中,至少包括以下几点:多周期技术面共振分析,日线级别趋势分析,关键价位预判,主力持仓行为解析,日内走势预演,日内交易策略,量化指标验证矩阵(包括周期/趋势方向[用↓↑表示]/动能强度[用★☆表示]/反转信号​​),多空争夺点位");
-		sb.append(
-				"注意:在分析过程中,要分析全部技术指标(请仔细检查).在结果展示中,至少包括以下几点:日线级别顶底分析(双顶底,多顶底),多空争夺点位,主力持仓行为解析,日内走势预演,周内基于点位的交易策略");
+		sb.append("注意:在分析过程中,要分析全部技术指标(请仔细检查).在结果展示中,至少包括以下几点:日线级别顶底分析(双顶底,多顶底),多空争夺点位,主力持仓行为解析,日内走势预演,周内基于点位的交易策略");
 		sb.append("\n");
 		sb.append("数据说明:NA代表当前数据缺失");
 		sb.append("\n");
@@ -409,7 +397,7 @@ public class DataResearchV2 {
 		List<Double> volumes = new ArrayList<Double>();
 		List<StockData> dataList = new ArrayList<>();
 		Queue<StringBuffer> ret = new LinkedBlockingQueue<>();
-		
+
 		Timeseries prev = null;
 		StringBuffer prevData = null;
 		int direction = 0;
@@ -565,14 +553,14 @@ public class DataResearchV2 {
 				ret.poll();
 			}
 			LocalDateTime currentLDT = TradeUtil.getLocalDateTime(ts.getTradeTs());
-			if(freq == FreqEnum._1D) {
-				if(size - i <= 5) {
+			if (freq == FreqEnum._1D) {
+				if (size - i <= 5) {
 					ret.add(dataSb);
-				} else if(prev != null) {
+				} else if (prev != null) {
 					int currentDir = ts.getClose().compareTo(prev.getClose());
-					if(direction == 0 || currentDir == 0) {
+					if (direction == 0 || currentDir == 0) {
 						direction = currentDir;
-					} else if(direction * currentDir < 0) {
+					} else if (direction * currentDir < 0) {
 						direction = currentDir;
 						ret.add(prevData);
 					}
@@ -581,8 +569,8 @@ public class DataResearchV2 {
 				}
 				prev = ts;
 				prevData = dataSb;
-			} else if ((TradeUtil.isTradingTime() && freq == FreqEnum._15MI && current.minusMinutes(150).isBefore(currentLDT))
-					|| !TradeUtil.isTradingTime()) {
+			} else if ((TradeUtil.isTradingTime() && freq == FreqEnum._15MI
+					&& current.minusMinutes(150).isBefore(currentLDT)) || !TradeUtil.isTradingTime()) {
 				ret.add(dataSb);
 			}
 		}

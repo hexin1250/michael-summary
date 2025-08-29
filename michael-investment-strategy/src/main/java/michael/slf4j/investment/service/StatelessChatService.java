@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,8 @@ import dev.langchain4j.model.output.Response;
 
 @Service("statelessChatService")
 public class StatelessChatService {
+	private final static Logger log = Logger.getLogger(StatelessChatService.class);
+	
 	private final static String QUESTION_TYPE = "question";
 	private final static String ANSWER_TYPE = "answer";
 
@@ -43,6 +46,7 @@ public class StatelessChatService {
 	}
 
 	public void doResearch() throws FileNotFoundException, IOException {
+		log.info("Start to do research through Deepseek");
 		Map<String, Map<String, File>> map = fileService.getFileStatus();
 		int size = map.size();
 		int start = size - 4;
@@ -51,7 +55,6 @@ public class StatelessChatService {
 
 		List<ChatMessage> messages = new ArrayList<>();
 		messages.add(SystemMessage.from("你是一个专业的期货投资顾问，擅长技术分析和解释市场趋势。用中文回答。"));
-//		StringBuilder context = new StringBuilder();
 		for (Entry<String, Map<String, File>> entry : map.entrySet()) {
 			count++;
 			if (count <= start) {
@@ -61,13 +64,11 @@ public class StatelessChatService {
 			File questionFile = typeMap.get(QUESTION_TYPE);
 			String question = getContent(questionFile);
 			messages.add(UserMessage.from(question));
-//			context.append("user:").append(question);
 
 			if (count != size) {
 				File answerFile = typeMap.get(ANSWER_TYPE);
 				String answer = getContent(answerFile);
 				messages.add(AiMessage.from(answer));
-//				context.append("assistant:").append(answer);
 			}
 			tradeDate = entry.getKey();
 		}
@@ -77,6 +78,8 @@ public class StatelessChatService {
 		String reply = aiReply.content().text();
 //		String reply = chatModel.generate(context.toString());
 		writeFile(tradeDate, reply);
+		
+		log.info("Done to get answer");
 	}
 
 	private String getContent(File file) throws FileNotFoundException, IOException {

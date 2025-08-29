@@ -42,16 +42,18 @@ public class SeleniumParser implements Closeable {
 		}
 		
 		WebElement contentPage = rightPage.findElement(By.className("content"));
-		WebElement module = contentPage.findElement(By.className("IFUlModule"));
-		
-		List<WebElement> tops = new ArrayList<>();
-		tops.add(module.findElement(By.className("IFcb1")));
-		tops.addAll(module.findElements(By.className("IFcb2")));
-		
 		List<TopDeal> ret = new ArrayList<>();
-		for (WebElement childTop : tops) {
-			String subject = childTop.findElement(By.className("IFtit")).getText();
+		loadData(ret, contentPage, varietyEnum, security, tradeDate);
+		return ret;
+	}
+
+	private void loadData(List<TopDeal> ret, WebElement contentPage, FutureSecurityEnum varietyEnum, String security, String tradeDate) {
+		List<WebElement> modules = contentPage.findElements(By.className("IFUlModule"));
+		for (int i = 1; i <= 2; i++) {
+			WebElement module = modules.get(i);
+			WebElement childTop = module.findElement(By.className("IFcb1"));
 			
+			String subject = childTop.findElement(By.className("IFtit")).getText();
 			WebElement table = childTop.findElement(By.className("IFUlDiv"));
 			List<WebElement> dataList = table.findElements(By.tagName("ul"));
 			for (WebElement data : dataList) {
@@ -74,12 +76,12 @@ public class SeleniumParser implements Closeable {
 					deal.setTop(Integer.valueOf(spanList.get(1).getText()));
 					deal.setClient(spanList.get(2).getText());
 					deal.setVolume(Integer.valueOf(spanList.get(3).getText()));
-					deal.setType(subject.replaceAll("龙虎榜", ""));
+					deal.setOffset(Integer.valueOf(spanList.get(4).getText()));
+					deal.setType(subject);
 					ret.add(deal);
 				}
 			}
 		}
-		return ret;
 	}
 
 	@Override

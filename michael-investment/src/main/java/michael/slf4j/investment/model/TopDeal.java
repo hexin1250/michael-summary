@@ -31,6 +31,8 @@ public class TopDeal implements Serializable {
 	private String client;
 	@Column(name = "volume")
 	private int volume;
+	@Column(name = "offset")
+	private int offset;
 	@Column(name = "type")
 	private String type;
 	
@@ -75,6 +77,12 @@ public class TopDeal implements Serializable {
 	}
 	public void setVolume(int volume) {
 		this.volume = volume;
+	}
+	public int getOffset() {
+		return offset;
+	}
+	public void setOffset(int offset) {
+		this.offset = offset;
 	}
 	public String getType() {
 		return type;

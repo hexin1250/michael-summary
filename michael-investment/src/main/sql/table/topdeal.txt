@@ -10,6 +10,7 @@ create table top_deal (
 	top int NOT NULL,
 	client varchar(20) NOT NULL,
 	volume int NOT NULL,
+	offset int NOT NULL,
 	type varchar(20) NOT NULL,
 	PRIMARY KEY (id)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;

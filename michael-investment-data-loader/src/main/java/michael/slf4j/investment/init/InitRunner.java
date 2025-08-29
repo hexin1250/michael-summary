@@ -39,11 +39,13 @@ public class InitRunner implements CommandLineRunner {
     	taskManager.subscribeSecurities();
     	dataLoaderClient.init();
     	log.info("Done to initialize resources.");
-    	dataLoaderClient.cleanup();
-    	log.info("Done to cleanup.");
     	
 //    	log.info("Start to initialize top deal data.");
 //    	dataLoaderClient.loadMainTopDeal();
 //    	log.info("Done to load top deal data.");
+    	
+    	dataLoaderClient.cleanup();
+    	log.info("Done to cleanup.");
+    	
     }
 }
