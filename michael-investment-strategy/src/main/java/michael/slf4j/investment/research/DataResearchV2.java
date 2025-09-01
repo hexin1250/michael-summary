@@ -346,7 +346,6 @@ public class DataResearchV2 {
 		int closePrice = lastTs.getClose().intValue();
 		sb.append("现在时间是").append(TradeUtil.getTimestamp(current)).append(",").append("已经收盘,收盘点位").append(closePrice);
 		sb.append("\n");
-		sb.append("目前处于移仓换月期\n");
 		Map<String, String> map = PositionFileUtil.readPositionData();
 		if (!map.isEmpty()) {
 			int v = Integer.valueOf(map.get(PositionFileUtil.PRICE));
