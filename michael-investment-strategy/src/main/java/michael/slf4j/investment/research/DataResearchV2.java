@@ -115,12 +115,12 @@ public class DataResearchV2 {
 		nf.setRoundingMode(RoundingMode.HALF_UP);
 		nf.setGroupingUsed(false);
 	}
-
+	
 	public void summarize() {
-		summarize("");
+		summarize(false);
 	}
 
-	public void summarize(String securityStr) {
+	public void summarize(boolean fullRequired) {
 		log.info("Start to get new research");
 		LocalDateTime current = LocalDateTime.now();
 		Variety variety = Variety.RB;
@@ -142,9 +142,6 @@ public class DataResearchV2 {
 				maxOpenInterest = openInterest;
 			}
 		}
-		if (securityStr != null && !securityStr.isBlank()) {
-			mainSecurity = securityStr;
-		}
 
 		List<StringBuffer> formatList = new ArrayList<StringBuffer>();
 		generateTopDeal(current, formatList, variety, mainSecurity, tTradeDate);
@@ -159,6 +156,10 @@ public class DataResearchV2 {
 		sb.append("\n");
 		formatList.add(sb);
 
+		String parameter = null;
+		if(!fullRequired) {
+			parameter = tTradeDate;
+		}
 		/**
 		 * 15M frequence data
 		 */
@@ -172,25 +173,25 @@ public class DataResearchV2 {
 		for (Entry<Timestamp, Timeseries> entry : map.entrySet()) {
 			adjustList.add(entry.getValue());
 		}
-		Queue<StringBuffer> queue15M = summarizeDataByFreq(freq, current, adjustList, 24);
+		Queue<StringBuffer> queue15M = summarizeDataByFreq(freq, current, adjustList, 24, parameter);
 		queue15M.stream().forEach(currentSb -> formatList.add(currentSb));
 
 		/**
 		 * 30M frequence data
 		 */
 		List<Timeseries> realTimeList30M = DataLoaderUtil.generate30TsListBy15ForRealTime(adjustList);
-		Queue<StringBuffer> queue30M = summarizeDataByFreq(FreqEnum._30MI, current, realTimeList30M, 13);
+		Queue<StringBuffer> queue30M = summarizeDataByFreq(FreqEnum._30MI, current, realTimeList30M, 13, parameter);
 
 		/**
 		 * 1H frequence data
 		 */
 		List<Timeseries> realTimeList60M = DataLoaderUtil.generate60TsListBy30ForBack(realTimeList30M);
-		Queue<StringBuffer> queue60M = summarizeDataByFreq(FreqEnum._1H, current, realTimeList60M, 6);
+		Queue<StringBuffer> queue60M = summarizeDataByFreq(FreqEnum._1H, current, realTimeList60M, 6, parameter);
 
 		/**
 		 * 2H frequence data
 		 */
-		List<Timeseries> realTimeList2H = DataLoaderUtil.generate2HTsListBy30ForBack(realTimeList30M);
+//		List<Timeseries> realTimeList2H = DataLoaderUtil.generate2HTsListBy30ForBack(realTimeList30M);
 //		Queue<StringBuffer> queue2H = summarizeDataByFreq(FreqEnum._2H, current, realTimeList2H, 12);
 //		queue2H.stream().forEach(currentSb -> formatList.add(currentSb));
 
@@ -201,23 +202,21 @@ public class DataResearchV2 {
 //				FreqEnum._1D.getValue());
 		List<Timeseries> realTimeList1D = DataLoaderUtil.generate1DTsListBy30ForBack(realTimeList30M);
 //		List<Timeseries> realTimeList1DAdj = adjust(realTimeList1D);
-		Queue<StringBuffer> queue1D = summarizeDataByFreq(FreqEnum._1D, current, realTimeList1D, 20);
+		Queue<StringBuffer> queue1D = summarizeDataByFreq(FreqEnum._1D, current, realTimeList1D, 20, parameter);
 
 		/**
 		 * 1W frequence data
 		 */
 		List<Timeseries> realTimeList1W = DataLoaderUtil.generate1WTsListBy1D(realTimeList1D);
-		Queue<StringBuffer> queue1W = summarizeDataByFreq(FreqEnum._1W, current, realTimeList1W, 50);
+		Queue<StringBuffer> queue1W = summarizeDataByFreq(FreqEnum._1W, current, realTimeList1W, 10, parameter);
 
-		if (!TradeUtil.isTradingTime()) {
-			queue30M.stream().forEach(currentSb -> formatList.add(currentSb));
-			queue60M.stream().forEach(currentSb -> formatList.add(currentSb));
-			queue1D.stream().forEach(currentSb -> formatList.add(currentSb));
-			queue1W.stream().forEach(currentSb -> formatList.add(currentSb));
-		}
+		queue30M.stream().forEach(currentSb -> formatList.add(currentSb));
+		queue60M.stream().forEach(currentSb -> formatList.add(currentSb));
+		queue1D.stream().forEach(currentSb -> formatList.add(currentSb));
+		queue1W.stream().forEach(currentSb -> formatList.add(currentSb));
 
 		generateKeyPoints(formatList, realTimeList1D);
-		generateTrail(formatList, mainSecurity, current, realTimeList2H.get(realTimeList2H.size() - 1));
+		generateTrail(tTradeDate, lastTradeDates.get(1), formatList, mainSecurity, current, adjustList.get(adjustList.size() - 1));
 
 		String fileName = folderName + "/" + tTradeDate + ".question.txt";
 		try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName)))) {
@@ -340,30 +339,18 @@ public class DataResearchV2 {
 		}
 	}
 
-	private void generateTrail(List<StringBuffer> formatList, String mainSecurity, LocalDateTime current,
+	private void generateTrail(String tDate, String tMinusDate, List<StringBuffer> formatList, String mainSecurity, LocalDateTime current,
 			Timeseries lastTs) {
 		StringBuffer sb = new StringBuffer();
 		int closePrice = lastTs.getClose().intValue();
-		sb.append("现在时间是").append(TradeUtil.getTimestamp(current)).append(",").append("已经收盘,收盘点位").append(closePrice);
-		sb.append("\n");
-		Map<String, String> map = PositionFileUtil.readPositionData();
-		if (!map.isEmpty()) {
-			int v = Integer.valueOf(map.get(PositionFileUtil.PRICE));
-			sb.append("目前持有").append(map.get(PositionFileUtil.DIRECTION)).append(",");
-			sb.append("开仓价").append(v).append(",");
-			sb.append("仓位").append(map.get(PositionFileUtil.POSITION_PER)).append("%").append(".");
+		sb.append("现在时间是").append(TradeUtil.getTimestamp(current)).append(",");
+		if(!TradeUtil.isTradingTime()) {
+			sb.append("已经收盘,收盘点位").append(closePrice);
 		} else {
-			sb.append("目前空仓");
+			sb.append("交易还在进行中,当前点位").append(closePrice);
 		}
 		sb.append("\n");
-		if (!TradeUtil.isTradingTime()) {
-			sb.append("请根据当前时间的(15M,30M,1H,1D,1W)周期的所有数据指标以及过往的趋势,分析螺纹钢期货");
-		} else {
-			sb.append("请根据当前时间的(15M)周期的所有数据指标以及过往的趋势,分析螺纹钢期货");
-		}
-		sb.append(
-				"(OI,VOLUME,MA5,MA10,MA20,MA40,MA60,BOLL(26,2),BIAS(6,12,24),WR(10,6,-80,-20),ATR(15),CCI(14),MFI(14),MACD(12,26,9),KDJ(9,3,3),RSI(6,12,24)");
-		sb.append("以及过往的趋势,分析螺纹钢期货");
+		sb.append("分析螺纹钢期货");
 		sb.append(mainSecurity);
 		if (current.getHour() >= 23 || current.getHour() <= 8
 				|| (current.getDayOfWeek() == DayOfWeek.SATURDAY || current.getDayOfWeek() == DayOfWeek.SUNDAY)) {
@@ -372,11 +359,45 @@ public class DataResearchV2 {
 			sb.append("剩余日盘");
 		} else if (current.getHour() >= 15 && current.getHour() <= 20) {
 			sb.append("下一个交易日的夜盘和日盘");
+		} else if(current.getHour() == 22) {
+			sb.append("剩余夜盘以及次日日盘");
 		}
-		sb.append("的走势预演,和对应的概率,和关键价位预判.基于当前持仓制定策略.");
-		sb.append("分析指标的时候,需标注对应的周期.").append("\n");
-//		sb.append("注意:在分析过程中,要分析全部技术指标(请仔细检查).在结果展示中,至少包括以下几点:多周期技术面共振分析,日线级别趋势分析,关键价位预判,主力持仓行为解析,日内走势预演,日内交易策略,量化指标验证矩阵(包括周期/趋势方向[用↓↑表示]/动能强度[用★☆表示]/反转信号​​),多空争夺点位");
-		sb.append("注意:在分析过程中,要分析全部技术指标(请仔细检查).在结果展示中,至少包括以下几点:日线级别顶底分析(双顶底,多顶底),多空争夺点位,主力持仓行为解析,日内走势预演,周内基于点位的交易策略");
+		sb.append("的走势预演,和对应的概率,和关键价位预判.");
+		Map<String, String> map = PositionFileUtil.readPositionData();
+		StringBuffer anotherCase = new StringBuffer();
+		if (!map.isEmpty()) {
+			anotherCase.append(";4.");
+			int v = Integer.valueOf(map.get(PositionFileUtil.PRICE));
+			int direction = Integer.valueOf(map.get(PositionFileUtil.DIRECTION_INT));
+			anotherCase.append(map.get(PositionFileUtil.DIRECTION));
+			anotherCase.append("开仓价").append(v).append(",");
+			anotherCase.append("浮");
+			if(direction * (closePrice - v) > 0) {
+				anotherCase.append("盈");
+			} else {
+				anotherCase.append("亏");
+			}
+			anotherCase.append(Math.abs(closePrice - v)).append("点,");
+			anotherCase.append("仓位").append(map.get(PositionFileUtil.POSITION_PER)).append("%");
+		}
+		sb.append("针对以下");
+		if(anotherCase.isEmpty()) {
+			sb.append(3);
+		} else {
+			sb.append(4);
+		}
+		sb.append("种情况制定交易策略(1.多单开仓价").append(closePrice + 10).append(",浮亏10点,仓位100%;");
+		sb.append("2.空单开仓价").append(closePrice - 10).append(",浮亏10点,仓位100%;");
+		sb.append("3.空仓");
+		sb.append(anotherCase);
+		sb.append(")");
+
+		sb.append("\n");
+		sb.append("在结果展示中,仅需包括以下5点:日线级别顶底分析(双顶底/多顶底),多空争夺点位,主力持仓行为解析,日内走势预演,交易策略(我是激进投资者,我只会100%仓位操作)");
+		sb.append("\n");
+		sb.append("如果这不是最开始的会话,先总结截至目前的走势是否符合" + tMinusDate + "的预测");
+		sb.append("\n");
+		sb.append("注意:策略需要明确标注止盈点、止损点;日内走势预演需要预测可能的收盘价");
 		sb.append("\n");
 		sb.append("数据说明:NA代表当前数据缺失");
 		sb.append("\n");
@@ -388,7 +409,7 @@ public class DataResearchV2 {
 	}
 
 	private Queue<StringBuffer> summarizeDataByFreq(FreqEnum freq, LocalDateTime current,
-			List<Timeseries> realTimeTsList, int limit) {
+			List<Timeseries> realTimeTsList, int limit, String tradeDate) {
 		List<Double> opens = new ArrayList<Double>();
 		List<Double> highs = new ArrayList<Double>();
 		List<Double> closes = new ArrayList<Double>();
@@ -551,8 +572,12 @@ public class DataResearchV2 {
 			if (ret.size() == limit) {
 				ret.poll();
 			}
-			LocalDateTime currentLDT = TradeUtil.getLocalDateTime(ts.getTradeTs());
-			if (freq == FreqEnum._1D || freq == FreqEnum._1W) {
+//			LocalDateTime currentLDT = TradeUtil.getLocalDateTime(ts.getTradeTs());
+			if(tradeDate != null) {
+				if(tradeDate.equals(ts.getTradeDate())) {
+					ret.add(dataSb);
+				}
+			} else if (freq == FreqEnum._1D || freq == FreqEnum._1W) {
 				if (size - i <= 5) {
 					ret.add(dataSb);
 				} else if (prev != null) {
@@ -568,8 +593,7 @@ public class DataResearchV2 {
 				}
 				prev = ts;
 				prevData = dataSb;
-			} else if ((TradeUtil.isTradingTime() && freq == FreqEnum._15MI
-					&& current.minusMinutes(150).isBefore(currentLDT)) || !TradeUtil.isTradingTime()) {
+			} else {
 				ret.add(dataSb);
 			}
 		}

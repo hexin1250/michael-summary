@@ -162,6 +162,7 @@ public class DataLoaderUtil {
 			ts.setLow(new BigDecimal(Math.min(ts.getLow().doubleValue(), ts1D.getLow().doubleValue())));
 			ts.setVolume(ts.getVolume().add(ts1D.getVolume()));
 			ts.setOpenInterest(ts1D.getOpenInterest());
+			ts.setTradeDate(ts1D.getTradeDate());
 		}
 		return new ArrayList<>(map.values());
 	}

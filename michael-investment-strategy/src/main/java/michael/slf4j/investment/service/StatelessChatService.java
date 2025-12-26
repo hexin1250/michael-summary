@@ -36,6 +36,9 @@ public class StatelessChatService {
 	@Value("${chat.history.folder}")
 	private String folderName;
 	
+	@Value("${chat.point.folder}")
+	private String pointFolderName;
+	
 	@Autowired
 	private FileService fileService;
 
@@ -49,12 +52,12 @@ public class StatelessChatService {
 		log.info("Start to do research through Deepseek");
 		Map<String, Map<String, File>> map = fileService.getFileStatus();
 		int size = map.size();
-		int start = size - 4;
+		int start = size - 10;
 		int count = 0;
 		String tradeDate = null;
 
 		List<ChatMessage> messages = new ArrayList<>();
-		messages.add(SystemMessage.from("你是一个专业的期货投资顾问，擅长技术分析和解释市场趋势。用中文回答。"));
+		messages.add(SystemMessage.from("你是一个专业的期货投资顾问,擅长技术分析和解释市场趋势.我是激进投资者,我只会100%仓位操作.用中文回答。"));
 		for (Entry<String, Map<String, File>> entry : map.entrySet()) {
 			count++;
 			if (count <= start) {
@@ -76,7 +79,6 @@ public class StatelessChatService {
 		// 调用模型生成回复
 		Response<AiMessage> aiReply = chatModel.generate(messages);
 		String reply = aiReply.content().text();
-//		String reply = chatModel.generate(context.toString());
 		writeFile(tradeDate, reply);
 		
 		log.info("Done to get answer");

@@ -35,4 +35,8 @@ future.activemq.topic.30M: future-30M-topic
 chat:
   history:
     folder: "src/main/data/chat-history"
+  backup:
+    folder: "src/main/data/backup"
+  point:
+    folder: "src/main/data/point"
 

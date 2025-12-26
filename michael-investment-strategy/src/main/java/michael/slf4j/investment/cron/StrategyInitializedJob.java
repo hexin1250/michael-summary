@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.event.EventListener;
@@ -14,8 +15,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.quant.live.LiveProcessor;
-import michael.slf4j.investment.research.DataResearchV2;
-import michael.slf4j.investment.service.StatelessChatService;
+import michael.slf4j.investment.service.FileService;
+import michael.slf4j.investment.util.ResearchUtil;
 
 @Component
 @Controller
@@ -28,10 +29,16 @@ public class StrategyInitializedJob {
 	private LiveProcessor liveProcessor;
 	
 	@Autowired
-	private DataResearchV2 dataResearchV2;
+	private FileService fileService;
 	
 	@Autowired
-	private StatelessChatService statelessChatService;
+	private ResearchUtil researchUtil;
+	
+	@Value("${chat.history.folder}")
+	private String historyFolderName;
+	
+	@Value("${chat.backup.folder}")
+	private String backupFolderName;
 	
 	@Scheduled(cron = "${clean-schedule}")
 	public void cleanData() {
@@ -44,6 +51,10 @@ public class StrategyInitializedJob {
 		log.info("[Start Night] Before Trading");
 		liveProcessor.beforeTrading();
 		log.info("[Start Night] Before Trading Done");
+		
+		log.info("Doing housekeeping");
+		fileService.housekeeping();
+		log.info("Done housekeeping");
 	}
 	
 	@Scheduled(cron = "${start-schedule2}")
@@ -75,17 +86,22 @@ public class StrategyInitializedJob {
 	}
 	
 	@Scheduled(cron = "${summary-night}")
-	public void summarizeNightData() {
-		dataResearchV2.summarize();
+	public void summarizeNightData() throws FileNotFoundException, IOException {
+		researchUtil.doResearch();
 	}
+
 	@Scheduled(cron = "${summary-afternoon}")
-	public void summarizeAfternoonData() {
-		dataResearchV2.summarize();
+	public void summarizeAfternoonData() throws FileNotFoundException, IOException {
+		researchUtil.doResearch();
 	}
+	@Scheduled(cron = "${before-close}")
+	public void summarizeBeforeClose() throws FileNotFoundException, IOException {
+		researchUtil.doResearch();
+	}
+	
 	@Scheduled(cron = "${top-deal-close}")
 	public void summarizeDayData() throws FileNotFoundException, IOException {
-		dataResearchV2.summarize();
-		statelessChatService.doResearch();
+		researchUtil.doResearch();
 	}
 
 }

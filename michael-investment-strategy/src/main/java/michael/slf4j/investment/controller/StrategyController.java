@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -48,7 +49,13 @@ public class StrategyController {
 	private AtomicInteger atom = new AtomicInteger();
 	
 	@Value("${chat.history.folder}")
-	private String folderName;
+	private String historyFolderName;
+	
+	@Value("${chat.backup.folder}")
+	private String backupFolderName;
+	
+	@Value("${chat.point.folder}")
+	private String pointFolderName;
 
 	@Autowired
 	private MockupProcess process;
@@ -164,7 +171,7 @@ public class StrategyController {
 	@GetMapping(path = "/research")
 	public @ResponseBody String research(
 			@RequestParam(name = "security", required = false, defaultValue = "") String security) {
-		dataResearchV2.summarize(security);
+		dataResearchV2.summarize();
 		StringBuffer sb = new StringBuffer();
 		sb.append(new Date()).append("<br>").append("research is done.");
 		log.info("Do research");
@@ -216,7 +223,15 @@ public class StrategyController {
 	@GetMapping(path = "/deepseekHistory")
 	public String deepseekHistory(Model model) throws Exception {
 		log.info("Check new deepseek history page");
-		File file = new File(fileService.getAnswerFileName());
+		File historyFolder = new File(historyFolderName);
+		File[] files = historyFolder.listFiles();
+		if(files.length == 0) {
+			File backupFolder = new File(backupFolderName);
+			files = backupFolder.listFiles();
+		}
+		File file = Arrays.stream(files).filter(a -> a.getName().contains("answer.txt")).max((a, b) -> {
+			return a.getName().compareTo(b.getName());
+		}).get();
 		try (InputStream is = new FileInputStream(file)) {
 			long timestamp = file.lastModified(); // 获取时间戳（毫秒）
 			Date date = new Date(timestamp);
@@ -239,7 +254,7 @@ public class StrategyController {
 			return "markdown-page";
 		}
 	}
-
+	
 	/**
 	 * http://localhost:1702/apps/strategy/question
 	 * 

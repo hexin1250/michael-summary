@@ -1,6 +1,8 @@
 package michael.slf4j.investment.quant.live.future;
 
 
+import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +23,7 @@ import michael.slf4j.investment.model.StrategyType;
 import michael.slf4j.investment.model.Timeseries;
 import michael.slf4j.investment.model.Variety;
 import michael.slf4j.investment.quant.live.LiveProcessor;
+import michael.slf4j.investment.util.ResearchUtil;
 
 @Component
 public class Future30MConsumer implements MessageListener {
@@ -31,6 +34,11 @@ public class Future30MConsumer implements MessageListener {
 	
 	@Autowired
 	private LiveProcessor liveProcess;
+	
+	@Autowired
+	private ResearchUtil researchUtil;
+	
+	private LocalDateTime lastLDT = null;
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -51,5 +59,26 @@ public class Future30MConsumer implements MessageListener {
 			contractList.add(new Future(ts));
 		}
 		liveProcess.handleFreq30M(StrategyType.FUTURE, security, contractList);
+		
+		LocalDateTime ldt = LocalDateTime.now();
+		if(ldt.getHour() == 22 && ldt.getMinute() < 30) {
+			if(lastLDT == null || ldt.getHour() != lastLDT.getHour()) {
+				try {
+					lastLDT = ldt;
+					researchUtil.doResearch();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		} else if(ldt.getHour() == 10 && ldt.getMinute() > 30) {
+			if(lastLDT == null || ldt.getHour() != lastLDT.getHour()) {
+				try {
+					lastLDT = ldt;
+					researchUtil.doResearch();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 }

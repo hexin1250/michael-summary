@@ -150,6 +150,7 @@ public class DataLoaderClient {
 			series = aliParser.parse(content, freq);
 			futureLoader.loadMultiSecurities(series, freq);
 		} catch (IOException e) {
+			log.error("Error message when reading data from Ali", e);
 			/**
 			 * Should not find one security. Ignore this case.
 			 */
@@ -392,7 +393,7 @@ public class DataLoaderClient {
 				mainSecurity = security;
 				maxOpenInterest = openInterest;
 			}
-			if (openInterest > maxOpenInterest) {
+			if (openInterest != null && openInterest > maxOpenInterest) {
 				mainSecurity = security;
 				maxOpenInterest = openInterest;
 			}
