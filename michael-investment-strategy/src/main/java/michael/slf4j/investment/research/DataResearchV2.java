@@ -189,19 +189,9 @@ public class DataResearchV2 {
 		Queue<StringBuffer> queue60M = summarizeDataByFreq(FreqEnum._1H, current, realTimeList60M, 6, parameter);
 
 		/**
-		 * 2H frequence data
-		 */
-//		List<Timeseries> realTimeList2H = DataLoaderUtil.generate2HTsListBy30ForBack(realTimeList30M);
-//		Queue<StringBuffer> queue2H = summarizeDataByFreq(FreqEnum._2H, current, realTimeList2H, 12);
-//		queue2H.stream().forEach(currentSb -> formatList.add(currentSb));
-
-		/**
 		 * 1D frequence data
 		 */
-//		List<Timeseries> realTimeList1D = timeseriesRepository.getAllDataByPeriod(mainSecurity, tTradeDate,
-//				FreqEnum._1D.getValue());
 		List<Timeseries> realTimeList1D = DataLoaderUtil.generate1DTsListBy30ForBack(realTimeList30M);
-//		List<Timeseries> realTimeList1DAdj = adjust(realTimeList1D);
 		Queue<StringBuffer> queue1D = summarizeDataByFreq(FreqEnum._1D, current, realTimeList1D, 20, parameter);
 
 		/**
@@ -293,23 +283,6 @@ public class DataResearchV2 {
 				updateMap(map, WEEK, ts);
 			}
 		}
-		StringBuffer sb = generateKeyInfo(map);
-		formatList.add(sb);
-	}
-
-	private StringBuffer generateKeyInfo(Map<String, Map<String, BigDecimal>> map) {
-		StringBuffer sb = new StringBuffer();
-		Map<String, BigDecimal> fullMap = map.get(FULL);
-		Map<String, BigDecimal> monthMap = map.get(MONTH);
-		Map<String, BigDecimal> weekMap = map.get(WEEK);
-		sb.append("\n");
-		sb.append("历史最高点:").append(fullMap.get(HIGH)).append(",历史最低点:").append(fullMap.get(LOW));
-		sb.append("\n");
-		sb.append("月内最高点:").append(monthMap.get(HIGH)).append(",月内最低点:").append(monthMap.get(LOW));
-		sb.append("\n");
-		sb.append("周内最高点:").append(weekMap.get(HIGH)).append(",周内最低点:").append(weekMap.get(LOW));
-		sb.append("\n");
-		return sb;
 	}
 
 	private void updateMap(Map<String, Map<String, BigDecimal>> map, String freq, Timeseries ts) {
@@ -405,6 +378,13 @@ public class DataResearchV2 {
 		sb.append("\n");
 		sb.append("交易时间说明:夜盘21:00-23:00,日盘9:00-10:15,10:30-11:30,13:30-15:00");
 		sb.append("\n");
+		if(TradeUtil.isUpcomingHoliday()) {
+			String nextTradeDate = TradeUtil.getNextTradeDate();
+			sb.append("特别说明:下一个交易日为");
+			sb.append(nextTradeDate);
+			sb.append(",这期间都是公共假日,且交易时间仅为日盘9:00-10:15,10:30-11:30,13:30-15:00");
+			sb.append("\n");
+		}
 		formatList.add(sb);
 	}
 

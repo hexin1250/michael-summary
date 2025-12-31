@@ -107,6 +107,12 @@ public class TradeUtil {
 		if(day >= 6) {
 			return false;
 		}
+		long time = getTradeDate();
+		LocalDateTime tradeDateLdt = getLocalDateTime(new Timestamp(time));
+		LocalDate tradeDateLd = getCurrentTradeDate(tradeDateLdt);
+		if(HolidayUtil.$.isHoliday(tradeDateLd)) {
+			return false;
+		}
 		return isTradingTime(ldt.toLocalTime());
 	}
 	
@@ -183,6 +189,41 @@ public class TradeUtil {
 		}
 		return tradeDate;
 	}
-
+	
+	public static boolean isUpcomingHoliday() {
+		LocalDate currentDate = LocalDate.now();
+		LocalTime currentTime = LocalTime.of(21, 0);
+		LocalDateTime target = LocalDateTime.of(currentDate, currentTime);
+		int dw = target.getDayOfWeek().getValue();
+		if (dw == 5) {
+			target = target.plusDays(3);
+		} else if (dw == 6) {
+			target = target.plusDays(2);
+		} else {
+			target = target.plusDays(1);
+		}
+		return HolidayUtil.$.isHoliday(target.toLocalDate());
+	}
+	
+	public static String getNextTradeDate() {
+		LocalDate currentDate = LocalDate.now();
+		LocalTime currentTime = LocalTime.of(21, 0);
+		LocalDateTime target = LocalDateTime.of(currentDate, currentTime);
+		while(true) {
+			int dw = target.getDayOfWeek().getValue();
+			if (dw == 5) {
+				target = target.plusDays(3);
+			} else if (dw == 6) {
+				target = target.plusDays(2);
+			} else {
+				target = target.plusDays(1);
+			}
+			LocalDate nowDate = target.toLocalDate();
+			if(!HolidayUtil.$.isHoliday(nowDate)) {
+				break;
+			}
+		}
+		return getDateStr(target.toLocalDate());
+	}
 
 }
