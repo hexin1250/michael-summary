@@ -17,7 +17,7 @@ public enum HolidayUtil {
 	
 	public void loadHolidays() {
 		try {
-			String holidayFileName = "src/main/resources/holiday/holiday_cn.txt";
+			String holidayFileName = "C:/Users/HP/git/michael-summary/michael-investment/src/main/resources/holiday/holiday_cn.txt";
 			Files.readAllLines(new File(holidayFileName).toPath()).stream().forEach(str -> {
 				holiday.add(LocalDate.parse(str));
 			});
