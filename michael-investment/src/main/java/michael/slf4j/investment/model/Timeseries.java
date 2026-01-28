@@ -49,6 +49,11 @@ public class Timeseries implements Comparator<Timeseries>, Serializable {
 	private String tradeDate;
 	@Column(name = "trade_ts")
 	private Timestamp tradeTs;
+	
+	@Column(name = "buy1")
+	private BigDecimal buy1;
+	@Column(name = "sell1")
+	private BigDecimal sell1;
 
 	public Timeseries() {
 	}
@@ -171,6 +176,22 @@ public class Timeseries implements Comparator<Timeseries>, Serializable {
 
 	public void setTradeTs(Timestamp tradeTs) {
 		this.tradeTs = tradeTs;
+	}
+
+	public BigDecimal getBuy1() {
+		return buy1;
+	}
+
+	public void setBuy1(BigDecimal buy1) {
+		this.buy1 = buy1;
+	}
+
+	public BigDecimal getSell1() {
+		return sell1;
+	}
+
+	public void setSell1(BigDecimal sell1) {
+		this.sell1 = sell1;
 	}
 
 	@Override

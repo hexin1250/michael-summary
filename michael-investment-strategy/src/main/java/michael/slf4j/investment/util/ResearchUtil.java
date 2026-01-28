@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import michael.slf4j.investment.constant.TopicConstants;
 import michael.slf4j.investment.message.service.MessageService;
+import michael.slf4j.investment.model.Variety;
 import michael.slf4j.investment.research.DataResearchV2;
 import michael.slf4j.investment.service.FileService;
 import michael.slf4j.investment.service.StatelessChatService;
@@ -39,24 +40,24 @@ public class ResearchUtil {
 	@Value("${chat.backup.folder}")
 	private String backupFolderName;
 	
-	public void doResearch() throws FileNotFoundException, IOException {
-		generateSummary();
-		statelessChatService.doResearch();
-		sendMessage();
+	public void doResearch(Variety variety) throws FileNotFoundException, IOException {
+		generateSummary(variety);
+		statelessChatService.doResearch(variety);
+		sendMessage(variety);
 	}
 	
-	private void generateSummary() {
+	private void generateSummary(Variety variety) {
 		long timestamp = TradeUtil.getTradeDate();
 		String tradeDate = TradeUtil.getDateStr(timestamp);
 		boolean isFullRequired = fileService.fullRequired(tradeDate);
-		dataResearchV2.summarize(isFullRequired);
+		dataResearchV2.summarize(variety, isFullRequired);
 	}
 	
-	private void sendMessage() {
-		File historyFolder = new File(historyFolderName);
+	private void sendMessage(Variety variety) {
+		File historyFolder = new File(historyFolderName + "/" + variety.name());
 		File[] files = historyFolder.listFiles();
 		if(files.length == 0) {
-			File backupFolder = new File(backupFolderName);
+			File backupFolder = new File(backupFolderName + "/" + variety.name());
 			files = backupFolder.listFiles();
 		}
 		File file = Arrays.stream(files).filter(a -> a.getName().contains("answer.txt")).max((a, b) -> {

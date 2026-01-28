@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -14,6 +15,7 @@ import michael.slf4j.investment.model.FutureSecurityEnum;
 import michael.slf4j.investment.model.TopDeal;
 
 public class SeleniumParser implements Closeable {
+	private static final Logger log = Logger.getLogger(SeleniumParser.class);
 	
 	private final WebDriver driver;
 	
@@ -22,8 +24,11 @@ public class SeleniumParser implements Closeable {
 	}
 	
 	public List<TopDeal> lookupData(FutureSecurityEnum varietyEnum, String security, String tradeDate) throws InterruptedException {
-		driver.get("https://data.eastmoney.com/futures/" + varietyEnum.broker + "/data.html?va=" + varietyEnum.name() + "&ct=" + security);
+		String url = "https://data.eastmoney.com/futures/" + varietyEnum.broker + "/data.html?va=" + varietyEnum.name() + "&ct=" + security;
+		log.info("Trying to access: " + url);
+		driver.get(url);
 		List<WebElement> mylist = driver.findElements(By.xpath("/html/body/div/img"));
+		log.info(mylist);
 		mylist.get(mylist.size() - 2).click();
 		Thread.sleep(1000);
 		List<WebElement> myNextlist = driver.findElements(By.xpath("/html/body/div/img"));

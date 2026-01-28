@@ -13,20 +13,21 @@ import java.util.Map;
 import java.util.Properties;
 
 public class PositionFileUtil {
-	private static final String POSITION_FILE_NAME = "C:/Users/HP/python-workspace/myproject/data/position.properties";
+	private static final String POSITION_DIR_NAME = "C:/Users/HP/python-workspace/myproject/data/";
+	private static final String POSITION_FILE_NAME = "position.properties";
 	
 	public static final String DIRECTION = "direction";
 	public static final String DIRECTION_INT = "directionInt";
 	public static final String PRICE = "price";
 	public static final String POSITION_PER = "positionPer";
 	
-	public static String savePositionData(int direction, int price, int positionPer) {
+	public static String savePositionData(String variety, int direction, int price, int positionPer) {
         Properties prop = new Properties();
         prop.setProperty(DIRECTION, direction + "");
         prop.setProperty(PRICE, price + "");
         prop.setProperty(POSITION_PER, positionPer + "");
 
-        try (OutputStream fos = new FileOutputStream(POSITION_FILE_NAME)) {
+        try (OutputStream fos = new FileOutputStream(POSITION_DIR_NAME + "/" + variety + "-" + POSITION_FILE_NAME)) {
             // 保存到文件（注释会以#开头）
             prop.store(fos, "Position Information");
             fos.flush();
@@ -36,10 +37,10 @@ public class PositionFileUtil {
 		return "保存成功";
 	}
 	
-	public static Map<String, String> readPositionData() {
+	public static Map<String, String> readPositionData(String variety) {
 		Properties prop = new Properties();
 		Map<String, String> ret = new HashMap<>();
-        try (InputStream fis = new FileInputStream(POSITION_FILE_NAME)) {
+        try (InputStream fis = new FileInputStream(POSITION_DIR_NAME + "/" + variety + "-" + POSITION_FILE_NAME)) {
             prop.load(fis);
             int direction = Integer.valueOf(prop.getProperty(DIRECTION));
             if(direction == 0) {

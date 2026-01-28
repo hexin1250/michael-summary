@@ -25,6 +25,7 @@ import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.output.Response;
+import michael.slf4j.investment.model.Variety;
 
 @Service("statelessChatService")
 public class StatelessChatService {
@@ -48,9 +49,9 @@ public class StatelessChatService {
 		this.chatModel = chatModel;
 	}
 
-	public void doResearch() throws FileNotFoundException, IOException {
-		log.info("Start to do research through Deepseek");
-		Map<String, Map<String, File>> map = fileService.getFileStatus();
+	public void doResearch(Variety variety) throws FileNotFoundException, IOException {
+		log.info("Start to do research through Deepseek for " + variety.name());
+		Map<String, Map<String, File>> map = fileService.getFileStatus(variety);
 		int size = map.size();
 		int start = size - 10;
 		int count = 0;
@@ -79,7 +80,7 @@ public class StatelessChatService {
 		// 调用模型生成回复
 		Response<AiMessage> aiReply = chatModel.generate(messages);
 		String reply = aiReply.content().text();
-		writeFile(tradeDate, reply);
+		writeFile(variety.name(), tradeDate, reply);
 		
 		log.info("Done to get answer");
 	}
@@ -95,8 +96,8 @@ public class StatelessChatService {
 		}
 	}
 	
-	private void writeFile(String tradeDate, String content) throws FileNotFoundException, IOException {
-		try(BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileService.getAnswerFileName())))){
+	private void writeFile(String variety, String tradeDate, String content) throws FileNotFoundException, IOException {
+		try(BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileService.getAnswerFileName(variety))))){
 			bw.write(content);
 			bw.newLine();
 			bw.flush();

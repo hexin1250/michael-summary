@@ -14,7 +14,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
+import michael.slf4j.investment.model.Variety;
 import michael.slf4j.investment.quant.live.LiveProcessor;
+import michael.slf4j.investment.research.realtime.RealTimeStrategy;
 import michael.slf4j.investment.service.FileService;
 import michael.slf4j.investment.util.ResearchUtil;
 
@@ -33,6 +35,9 @@ public class StrategyInitializedJob {
 	
 	@Autowired
 	private ResearchUtil researchUtil;
+	
+	@Autowired
+	private RealTimeStrategy realtimeStrategy;
 	
 	@Value("${chat.history.folder}")
 	private String historyFolderName;
@@ -54,7 +59,12 @@ public class StrategyInitializedJob {
 		
 		log.info("Doing housekeeping");
 		fileService.housekeeping();
+		realtimeStrategy.cleanup();
 		log.info("Done housekeeping");
+		
+		log.info("Start to initialize real time strategy");
+		realtimeStrategy.init();
+		log.info("Done to initialize real time strategy");
 	}
 	
 	@Scheduled(cron = "${start-schedule2}")
@@ -85,23 +95,14 @@ public class StrategyInitializedJob {
 		log.info("Done to initialize after startup");
 	}
 	
-	@Scheduled(cron = "${summary-night}")
-	public void summarizeNightData() throws FileNotFoundException, IOException {
-		researchUtil.doResearch();
-	}
-
-	@Scheduled(cron = "${summary-afternoon}")
-	public void summarizeAfternoonData() throws FileNotFoundException, IOException {
-		researchUtil.doResearch();
-	}
-	@Scheduled(cron = "${before-close}")
-	public void summarizeBeforeClose() throws FileNotFoundException, IOException {
-		researchUtil.doResearch();
+	@Scheduled(cron = "${top-deal-close}")
+	public void summarizeData4RB() throws FileNotFoundException, IOException {
+		researchUtil.doResearch(Variety.RB);
 	}
 	
-	@Scheduled(cron = "${top-deal-close}")
-	public void summarizeDayData() throws FileNotFoundException, IOException {
-		researchUtil.doResearch();
+	@Scheduled(cron = "${top-deal-close2}")
+	public void summarizeData4I() throws FileNotFoundException, IOException {
+		researchUtil.doResearch(Variety.I);
 	}
 
 }

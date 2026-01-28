@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import michael.slf4j.investment.message.service.MessageService;
 import michael.slf4j.investment.model.Account;
 import michael.slf4j.investment.model.RealRun;
+import michael.slf4j.investment.model.Variety;
 import michael.slf4j.investment.quant.backtest.ClassicalFutureStrategy;
 import michael.slf4j.investment.quant.backtest.MACDStrategy;
 import michael.slf4j.investment.quant.live.LiveProcessor;
@@ -161,17 +162,38 @@ public class StrategyController {
 	}
 
 	/**
-	 * http://localhost:1702/apps/strategy/research
-	 * http://localhost:1702/apps/strategy/research?security=RB2510
-	 * http://localhost:1702/apps/strategy/research?latest=true
+	 * http://localhost:1702/apps/strategy/research?variety=I
 	 * 
 	 * @param full
 	 * @return
 	 */
 	@GetMapping(path = "/research")
 	public @ResponseBody String research(
-			@RequestParam(name = "security", required = false, defaultValue = "") String security) {
-		dataResearchV2.summarize();
+			@RequestParam(name = "variety", required = true) String varietyStr) {
+		File historyFolder = new File(historyFolderName + "/" + varietyStr);
+		File[] files = historyFolder.listFiles();
+		Variety variety = Variety.of(varietyStr);
+		String tradeDate = fileService.getTradeDate(variety);
+		long count = Arrays.stream(files).filter(file -> !file.getName().contains(tradeDate)).count();
+		dataResearchV2.summarize(variety, count == 0);
+		StringBuffer sb = new StringBuffer();
+		sb.append(new Date()).append("<br>").append("research is done.");
+		log.info("Do research");
+		return sb.toString();
+	}
+	
+	/**
+	 * http://localhost:1702/apps/strategy/researchFull?variety=RB
+	 * 
+	 * @param full
+	 * @return
+	 */
+	@GetMapping(path = "/researchFull")
+	public @ResponseBody String researchFull(
+			@RequestParam(name = "variety", required = true) String varietyStr) {
+		Variety variety = Variety.of(varietyStr);
+		String researchFileName = pointFolderName + "/" + varietyStr + ".researchAll.txt";
+		dataResearchV2.summarize(variety, true, researchFileName);
 		StringBuffer sb = new StringBuffer();
 		sb.append(new Date()).append("<br>").append("research is done.");
 		log.info("Do research");
@@ -179,7 +201,7 @@ public class StrategyController {
 	}
 
 	/**
-	 * http://localhost:1702/apps/strategy/savePosition?direction=-1&price=3330&position=25
+	 * http://localhost:1702/apps/strategy/savePosition?direction=-1&price=3330&position=25&variety=RB
 	 * 
 	 * @param direction
 	 * @param price
@@ -188,10 +210,11 @@ public class StrategyController {
 	 */
 	@GetMapping(path = "/savePosition")
 	public @ResponseBody String savePosition(
+			@RequestParam(name = "variety", required = true) String variety,
 			@RequestParam(name = "direction", required = false, defaultValue = "0") int direction,
 			@RequestParam(name = "price", required = false, defaultValue = "0") int price,
 			@RequestParam(name = "position", required = false, defaultValue = "0") int positionPer) {
-		PositionFileUtil.savePositionData(direction, price, positionPer);
+		PositionFileUtil.savePositionData(variety, direction, price, positionPer);
 		StringBuffer sb = new StringBuffer();
 		sb.append(new Date()).append("<br>").append("Done to save data.");
 		log.info("Save position data");
@@ -199,34 +222,35 @@ public class StrategyController {
 	}
 
 	/**
-	 * http://localhost:1702/apps/strategy/deepseek
+	 * http://localhost:1702/apps/strategy/deepseek?variety=RB
 	 * 
 	 * @return
 	 * @throws IOException 
 	 * @throws FileNotFoundException 
 	 */
 	@GetMapping(path = "/deepseek")
-	public @ResponseBody String deepseek() throws FileNotFoundException, IOException {
+	public @ResponseBody String deepseek(@RequestParam(name = "variety", required = true) String varietyStr) throws FileNotFoundException, IOException {
 		log.info("get request to deepseek");
-		statelessChatService.doResearch();
+		Variety variety = Variety.of(varietyStr);
+		statelessChatService.doResearch(variety);
 		log.info("Done to get response from deepseek");
 		return "ok";
 	}
 
 	/**
-	 * http://localhost:1702/apps/strategy/deepseekHistory
+	 * http://localhost:1702/apps/strategy/deepseekHistory?variety=RB
 	 * 
 	 * @return
 	 * @throws IOException
 	 * @throws FileNotFoundException
 	 */
 	@GetMapping(path = "/deepseekHistory")
-	public String deepseekHistory(Model model) throws Exception {
+	public String deepseekHistory(Model model, @RequestParam(name = "variety", required = true) String variety) throws Exception {
 		log.info("Check new deepseek history page");
-		File historyFolder = new File(historyFolderName);
+		File historyFolder = new File(historyFolderName + "/" + variety);
 		File[] files = historyFolder.listFiles();
 		if(files.length == 0) {
-			File backupFolder = new File(backupFolderName);
+			File backupFolder = new File(backupFolderName + "/" + variety);
 			files = backupFolder.listFiles();
 		}
 		File file = Arrays.stream(files).filter(a -> a.getName().contains("answer.txt")).max((a, b) -> {
@@ -256,15 +280,29 @@ public class StrategyController {
 	}
 	
 	/**
-	 * http://localhost:1702/apps/strategy/question
+	 * http://localhost:1702/apps/strategy/question?variety=I
 	 * 
 	 * @return
 	 */
 	@GetMapping(path = "/question")
-	public @ResponseBody String question() {
+	public @ResponseBody String question(@RequestParam(name = "variety", required = true) String variety) {
 		log.info("Get question");
 		StringBuffer sb = new StringBuffer();
-		sb.append(PositionFileUtil.readFile(fileService.getQuestionFileName()));
+		sb.append(PositionFileUtil.readFile(fileService.getQuestionFileName(variety)));
+		return sb.toString();
+	}
+	
+	/**
+	 * http://localhost:1702/apps/strategy/questionFull?variety=I
+	 * 
+	 * @return
+	 */
+	@GetMapping(path = "/questionFull")
+	public @ResponseBody String questionFull(@RequestParam(name = "variety", required = true) String variety) {
+		log.info("Get question");
+		StringBuffer sb = new StringBuffer();
+		String researchFileName = pointFolderName + "/" + variety + ".researchAll.txt";
+		sb.append(PositionFileUtil.readFile(researchFileName));
 		return sb.toString();
 	}
 	

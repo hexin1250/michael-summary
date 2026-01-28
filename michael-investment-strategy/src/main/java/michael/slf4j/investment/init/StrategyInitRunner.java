@@ -5,6 +5,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
+import michael.slf4j.investment.model.Variety;
 import michael.slf4j.investment.quant.live.LiveProcessor;
 import michael.slf4j.investment.service.FileService;
 import michael.slf4j.investment.util.HolidayUtil;
@@ -24,7 +25,8 @@ public class StrategyInitRunner implements CommandLineRunner {
  		liveProcessor.beforeTrading();
 		HolidayUtil.$.loadHolidays();
 		
-		fileService.getFileStatus();
+		fileService.getFileStatus(Variety.I);
+		fileService.getFileStatus(Variety.RB);
 	}
 
 }

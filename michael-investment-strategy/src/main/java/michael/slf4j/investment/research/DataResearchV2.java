@@ -27,7 +27,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import michael.slf4j.investment.configuration.FreqEnum;
-import michael.slf4j.investment.message.service.MessageService;
 import michael.slf4j.investment.model.Timeseries;
 import michael.slf4j.investment.model.TopDeal;
 import michael.slf4j.investment.model.Variety;
@@ -98,9 +97,6 @@ public class DataResearchV2 {
 	@Autowired
 	private TopDealRepository topDealRepo;
 
-	@Autowired
-	MessageService messageService;
-
 	@Value("${chat.history.folder}")
 	private String folderName;
 
@@ -116,14 +112,13 @@ public class DataResearchV2 {
 		nf.setGroupingUsed(false);
 	}
 	
-	public void summarize() {
-		summarize(false);
+	public void summarize(Variety variety, boolean fullRequired) {
+		summarize(variety, fullRequired, null);
 	}
 
-	public void summarize(boolean fullRequired) {
+	public void summarize(Variety variety, boolean fullRequired, String researchFileName) {
 		log.info("Start to get new research");
 		LocalDateTime current = LocalDateTime.now();
-		Variety variety = Variety.RB;
 		Timestamp ts = TradeUtil.getTimestamp(current);
 		List<String> lastTradeDates = timeseriesRepository.getLast5TradeDate(variety.name(), FreqEnum._1MI.getValue(),
 				ts);
@@ -206,16 +201,21 @@ public class DataResearchV2 {
 		queue1W.stream().forEach(currentSb -> formatList.add(currentSb));
 
 		generateKeyPoints(formatList, realTimeList1D);
-		generateTrail(tTradeDate, lastTradeDates.get(1), formatList, mainSecurity, current, adjustList.get(adjustList.size() - 1));
+		generateTrail(variety.name(), tTradeDate, lastTradeDates.get(1), formatList, mainSecurity, current, adjustList.get(adjustList.size() - 1));
 
-		String fileName = folderName + "/" + tTradeDate + ".question.txt";
+		String fileName = null;
+		if(researchFileName != null) {
+			fileName = researchFileName;
+		} else {
+			fileName = folderName + "/" + variety.name() + "/" + tTradeDate + ".question.txt";
+		}
 		try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName)))) {
 			for (StringBuffer strb : formatList) {
 				bw.write(strb.toString());
 				bw.flush();
 			}
 			log.info("Latest information is generated");
-			fileService.getFileStatus();
+			fileService.getFileStatus(variety);
 		} catch (Exception e) {
 			log.error("Error when sending message to topic", e);
 		}
@@ -312,7 +312,7 @@ public class DataResearchV2 {
 		}
 	}
 
-	private void generateTrail(String tDate, String tMinusDate, List<StringBuffer> formatList, String mainSecurity, LocalDateTime current,
+	private void generateTrail(String varietyStr, String tDate, String tMinusDate, List<StringBuffer> formatList, String mainSecurity, LocalDateTime current,
 			Timeseries lastTs) {
 		StringBuffer sb = new StringBuffer();
 		int closePrice = lastTs.getClose().intValue();
@@ -336,10 +336,9 @@ public class DataResearchV2 {
 			sb.append("剩余夜盘以及次日日盘");
 		}
 		sb.append("的走势预演,和对应的概率,和关键价位预判.");
-		Map<String, String> map = PositionFileUtil.readPositionData();
+		Map<String, String> map = PositionFileUtil.readPositionData(varietyStr);
 		StringBuffer anotherCase = new StringBuffer();
 		if (!map.isEmpty()) {
-			anotherCase.append(";4.");
 			int v = Integer.valueOf(map.get(PositionFileUtil.PRICE));
 			int direction = Integer.valueOf(map.get(PositionFileUtil.DIRECTION_INT));
 			anotherCase.append(map.get(PositionFileUtil.DIRECTION));
@@ -353,16 +352,12 @@ public class DataResearchV2 {
 			anotherCase.append(Math.abs(closePrice - v)).append("点,");
 			anotherCase.append("仓位").append(map.get(PositionFileUtil.POSITION_PER)).append("%");
 		}
-		sb.append("针对以下");
+		sb.append("针对以下情况制定交易策略(");
 		if(anotherCase.isEmpty()) {
-			sb.append(3);
+			sb.append("空仓");
 		} else {
-			sb.append(4);
+			sb.append(anotherCase);
 		}
-		sb.append("种情况制定交易策略(1.多单开仓价").append(closePrice + 10).append(",浮亏10点,仓位100%;");
-		sb.append("2.空单开仓价").append(closePrice - 10).append(",浮亏10点,仓位100%;");
-		sb.append("3.空仓");
-		sb.append(anotherCase);
 		sb.append(")");
 
 		sb.append("\n");
@@ -370,7 +365,7 @@ public class DataResearchV2 {
 		sb.append("\n");
 		sb.append("如果这不是最开始的会话,先总结截至目前的走势是否符合" + tMinusDate + "的预测");
 		sb.append("\n");
-		sb.append("注意:策略需要明确标注止盈点、止损点;日内走势预演需要预测可能的收盘价");
+		sb.append("注意:策略需要明确标注止盈点、止损点;日内走势预演需要预测可能的收盘价;制定策略时要注意开仓方向和盈亏情况,千万不要形成错误结论");
 		sb.append("\n");
 		sb.append("数据说明:NA代表当前数据缺失");
 		sb.append("\n");

@@ -2,7 +2,10 @@ package michael.slf4j.investment.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -11,7 +14,7 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.google.common.io.Files;
+import michael.slf4j.investment.model.Variety;
 
 @Service("fileService")
 public class FileService {
@@ -26,10 +29,13 @@ public class FileService {
 	@Value("${chat.backup.folder}")
 	private String backUpfolderName;
 	
-	private String tradeDate;
+	@Value(value = "${chat.research.folder}")
+	private String researchFolder;
 	
-	public TreeMap<String, Map<String, File>> getFileStatus() {
-		File folder = new File(historyFolderName);
+	private Map<Variety, String> tradeDateMap = new HashMap<>();
+	
+	public TreeMap<String, Map<String, File>> getFileStatus(Variety variety) {
+		File folder = new File(historyFolderName + "/" + variety.name());
 		File[] files = folder.listFiles();
 		TreeMap<String, Map<String, File>> map = new TreeMap<>();
 		for (File file : files) {
@@ -47,25 +53,29 @@ public class FileService {
 			}
 		}
 		if(!map.isEmpty()) {
-			tradeDate = map.lastKey();
+			tradeDateMap.put(variety, map.lastKey());
 		}
 		return map;
 	}
 
-	public String getTradeDate() {
-		return tradeDate;
+	public String getTradeDate(Variety variety) {
+		return tradeDateMap.get(variety);
 	}
 	
-	public String getQuestionFileName() {
-		return historyFolderName + "/" + tradeDate + ".question.txt";
+	public String getQuestionFileName(String varietyStr) {
+		Variety variety = Variety.of(varietyStr);
+		String tradeDate = tradeDateMap.get(variety);
+		return historyFolderName + "/" + varietyStr + "/" + tradeDate + ".question.txt";
 	}
 	
-	public String getAnswerFileName() {
-		return historyFolderName + "/" + tradeDate + ".answer.txt";
+	public String getAnswerFileName(String varietyStr) {
+		Variety variety = Variety.of(varietyStr);
+		String tradeDate = tradeDateMap.get(variety);
+		return historyFolderName + "/" + varietyStr + "/" + tradeDate + ".answer.txt";
 	}
 	
-	public String getLatestAnswerFileName() {
-		TreeMap<String, Map<String, File>> statusMap = getFileStatus();
+	public String getLatestAnswerFileName(Variety variety) {
+		TreeMap<String, Map<String, File>> statusMap = getFileStatus(variety);
 		String tradeDate = statusMap.lastKey();
 		Map<String, File> typeMap = statusMap.get(tradeDate);
 		if(typeMap.containsKey(ANSWER_TYPE)) {
@@ -84,18 +94,37 @@ public class FileService {
 	}
 	
 	public void housekeeping() {
-		File folder = new File(historyFolderName);
+		housekeepVariety(Variety.I);
+		housekeepVariety(Variety.RB);
+	}
+	
+	private void housekeepVariety(Variety variety) {
+		File folder = new File(historyFolderName + "/" + variety.name());
 		File[] files = folder.listFiles();
 		long count = Arrays.stream(files).filter(file -> file.getName().contains("answer.txt")).count();
-		if(count == 6) {
+		if (count == 6) {
 			for (File from : files) {
-				String targetFileName = backUpfolderName + "/" + from.getName();
+				String targetFileName = backUpfolderName + "/" + variety.name() + "/" + from.getName();
 				File to = new File(targetFileName);
 				try {
-					Files.move(from, to);
+					Files.move(from.toPath(), to.toPath(), StandardCopyOption.REPLACE_EXISTING);
 				} catch (IOException e) {
 					log.warn("Move file error [" + from.getAbsolutePath() + "]", e);
 				}
+			}
+		}
+
+		File realtimeDir = new File(researchFolder);
+		if (realtimeDir.exists() && realtimeDir.isDirectory()) {
+			try {
+				Files.walk(realtimeDir.toPath()).skip(1).sorted(Comparator.reverseOrder()).forEach(path -> {
+					try {
+						Files.delete(path);
+					} catch (IOException e) {
+					}
+				});
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 	}

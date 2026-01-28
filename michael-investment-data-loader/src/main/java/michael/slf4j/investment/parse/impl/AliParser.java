@@ -42,6 +42,8 @@ public class AliParser implements IParser {
 			m.setVolume(security.getBigDecimal("NV"));
 			BigDecimal buy1 = security.getBigDecimal("B1");
 			BigDecimal sell1 = security.getBigDecimal("S1");
+			m.setBuy1(buy1);
+			m.setSell1(sell1);
 			if (buy1.compareTo(new BigDecimal(0)) == 0) {
 				m.setDownLimit(m.getClose());
 			}

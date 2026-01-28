@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.etl.DataLoaderClient;
 import michael.slf4j.investment.taskmanager.TaskManager;
+import michael.slf4j.investment.util.HolidayUtil;
 import michael.slf4j.investment.util.LoadFreqFutureData;
 import michael.slf4j.investment.util.TradeUtil;
 
@@ -31,6 +32,7 @@ public class InitRunner implements CommandLineRunner {
 	
 	@Override
     public void run(String... args) throws Exception {
+		HolidayUtil.$.loadHolidays();
 //		log.info("Start loading data...");
 //		loader.loadFreqData();
 //		log.info("Done to load data");
