@@ -389,6 +389,9 @@ public class DataLoaderClient {
 		double maxOpenInterest = 0D;
 		for (String security : securityList) {
 			Double openInterest = timeseriesRepository.getLastOpenInterest(security, ts);
+			if(openInterest == null) {
+				continue;
+			}
 			if (mainSecurity == null) {
 				mainSecurity = security;
 				maxOpenInterest = openInterest;

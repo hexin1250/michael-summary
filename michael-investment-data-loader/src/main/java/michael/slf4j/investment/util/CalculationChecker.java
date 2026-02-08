@@ -69,6 +69,7 @@ public class CalculationChecker {
 	}
 
 	public static void main(String[] args) throws FileNotFoundException, IOException {
+		String freqStr = args[0];
 		NumberFormat nf = NumberFormat.getInstance();
 		nf.setMaximumFractionDigits(2);
 		nf.setRoundingMode(RoundingMode.HALF_UP);
@@ -83,7 +84,7 @@ public class CalculationChecker {
 		Queue<StringBuffer> ret = new LinkedBlockingQueue<>();
 		
 //		List<List<String>> list = getData();
-		List<List<String>> list = getJsonData();
+		List<List<String>> list = getJsonData(freqStr);
 		
 		for (List<String> data : list) {
 			String time = data.get(0);
@@ -220,7 +221,7 @@ public class CalculationChecker {
 		}
 		
 		StringBuffer sb = new StringBuffer();
-		sb.append("下面表格包括了月线指标的数据:");
+		sb.append("下面表格包括了15分钟指标的数据:");
 		sb.append("\n");
 		sb.append("|");
 		sb.append(HEADER_MAP.values().stream().collect(Collectors.joining("|")));
@@ -236,9 +237,10 @@ public class CalculationChecker {
 //格式说明:不能出现table格式
 //			""";
 		String tail = """
-这是XAUUSD的月k线数据,根据所有指标,预测接下来的1个月的走势
+根据所有指标,预测接下来的1天的走势
 数据说明:NA代表当前数据缺失
 格式说明:不能出现table格式
+预测说明:用波浪理论进行高点低点预测以及相应的走势,在计算波浪最高价和最低价时,应当用日线的最高价和最低价,而不是收盘价.假定5597是5浪的结束点
 			""";
 //		String tail = """
 //				这是上证指数的日k线数据,根据所有指标,预测接下来的1个月/2个月/3个月的走势图
@@ -248,10 +250,10 @@ public class CalculationChecker {
 		System.out.println(tail);
 	}
 
-	private static List<List<String>> getJsonData() throws FileNotFoundException, IOException {
-		File dir = new File("src/test/data/XAUUSD");
+	private static List<List<String>> getJsonData(String freqStr) throws FileNotFoundException, IOException {
+		File dir = new File("src/test/data/XAUUSD/" + freqStr);
 		List<List<String>> dataList = new ArrayList<>();
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
 		for (File file : dir.listFiles()) {
 			try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file)))){
 				String line = null;

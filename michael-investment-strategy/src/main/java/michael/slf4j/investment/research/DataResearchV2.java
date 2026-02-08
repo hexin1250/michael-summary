@@ -335,7 +335,7 @@ public class DataResearchV2 {
 		} else if(current.getHour() == 22) {
 			sb.append("剩余夜盘以及次日日盘");
 		}
-		sb.append("的走势预演,和对应的概率,和关键价位预判.");
+		sb.append("的走势预演,和对应的概率,和关键价位预判\n");
 		Map<String, String> map = PositionFileUtil.readPositionData(varietyStr);
 		StringBuffer anotherCase = new StringBuffer();
 		if (!map.isEmpty()) {
@@ -358,15 +358,36 @@ public class DataResearchV2 {
 		} else {
 			sb.append(anotherCase);
 		}
-		sb.append(")");
-
+		sb.append(")\n");
+		
+		String command = """
+第一步,请首先确认的所有数据表格和指标清单:
+1. 净多头龙虎榜:机构/名次/净量/增减
+2. 净空头龙虎榜:机构/名次/净量/增减
+3. 周期指标表:必须包括时间/周期/开盘价/最高价/最低价/收盘价/OI/VOLUME,以及以下所有技术指标(共21个):
+ - 趋势指标:MA5, MA10, MA20, MA40, MA60
+ - 通道指标:BOLL LOWER, BOLL MID, BOLL UPPER
+ - 震荡/动量指标:BIAS1, BIAS2, BIAS3;WR1, WR2;CCI(14);MFI(14);RSI1, RSI2, RSI3
+ - 趋势振荡指标:MACD DIFF, MACD DEA, MACD MACD
+ - 随机指标:KDJ K, KDJ D, KDJ J
+ - 波动指标:ATR TR, ATR ATR
+(请在此条后回复"已确认数据清单"后再进行下一步)
+第二步,请确认所有数据清单都将会被用作分析
+(请在此条后回复"已确认所有指标都将被分析"后再进行下一步)
+第三步:逐项分析
+请按以下结构分析,每一项都必须明确引用上一步列出的具体指标名称和最新数值:
+1.如果这不是最开始的会话,先总结截至目前的走势是否符合2026-02-05的预测
+2.日线级别顶底分析:基于日线(1D周期)的开盘价/最高价/最低价/收盘价,结合所有21个形态指标,判断是否存在双顶/双底/头肩等形态,并描述价格相对位置
+3.多空争夺点位:确定关键压力和支撑位
+4.主力持仓行为解析:对比两张龙虎榜的"总持仓"/"总增减",推断主力意图
+5.日内走势预演:综合多周期指标状态,推演夜盘和日盘的可能路径,并给出收盘价预判区间
+6.交易策略:基于以上所有分析,为给定的持仓情况,明确给出包含仓位/方向/开/平仓点位/止盈点/止损点的具体计划
+第四步:交叉验证
+在最终结论前,请声明:我已就[合约代码]的数据,完成了对所有提供指标(第一步中列出的全部项目)的分析,没有遗漏
+				""";
+		sb.append(command);
 		sb.append("\n");
-		sb.append("在结果展示中,仅需包括以下5点:日线级别顶底分析(双顶底/多顶底),多空争夺点位,主力持仓行为解析,日内走势预演,交易策略(我是激进投资者,我只会100%仓位操作)");
-		sb.append("\n");
-		sb.append("如果这不是最开始的会话,先总结截至目前的走势是否符合" + tMinusDate + "的预测");
-		sb.append("\n");
-		sb.append("注意:策略需要明确标注止盈点、止损点;日内走势预演需要预测可能的收盘价;制定策略时要注意开仓方向和盈亏情况,千万不要形成错误结论");
-		sb.append("\n");
+		
 		sb.append("数据说明:NA代表当前数据缺失");
 		sb.append("\n");
 		sb.append("格式说明:不能出现table格式");
