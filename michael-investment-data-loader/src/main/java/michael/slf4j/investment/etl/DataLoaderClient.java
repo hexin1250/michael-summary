@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,7 @@ import michael.slf4j.investment.repo.TimeseriesRepository;
 import michael.slf4j.investment.repo.TopDealRepository;
 import michael.slf4j.investment.source.ISource;
 import michael.slf4j.investment.source.impl.AliHistoricalDataSource;
+import michael.slf4j.investment.source.impl.AliHistoricalDataSourceV2;
 import michael.slf4j.investment.taskmanager.TaskManager;
 import michael.slf4j.investment.util.DataLoaderUtil;
 import michael.slf4j.investment.util.MyFileUtil;
@@ -69,6 +71,10 @@ public class DataLoaderClient {
 	@Autowired
 	@Qualifier(value="aliHistoricalSource")
 	private AliHistoricalDataSource aliHistoricalSource;
+	
+	@Autowired
+	@Qualifier(value="aliHistoricalSourceV2")
+	private AliHistoricalDataSourceV2 aliHistoricalSourceV2;
 	
 	@Autowired
 	@Qualifier(value="aliHistoricalParser")
@@ -180,6 +186,19 @@ public class DataLoaderClient {
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
+		}
+	}
+	
+	public void update1D() throws IOException, JMSException {
+		Set<String> set = new HashSet<>();
+		set.add("XAUUSD");
+		for (String securityStr : set) {
+			Security security = new Security(securityStr, Variety.of(securityStr));
+			FreqEnum freq = FreqEnum._1D;
+			String content = aliHistoricalSourceV2.getContent(securityStr, freq, "1");
+			List<Timeseries> series = aliHistoricalParser.parse(security, content, freq);
+			futureLoader.loadSecurity(security, freq, series);
+			sendMessage(freq, series);
 		}
 	}
 	

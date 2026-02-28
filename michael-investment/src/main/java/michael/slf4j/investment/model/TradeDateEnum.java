@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 public enum TradeDateEnum {
 	night(_21),
 	day(_9, _10, _13),
+	whole_night(_EUR_NIGHT),
+	whole_day(_EUR_DAY),
 	;
 	
 	private TradePairEnum[] tradingHours;

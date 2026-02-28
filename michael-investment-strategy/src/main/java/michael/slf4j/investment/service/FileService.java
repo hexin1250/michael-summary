@@ -7,8 +7,10 @@ import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -63,9 +65,11 @@ public class FileService {
 	}
 	
 	public String getQuestionFileName(String varietyStr) {
-		Variety variety = Variety.of(varietyStr);
-		String tradeDate = tradeDateMap.get(variety);
-		return historyFolderName + "/" + varietyStr + "/" + tradeDate + ".question.txt";
+		String folder = historyFolderName + "/" + varietyStr;
+		File dir = new File(folder);
+		List<String> fileNameList = Arrays.stream(dir.list()).filter(fileName -> fileName.endsWith(".question.txt"))
+			.sorted((a, b) -> a.compareTo(b) * -1).collect(Collectors.toList());
+		return folder + "/" + fileNameList.get(0);
 	}
 	
 	public String getAnswerFileName(String varietyStr) {

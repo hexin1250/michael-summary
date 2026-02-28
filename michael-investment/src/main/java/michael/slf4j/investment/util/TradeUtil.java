@@ -109,7 +109,7 @@ public class TradeUtil {
 		}
 		long time = getTradeDate();
 		LocalDateTime tradeDateLdt = getLocalDateTime(new Timestamp(time));
-		String str = getTradeDateByLDT(tradeDateLdt);
+		String str = tradeDateLdt.format(DateTimeFormatter.ISO_DATE);
 		LocalDate tradeDateLd = getTradeDate(str);
 		if(HolidayUtil.$.isHoliday(tradeDateLd)) {
 			return false;

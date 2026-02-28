@@ -14,10 +14,16 @@ create table timeseries (
 	freq varchar(10) NOT NULL,
 	trade_date varchar(10) NOT null,
 	trade_ts timestamp NOT NULL,
+	buy1 NUMERIC(10,4),
+	sell1 NUMERIC(10,4);
 	PRIMARY KEY (id)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 /*
 insert into timeseries(security,security_name,open,high,low,close,up_limit,down_limit,volume,freq,trade_date,trade_ts,is_main_future) values('I',2,2,2,2,2,2,2,'1d','2020-01-01 00:00:00','f');
+
+ALTER TABLE timeseries
+ADD COLUMN buy1 NUMERIC(10,4),
+ADD COLUMN sell1 NUMERIC(10,4);
 */
 
 /*

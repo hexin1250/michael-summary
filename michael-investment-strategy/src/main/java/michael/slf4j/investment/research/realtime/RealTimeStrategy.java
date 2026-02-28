@@ -12,7 +12,6 @@ import java.io.OutputStreamWriter;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,6 +20,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -34,7 +34,7 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.annotation.JmsListener;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
@@ -52,7 +52,7 @@ import michael.slf4j.investment.research.DataResearchV2;
 import michael.slf4j.investment.util.PositionFileUtil;
 import michael.slf4j.investment.util.TradeUtil;
 
-@Service
+@Component
 public class RealTimeStrategy implements MessageListener {
 	private static final Logger log = Logger.getLogger(RealTimeStrategy.class);
 	private static final Pattern FILENAME_PATTERN = Pattern.compile(".*-(.*)-(.*)[.]txt");
@@ -70,7 +70,7 @@ public class RealTimeStrategy implements MessageListener {
 	@Autowired
 	MessageService messageService;
 
-	@Value(value = "${future.activemq.topic}")
+	@Value(value = "${future.activemq.topic.15M}")
 	private String topic;
 	
 	@Value(value = "${chat.research.folder}")
@@ -79,7 +79,6 @@ public class RealTimeStrategy implements MessageListener {
 	private Map<Variety, String> mainSecurityMap = new HashMap<>();
 	private Map<Variety, Integer> countMap = new HashMap<>();
 	private Map<Variety, List<ChatMessage>> chatMap = new HashMap<>();
-	private Map<Variety, Timeseries> tsMap = new HashMap<>();
 	
 	@PostConstruct
 	public void init() {
@@ -129,9 +128,8 @@ public class RealTimeStrategy implements MessageListener {
 					writeFile(fileNamePrefix + "0-answer.txt", initReply);
 					
 					StringBuffer questionSb = new StringBuffer();
-					questionSb.append("现在我需要实时盯盘,基于每分钟的数据.开盘之后,我会给你当前分钟时间,当前最新价,当前OI和当前持仓情况.\n");
-					questionSb.append("到时候我需要你根据实时数据,重新评估日内走势,然后生成最新的策略(我不会因为隔夜盘而平仓)\n");
-					questionSb.append("注意:输出要控制在100个字符内,需要省略不必要的markdown格式带来的字符*等");
+					questionSb.append("稍后,我会提供15分钟和30分钟的数据.请到时候基于更新的数据数据,重新评估日内走势和交易策略(我不会因为隔夜盘而平仓).如果你准备好了,请回复'确认'\n");
+					questionSb.append("注意:需要省略不必要的markdown格式带来的字符*等");
 					messages.add(UserMessage.from(questionSb.toString()));
 					
 					Response<AiMessage> contextAiReply = chatModel.generate(messages);
@@ -184,12 +182,43 @@ public class RealTimeStrategy implements MessageListener {
 							index++;
 						}
 					}
+					if(direction != 0) {
+						log.info("Trigger extra conversation.");
+						Response<AiMessage> contextAiReply = chatModel.generate(messages);
+						String contextReply = contextAiReply.content().text();
+						messages.add(AiMessage.from(contextReply));
+						
+						writeFile(fileNamePrefix + index + "-answer.txt", contextReply);
+						index++;
+					}
 					countMap.put(variety, index);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 			log.info("RealTime is ready for " + variety.name());
+			
+			List<Timeseries> realTimeList = timeseriesRepository.getAllDataByPeriod(mainSecurity, lastTradeDates.get(0), FreqEnum._15MI.getValue());
+			for (int i = 0; i < realTimeList.size(); i++) {
+				Timeseries thisTs = realTimeList.get(i);
+				researchV2.summarizeDataByFreq(variety, FreqEnum._15MI, thisTs);
+				LocalDateTime ldt = TradeUtil.getLocalDateTime(thisTs.getTradeTs());
+				if(ldt.getMinute() % 30 == 0 || (ldt.getHour() == 10 && ldt.getMinute() == 15)) {
+					Timeseries ts30Min = thisTs.copy();
+					if(ldt.getHour() == 10 && ldt.getMinute() == 15) {
+						LocalDateTime newLdt = ldt.plusMinutes(15);
+						ts30Min.setTradeTs(new Timestamp(TradeUtil.getLong(newLdt)));
+					} else {
+						Timeseries previousTs = realTimeList.get(i - 1);
+						ts30Min.setVolume(ts30Min.getVolume().add(previousTs.getVolume()));
+						ts30Min.setOpen(previousTs.getOpen());
+						ts30Min.setHigh(new BigDecimal(Math.max(ts30Min.getHigh().doubleValue(), previousTs.getHigh().doubleValue())));
+						ts30Min.setLow(new BigDecimal(Math.min(ts30Min.getLow().doubleValue(), previousTs.getLow().doubleValue())));
+						ts30Min.setFreq(FreqEnum._30MI.getValue());
+					}
+					researchV2.summarizeDataByFreq(variety, FreqEnum._30MI, ts30Min);
+				}
+			}
 		});
 		log.info("RealTime is ready for all. Main Securities->" + mainSecurityMap
 				.entrySet().stream()
@@ -204,87 +233,93 @@ public class RealTimeStrategy implements MessageListener {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	@JmsListener(destination = "${future.activemq.topic}")
+	@JmsListener(destination = "${future.activemq.topic.15M}")
 	public void onMessage(Message message) {
-		Map<String, Timeseries> map = new HashMap<>();
-		List<Timeseries> tsList = null;
+		List<Timeseries> myList = new ArrayList<>();
+		Variety variety = null;
 		try {
 			ObjectMessage objectMessage = (ObjectMessage) message;
-			tsList = (List<Timeseries>) objectMessage.getObject();
-			for (Timeseries ts : tsList) {
-				map.put(ts.getSecurity(), ts);
+			List<Timeseries> tsList = (List<Timeseries>) objectMessage.getObject();
+			for (Entry<Variety, String> entry : mainSecurityMap.entrySet()) {
+				String mainSecurity = entry.getValue();
+				Timeseries ts = tsList.get(0);
+				if(mainSecurity.equalsIgnoreCase(ts.getSecurity())) {
+					variety = entry.getKey();
+					break;
+				}
 			}
+			if(variety == null) {
+				return;
+			}
+			for (Timeseries ts : tsList) {
+				myList.add(ts);
+			}
+			Collections.sort(myList, (a,b) -> (int)(b.getTradeTs().getTime() - a.getTradeTs().getTime()));
 		} catch (Exception e) {
 			log.error("Error during receiving message from the topic:" + topic, e);
 		}
-		List<Variety> list = List.of(Variety.RB, Variety.I);
-		list.parallelStream().forEach(variety -> {
-			String mainSecurity = mainSecurityMap.get(variety);
-			Timeseries ts = map.get(mainSecurity);
-			Timeseries lastTs = tsMap.get(variety);
-			boolean moreInfo = false;
-			if(lastTs != null) {
-				BigDecimal prevBuy1 = lastTs.getBuy1();
-				BigDecimal prevSell1 = lastTs.getSell1();
-				BigDecimal buy1 = ts.getBuy1();
-				BigDecimal sell1 = ts.getSell1();
-				if(prevBuy1 != null && prevBuy1.compareTo(buy1) == 0 && prevSell1 != null && prevSell1.compareTo(sell1) == 0) {
-					return;
-				}
-				BigDecimal offset = null;
-				if(prevBuy1 != null && buy1 != null) {
-					offset = prevBuy1.subtract(buy1).abs();
-				} else {
-					offset = prevSell1.subtract(sell1).abs();
-				}
-				switch(variety) {
-				case RB:
-					if(offset.intValue() > 3) {
-						moreInfo = true;
-					}
-					break;
-				case I:
-					if(offset.doubleValue() > 1.5D) {
-						moreInfo = true;
-					}
-					break;
-					default:
-						moreInfo = false;
-				}
-			}
-			LocalTime lt = LocalTime.now();
-			if(lt.getMinute() % 30 == 0) {
-				moreInfo = true;
-			}
-			StringBuffer sb = new StringBuffer();
-			sb.append(generateQuestion(variety, ts));
-			sb.append("\n");
-			if(!moreInfo) {
-				sb.append("输出严格控制在50字符以内");
+		String mainSecurity = mainSecurityMap.get(variety);
+		Timeseries lastTs1 = myList.get(0);
+		Timeseries lastTs2 = myList.get(1);
+		Timeseries lastTs3 = myList.get(2);
+		Timeseries lastTs = lastTs1;
+		Timeseries nextTs = lastTs2;
+		if(lastTs1.getTradeTs().getTime() > System.currentTimeMillis()) {
+			lastTs = lastTs2;
+			nextTs = lastTs3;
+		}
+		
+		StringBuffer sb = new StringBuffer();
+		String myHeader = """
+本次分析基于【日线/周线】级别持仓.我的风格是100%仓位激进操作,但风控必须匹配我的持仓周期.请遵循以下分析流程:
+1.首先确认我的持仓周期和逻辑
+2.确认最新提供的数据并实时可能的走势
+3.明确在什么价位将100%仓位做反手操作,而不是基于分钟图频繁止损
+4.宽幅止损:应基于我持仓级别的关键支撑/压力，而非日内波动
+5.最后,结合分时指标等作为辅助验证和出场点细化.回答应保持简洁的同时,尽可能提供更多信息
+注:严格确保输出在1000个token以内
+				""";
+		sb.append(myHeader);
+		sb.append("\n");
+		sb.append(researchV2.getHeader());
+		sb.append(researchV2.summarizeDataByFreq(variety, FreqEnum._15MI, lastTs));
+		LocalDateTime ldt = TradeUtil.getLocalDateTime(lastTs.getTradeTs());
+		if(ldt.getMinute() % 30 == 0 || (ldt.getHour() == 10 && ldt.getMinute() == 15)) {
+			Timeseries ts30Min = lastTs.copy();
+			if(ldt.getHour() == 10 && ldt.getMinute() == 15) {
+				LocalDateTime newLdt = ldt.plusMinutes(15);
+				ts30Min.setTradeTs(new Timestamp(TradeUtil.getLong(newLdt)));
 			} else {
-				sb.append("需要详细信息,输出在200字符以内");
+				ts30Min.setVolume(ts30Min.getVolume().add(nextTs.getVolume()));
+				ts30Min.setOpen(nextTs.getOpen());
+				ts30Min.setHigh(new BigDecimal(Math.max(ts30Min.getHigh().doubleValue(), nextTs.getHigh().doubleValue())));
+				ts30Min.setLow(new BigDecimal(Math.min(ts30Min.getLow().doubleValue(), nextTs.getLow().doubleValue())));
+				ts30Min.setFreq(FreqEnum._30MI.getValue());
 			}
-			String question = sb.toString();
-			List<ChatMessage> messages = chatMap.get(variety);
-			messages.add(UserMessage.from(question));
-			
-			Response<AiMessage> aiReply = chatModel.generate(messages);
-			String reply = aiReply.content().text();
-			messages.add(AiMessage.from(reply));
-			
-			String fileNamePrefix = getFilenamePrefix(variety, mainSecurity);
-			int index = countMap.get(variety);
-			try {
-				messageService.send(TopicConstants.NOTIFICATION_TOPIC, reply);
-				writeFile(fileNamePrefix + index + "-question.txt", question);
-				writeFile(fileNamePrefix + index + "-answer.txt", reply);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			index++;
-			countMap.put(variety, index);
-			tsMap.put(variety, ts);
-		});
+			sb.append(researchV2.summarizeDataByFreq(variety, FreqEnum._30MI, ts30Min));
+		}
+		
+		sb.append(generateQuestion(variety, lastTs));
+		String question = sb.toString();
+		List<ChatMessage> messages = chatMap.get(variety);
+		messages.add(UserMessage.from(question));
+		
+		log.info("Start real time deepseek for[" + variety + "]");
+		Response<AiMessage> aiReply = chatModel.generate(messages);
+		String reply = aiReply.content().text();
+		messages.add(AiMessage.from(reply));
+		
+		String fileNamePrefix = getFilenamePrefix(variety, mainSecurity);
+		int index = countMap.get(variety);
+		try {
+			messageService.send(TopicConstants.NOTIFICATION_TOPIC, reply);
+			writeFile(fileNamePrefix + index + "-question.txt", question);
+			writeFile(fileNamePrefix + index + "-answer.txt", reply);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		index++;
+		countMap.put(variety, index);
 		
 	}
 	
@@ -292,7 +327,6 @@ public class RealTimeStrategy implements MessageListener {
 		mainSecurityMap.clear();
 		countMap.clear();
 		chatMap.clear();
-		tsMap.clear();
 	}
 	
 	private String generateQuestion(Variety variety, Timeseries ts) {
@@ -322,10 +356,6 @@ public class RealTimeStrategy implements MessageListener {
 		}
 		
 		sb.append(timeStr);
-		sb.append(" ");
-		sb.append(closeBD.stripTrailingZeros().toPlainString());
-		sb.append(" ");
-		sb.append(ts.getOpenInterest().stripTrailingZeros().toPlainString());
 		sb.append("\n");
 		sb.append(anotherCase);
 		return sb.toString();

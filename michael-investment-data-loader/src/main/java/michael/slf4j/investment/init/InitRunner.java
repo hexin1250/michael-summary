@@ -6,11 +6,11 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
+import io.github.bonigarcia.wdm.WebDriverManager;
 import michael.slf4j.investment.etl.DataLoaderClient;
 import michael.slf4j.investment.taskmanager.TaskManager;
 import michael.slf4j.investment.util.HolidayUtil;
 import michael.slf4j.investment.util.LoadFreqFutureData;
-import michael.slf4j.investment.util.TradeUtil;
 
 @Component
 @Controller
@@ -18,7 +18,7 @@ public class InitRunner implements CommandLineRunner {
 	private static final Logger log = Logger.getLogger(InitRunner.class);
 	
 	static {
-		System.setProperty("webdriver.chrome.driver", "C:\\software\\chrome\\chromedriver.exe");
+		WebDriverManager.chromedriver().setup();
 	}
 
 	@Autowired
@@ -32,6 +32,8 @@ public class InitRunner implements CommandLineRunner {
 	
 	@Override
     public void run(String... args) throws Exception {
+//		dataLoaderClient.update1D();
+		
 		HolidayUtil.$.loadHolidays();
 //		log.info("Start loading data...");
 //		loader.loadFreqData();

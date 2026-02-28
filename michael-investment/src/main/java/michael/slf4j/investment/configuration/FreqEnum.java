@@ -6,7 +6,7 @@ public enum FreqEnum {
 	_30MI{{value = "30M"; period = 30 - 1;}},
 	_1H{{value = "1H"; period = 60 - 1;}},
 	_2H{{value = "2H"; period = 120 - 1;}},
-	_1D{{value = "1D"; period = 60 * 18 - 1;}},
+	_1D{{value = "D"; period = 60 * 18 - 1;}},
 	_1W{{value = "1W";period = 4 * 24 * 60 + 6 * 60 - 1;}},
 	_1M{{value = "M";period = 10000L;}},
 	_TICK{{value = "TICK";}},

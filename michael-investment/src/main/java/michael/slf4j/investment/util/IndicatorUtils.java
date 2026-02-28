@@ -52,10 +52,12 @@ public class IndicatorUtils {
 	public static Map<String, List<Double>> calculateMA(List<Double> closes) {
 		Map<String, List<Double>> map = new LinkedHashMap<String, List<Double>>();
 		map.put("MA1", calculateMA(closes, 5));
-		map.put("MA2", calculateMA(closes, 10));
-		map.put("MA3", calculateMA(closes, 20));
-		map.put("MA4", calculateMA(closes, 40));
-		map.put("MA5", calculateMA(closes, 60));
+		map.put("MA2", calculateMA(closes, 8));
+		map.put("MA3", calculateMA(closes, 13));
+		map.put("MA4", calculateMA(closes, 21));
+		map.put("MA5", calculateMA(closes, 34));
+		map.put("MA6", calculateMA(closes, 55));
+		map.put("MA7", calculateMA(closes, 89));
 		return map;
 	}
 

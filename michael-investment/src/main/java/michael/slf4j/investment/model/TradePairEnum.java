@@ -7,6 +7,8 @@ public enum TradePairEnum {
 	_10(LocalTime.of(10, 30, 0), LocalTime.of(11, 30, 0)),
 	_13(LocalTime.of(13, 30, 0), LocalTime.of(15, 0, 0)),
 	_21(LocalTime.of(21, 0, 0), LocalTime.of(23, 0, 0)),
+	_EUR_NIGHT(LocalTime.of(7, 0, 0), LocalTime.of(21, 0, 0)),
+	_EUR_DAY(LocalTime.of(21, 0, 0), LocalTime.of(6, 0, 0)),
 	;
 	
 	private LocalTime start;

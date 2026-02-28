@@ -16,6 +16,7 @@ import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.model.Variety;
 import michael.slf4j.investment.quant.live.LiveProcessor;
+import michael.slf4j.investment.research.XAUDataResearch;
 import michael.slf4j.investment.research.realtime.RealTimeStrategy;
 import michael.slf4j.investment.service.FileService;
 import michael.slf4j.investment.util.ResearchUtil;
@@ -38,6 +39,9 @@ public class StrategyInitializedJob {
 	
 	@Autowired
 	private RealTimeStrategy realtimeStrategy;
+	
+	@Autowired
+	private XAUDataResearch xauDataResearch;
 	
 	@Value("${chat.history.folder}")
 	private String historyFolderName;
@@ -103,6 +107,11 @@ public class StrategyInitializedJob {
 	@Scheduled(cron = "${top-deal-close2}")
 	public void summarizeData4I() throws FileNotFoundException, IOException {
 		researchUtil.doResearch(Variety.I);
+	}
+	
+	@Scheduled(cron = "${xauusd-research}")
+	public void summarizeXAUUSD() throws FileNotFoundException, IOException {
+		xauDataResearch.summarize();
 	}
 
 }

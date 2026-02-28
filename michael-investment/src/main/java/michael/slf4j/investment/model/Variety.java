@@ -4,7 +4,8 @@ public enum Variety {
 	STOCK{{rate = 0.0003D; dayRate = 0.0003D; unit = 100D; marginRate = 1D; cal = 1;}},
 	I{{rate = 0.0006D; dayRate = 0.0024D; unit = 100D; marginRate = 0.12D; cal = 1;}},
 	J{{rate = 0.0006D; dayRate = 0.0024D; unit = 100D; marginRate = 0.11D; cal = 1;}},
-	RB{{rate = 0.0003D; dayRate = 0.004D; unit = 10D; marginRate = 0.1D; cal = 10;}};
+	RB{{rate = 0.0003D; dayRate = 0.004D; unit = 10D; marginRate = 0.1D; cal = 10;}},
+	XAUUSD{{rate = 0.0025D; dayRate = 0.0025D; unit = 1D; marginRate = 1D; cal = 1;}};
 	
 	public double rate;
 	public double dayRate;
@@ -33,16 +34,12 @@ public enum Variety {
 	}
 
 	public static Variety of(String variety) {
-		switch(variety) {
-		case "I":
-			return I;
-		case "J":
-			return J;
-		case "RB":
-			return RB;
-			default:
-				return null;
+		for (Variety v : Variety.values()) {
+			if(v.name().equalsIgnoreCase(variety)) {
+				return v;
+			}
 		}
+		return null;
 	}
 	
 	@Override

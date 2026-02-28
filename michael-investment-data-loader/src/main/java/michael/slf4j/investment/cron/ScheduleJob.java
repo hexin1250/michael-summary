@@ -108,4 +108,13 @@ public class ScheduleJob {
 		}
 	}
 	
+	@Scheduled(cron = "${xauusd-data}")
+	public void updateXAUUSDData() {
+		try {
+			dataLoaderClient.update1D();
+		} catch (Exception e) {
+			log.error("Error when updating XAUUSD data", e);
+		}
+	}
+	
 }
