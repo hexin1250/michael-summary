@@ -176,7 +176,7 @@ public class XAUDataResearch {
 //		startSb.append("交易说明:我是进行10倍杠杆交易,标的价格浮动10%会强平.所以你在生成策略的时候,务必要严谨,我会严格按照你的交易策略进行交易!");
 //		startSb.append("我今日的目标是赚25%,也就是单笔浮动超过2.5%即可实现.实现后交易策略转为防守,宁可少赚也不能亏.\n");
 //		startSb.append("浮盈超过0.12%才能保证单笔不亏(考虑到手续费).所以在设置止损价时,一定要确保浮盈超过0.12%\n");
-		startSb.append("每日在这些小时进行deepseek预测:9,12,19,23");
+		startSb.append("每日在这些小时进行deepseek预测:8,13,20");
 		startSb.append("用中文回答");
 		messages.add(SystemMessage.from(startSb.toString()));
 		try {
