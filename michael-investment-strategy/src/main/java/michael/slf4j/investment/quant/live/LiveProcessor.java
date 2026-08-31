@@ -57,7 +57,7 @@ public class LiveProcessor {
 	public void init() {
 		log.info("Start to initialize live trade processor");
 		List<RealRun> runList = realRunRepo.findRunningJobs();
-		runList.stream().forEach(rr -> {
+		runList.stream().filter(rr -> rr.getId() != 1L).forEach(rr -> {
 			initStrategy(rr);
 		});
 		log.info("Done to initialize live trade processor");

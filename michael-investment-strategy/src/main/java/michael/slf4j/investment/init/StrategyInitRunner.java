@@ -7,10 +7,10 @@ import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.model.Variety;
 import michael.slf4j.investment.quant.live.LiveProcessor;
+import michael.slf4j.investment.research.CoinDataResearch;
 import michael.slf4j.investment.research.XAUDataResearch;
 import michael.slf4j.investment.service.FileService;
 import michael.slf4j.investment.util.HolidayUtil;
-import michael.slf4j.investment.util.ResearchUtil;
 
 @Component
 @Controller
@@ -26,7 +26,7 @@ public class StrategyInitRunner implements CommandLineRunner {
 	private XAUDataResearch xauDataResearch;
 	
 	@Autowired
-	private ResearchUtil researchUtil;
+	private CoinDataResearch coinDataResearch;
 	
  	@Override
 	public void run(String... args) throws Exception {
@@ -37,9 +37,7 @@ public class StrategyInitRunner implements CommandLineRunner {
 		fileService.getFileStatus(Variety.RB);
 		
 //		xauDataResearch.summarize();
-		
-//		researchUtil.doResearch(Variety.RB);
-//		researchUtil.doResearch(Variety.I);
+//		coinDataResearch.summarize();
 	}
 
 }

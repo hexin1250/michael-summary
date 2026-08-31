@@ -1,7 +1,8 @@
 package michael.slf4j.investment.configuration;
 
 public enum FreqEnum {
-	_1MI{{value = "1MI";}},
+	_1MI{{value = "1M";}},
+	_5MI{{value = "5M";}},
 	_15MI{{value = "15M"; period = 15 - 1;}},
 	_30MI{{value = "30M"; period = 30 - 1;}},
 	_1H{{value = "1H"; period = 60 - 1;}},

@@ -89,7 +89,7 @@ public class LoadFutureData {
 										tm.setOpenInterest(new BigDecimal(futureParts[8]));
 										tm.setTradeDate(tradeDate);
 										tm.setTradeTs(tradeTs);
-										tm.setFreq("1MI");
+										tm.setFreq("1M");
 										
 										if(!tradeDates.contains(tradeDate)) {
 											addPsBatch(ps, tm, tm.getFreq());

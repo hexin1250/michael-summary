@@ -41,6 +41,7 @@ public class WeChatRobot {
 	}
 
 	public void ChooseFriends(String name) {
+		OpenWeChat();
 		StringSelection text = new StringSelection(name);
 		clip.setContents(text, null);
 		bot.delay(500);
@@ -57,6 +58,7 @@ public class WeChatRobot {
 		bot.keyPress(KeyEvent.VK_ENTER);
 		bot.keyRelease(KeyEvent.VK_ENTER);
 		bot.delay(200);
+		OpenWeChat();
 	}
 
 	private void SendMessage(String message) {
@@ -79,8 +81,34 @@ public class WeChatRobot {
 		bot.delay(200);
 	}
 	
-	public static void main(String[] args) {
-		WeChatRobot robot = new WeChatRobot();
-		robot.sendWechatMessage("test");
-	}
+	public void sendWeChatImage() {
+		OpenWeChat();
+        pasteAndSendImage();         // 粘贴图片并发送
+    }
+
+    private void pasteAndSendImage() {
+        bot.delay(300);                   // 等剪贴板更新
+
+        // Ctrl+V 粘贴
+        bot.keyPress(KeyEvent.VK_CONTROL);
+        bot.keyPress(KeyEvent.VK_V);
+        bot.keyRelease(KeyEvent.VK_V);
+        bot.keyRelease(KeyEvent.VK_CONTROL);
+        bot.delay(1000);                  // 等图片在输入框渲染完成，时间可根据网速/图片大小调整
+
+        // 回车发送
+        bot.keyPress(KeyEvent.VK_ENTER);
+        bot.keyRelease(KeyEvent.VK_ENTER);
+        bot.delay(800);                   // 等待发送完成
+
+        // 可选：发送后关闭微信窗口（与 SendMessage 保持一致）
+        bot.keyPress(KeyEvent.VK_CONTROL);
+        bot.keyPress(KeyEvent.VK_ALT);
+        bot.keyPress(KeyEvent.VK_W);
+        bot.keyRelease(KeyEvent.VK_CONTROL);
+        bot.keyRelease(KeyEvent.VK_ALT);
+        bot.keyRelease(KeyEvent.VK_W);
+        bot.delay(200);
+    }
+
 }

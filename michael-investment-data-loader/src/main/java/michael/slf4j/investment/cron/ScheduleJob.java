@@ -1,5 +1,7 @@
 package michael.slf4j.investment.cron;
 
+import java.io.IOException;
+
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -9,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.etl.DataLoaderClient;
-import michael.slf4j.investment.taskmanager.TaskManager;
 
 @Component
 @Controller
@@ -19,15 +20,17 @@ public class ScheduleJob {
 	private static final Logger log = Logger.getLogger(ScheduleJob.class);
 	
 	@Autowired
-	private TaskManager taskManager;
-	
-	@Autowired
 	@Qualifier(value="dataLoaderClient")
 	private DataLoaderClient dataLoaderClient;
 	
 	@Scheduled(cron = "${clean-schedule}")
 	public void cleanData() {
-		taskManager.fillBack1D();
+		dataLoaderClient.fillBack1D();
+		try {
+			dataLoaderClient.updateHistory1MbyEOD();
+		} catch (IOException e) {
+			log.error("What happend???", e);
+		}
 		log.info("[EOD] Done to fill back 1D data.");
 	}
 
@@ -109,11 +112,21 @@ public class ScheduleJob {
 	}
 	
 	@Scheduled(cron = "${xauusd-data}")
+	@Scheduled(cron = "${xauusd-data-weekend}")
 	public void updateXAUUSDData() {
 		try {
-			dataLoaderClient.update1D();
+			dataLoaderClient.updateMetal();
 		} catch (Exception e) {
 			log.error("Error when updating XAUUSD data", e);
+		}
+	}
+	
+	@Scheduled(cron = "${coin-data}")
+	public void updateCoinData() {
+		try {
+			dataLoaderClient.updateCoin();
+		} catch (Exception e) {
+			log.error("Error when updating ETHUSDT data", e);
 		}
 	}
 	

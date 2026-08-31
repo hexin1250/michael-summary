@@ -20,15 +20,11 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
-import michael.slf4j.investment.etl.FutureLoader;
 import michael.slf4j.investment.model.FutureSecurityEnum;
 
 @Controller
 public class TaskManager {
 	private static final Logger log = Logger.getLogger(TaskManager.class);
-	
-	@Autowired
-	private FutureLoader futureLoader;
 	
 	@Autowired
 	private FutureTask futureTask;
@@ -78,10 +74,6 @@ public class TaskManager {
 		recordMap.clear();
 		futureTask.clear();
 		log.info("Cancel Tasks.");
-	}
-	
-	public void fillBack1D() {
-		futureLoader.fillBack1D();
 	}
 	
 	public void close() {

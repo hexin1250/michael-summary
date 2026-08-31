@@ -118,7 +118,7 @@ public class FileService {
 			}
 		}
 
-		File realtimeDir = new File(researchFolder);
+		File realtimeDir = new File(researchFolder + "/" + variety.name());
 		if (realtimeDir.exists() && realtimeDir.isDirectory()) {
 			try {
 				Files.walk(realtimeDir.toPath()).skip(1).sorted(Comparator.reverseOrder()).forEach(path -> {

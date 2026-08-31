@@ -16,6 +16,7 @@ import org.springframework.stereotype.Controller;
 
 import michael.slf4j.investment.model.Variety;
 import michael.slf4j.investment.quant.live.LiveProcessor;
+import michael.slf4j.investment.research.CoinDataResearch;
 import michael.slf4j.investment.research.XAUDataResearch;
 import michael.slf4j.investment.research.realtime.RealTimeStrategy;
 import michael.slf4j.investment.service.FileService;
@@ -43,6 +44,9 @@ public class StrategyInitializedJob {
 	@Autowired
 	private XAUDataResearch xauDataResearch;
 	
+	@Autowired
+	private CoinDataResearch coinDataResearch;
+	
 	@Value("${chat.history.folder}")
 	private String historyFolderName;
 	
@@ -53,6 +57,8 @@ public class StrategyInitializedJob {
 	public void cleanData() {
 		liveProcessor.afterTrading();
 		log.info("[EOD] After trading");
+		realtimeStrategy.cleanup();
+		log.info("Done housekeeping for real time strategy");
 	}
 
 	@Scheduled(cron = "${start-schedule1}")
@@ -63,11 +69,10 @@ public class StrategyInitializedJob {
 		
 		log.info("Doing housekeeping");
 		fileService.housekeeping();
-		realtimeStrategy.cleanup();
 		log.info("Done housekeeping");
 		
 		log.info("Start to initialize real time strategy");
-		realtimeStrategy.init();
+//		realtimeStrategy.init();
 		log.info("Done to initialize real time strategy");
 	}
 	
@@ -101,17 +106,30 @@ public class StrategyInitializedJob {
 	
 	@Scheduled(cron = "${top-deal-close}")
 	public void summarizeData4RB() throws FileNotFoundException, IOException {
-		researchUtil.doResearch(Variety.RB);
+//		researchUtil.doResearch(Variety.RB);
 	}
 	
 	@Scheduled(cron = "${top-deal-close2}")
 	public void summarizeData4I() throws FileNotFoundException, IOException {
-		researchUtil.doResearch(Variety.I);
+//		researchUtil.doResearch(Variety.I);
 	}
 	
 	@Scheduled(cron = "${xauusd-research}")
+	@Scheduled(cron = "${xauusd-research2}")
+	@Scheduled(cron = "${xauusd-research-weekend}")
 	public void summarizeXAUUSD() throws FileNotFoundException, IOException {
 		xauDataResearch.summarize();
+	}
+	
+	@Scheduled(cron = "${coin-research}")
+	public void summarizeCoin() throws FileNotFoundException, IOException {
+//		coinDataResearch.summarize();
+	}
+	
+	@Scheduled(cron = "${future-research1}")
+	@Scheduled(cron = "${future-research2}")
+	public void summarizeDataRB() throws FileNotFoundException, IOException {
+//		realtimeStrategy.startResearch(Variety.RB);
 	}
 
 }

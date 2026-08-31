@@ -15,7 +15,7 @@ public class MessageService {
 	private JmsMessagingTemplate jmsTemplate;
 
 	public void send(String topicName, Object content) throws JMSException {
-		log.info("Send message:" + content);
+//		log.info("Send message:" + content);
 		jmsTemplate.convertAndSend(topicName, content);
 	}
 

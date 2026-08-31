@@ -32,18 +32,23 @@ public class InitRunner implements CommandLineRunner {
 	
 	@Override
     public void run(String... args) throws Exception {
-//		dataLoaderClient.update1D();
+    	log.info("Initializing...");
+    	taskManager.subscribeSecurities();
+    	dataLoaderClient.init();
+    	log.info("Done to initialize resources.");
+//    	dataLoaderClient.update1MinData();
+//    	dataLoaderClient.updateHistory1M();
+//    	dataLoaderClient.updateHistory1MbyEOD();
+    	
+//		dataLoaderClient.fillBack1D();
+    	dataLoaderClient.updateMetal();
+    	dataLoaderClient.updateCoin();
 		
 		HolidayUtil.$.loadHolidays();
 //		log.info("Start loading data...");
 //		loader.loadFreqData();
 //		log.info("Done to load data");
 
-    	log.info("Initializing...");
-    	taskManager.subscribeSecurities();
-    	dataLoaderClient.init();
-    	log.info("Done to initialize resources.");
-    	
 //    	log.info("Start to initialize top deal data.");
 //    	dataLoaderClient.loadMainTopDeal();
 //    	log.info("Done to load top deal data.");

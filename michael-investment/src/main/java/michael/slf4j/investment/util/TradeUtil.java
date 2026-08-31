@@ -16,8 +16,8 @@ public class TradeUtil {
 	public static LocalTime[][] periods = new LocalTime[][] {
 		{LocalTime.of(21, 1, 0), LocalTime.of(23, 0, 0)},
 		{LocalTime.of(9, 1, 0), LocalTime.of(10, 15, 0)},
-		{LocalTime.of(10, 30, 0), LocalTime.of(11, 30, 0)},
-		{LocalTime.of(13, 30, 0), LocalTime.of(15, 1, 0)}
+		{LocalTime.of(10, 31, 0), LocalTime.of(11, 30, 0)},
+		{LocalTime.of(13, 31, 0), LocalTime.of(15, 1, 0)}
 	};
 	
 	public static LocalDate getLDTradeDate() {
@@ -101,20 +101,34 @@ public class TradeUtil {
 	}
 	
 	public static boolean isTradingTime(LocalDateTime ldt) {
+		Boolean debug = Boolean.getBoolean("trading.debug");
+		if(debug) {
+			return true;
+		}
 		LocalDate ld = ldt.toLocalDate();
 		DayOfWeek dayOfWeek = ld.getDayOfWeek();
 		int day = dayOfWeek.getValue();
 		if(day >= 6) {
 			return false;
 		}
+		if(checkHolidayTimePeriod(System.currentTimeMillis())) {
+			return false;
+		}
 		long time = getTradeDate();
+		if(checkHolidayTimePeriod(time)) {
+			return false;
+		}
+		return isTradingTime(ldt.toLocalTime());
+	}
+
+	private static boolean checkHolidayTimePeriod(long time) {
 		LocalDateTime tradeDateLdt = getLocalDateTime(new Timestamp(time));
 		String str = tradeDateLdt.format(DateTimeFormatter.ISO_DATE);
 		LocalDate tradeDateLd = getTradeDate(str);
 		if(HolidayUtil.$.isHoliday(tradeDateLd)) {
-			return false;
+			return true;
 		}
-		return isTradingTime(ldt.toLocalTime());
+		return false;
 	}
 	
 	public static LocalDate getCurrentTradeDate(LocalDateTime ldt) {

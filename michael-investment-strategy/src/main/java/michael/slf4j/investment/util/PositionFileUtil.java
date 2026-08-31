@@ -21,7 +21,7 @@ public class PositionFileUtil {
 	public static final String PRICE = "price";
 	public static final String POSITION_PER = "positionPer";
 	
-	public static String savePositionData(String variety, int direction, int price, int positionPer) {
+	public static String savePositionData(String variety, int direction, String price, int positionPer) {
         Properties prop = new Properties();
         prop.setProperty(DIRECTION, direction + "");
         prop.setProperty(PRICE, price + "");

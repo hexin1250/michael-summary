@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import michael.slf4j.investment.configuration.FreqEnum;
-import michael.slf4j.investment.constant.Constants;
 import michael.slf4j.investment.model.Security;
 import michael.slf4j.investment.model.Timeseries;
 import michael.slf4j.investment.parse.IParser;
@@ -49,7 +48,11 @@ public class FutureLoader {
 	}
 	
 	public boolean loadSecurity(Security security, FreqEnum freq, List<Timeseries> series) {
-		List<Timeseries> storedData = timeseriesRepository.findBySecurityFreqLimit(security.getName(), freq.getValue(), 100);
+		return loadSecurity(security, freq, series, 100);
+	}
+	
+	public boolean loadSecurity(Security security, FreqEnum freq, List<Timeseries> series, int limit) {
+		List<Timeseries> storedData = timeseriesRepository.findBySecurityFreqLimit(security.getName(), freq.getValue(), limit);
 		for (Timeseries ts : series) {
 			boolean find = false;
 			for (Timeseries tsInDB : storedData) {
@@ -58,12 +61,16 @@ public class FutureLoader {
 					tsInDB.setClose(ts.getClose());
 					tsInDB.setHigh(ts.getHigh());
 					tsInDB.setLow(ts.getLow());
-					tsInDB.setOpenInterest(ts.getOpenInterest());
+					tsInDB.setOpen(ts.getOpen());
+					if(ts.getOpenInterest() != null && ts.getOpenInterest().intValue() > 0) {
+						tsInDB.setOpenInterest(ts.getOpenInterest());
+					}
 					tsInDB.setVolume(ts.getVolume());
 					break;
 				}
 			}
 			if(!find) {
+				ts.setOpenInterest(new BigDecimal(1));
 				storedData.add(ts);
 			}
 		}
@@ -74,45 +81,6 @@ public class FutureLoader {
 	
 	public List<Timeseries> getSecuritySeries(String security, String freq, int limit){
 		return timeseriesRepository.findBySecurityFreqLimit(security, freq, limit);
-	}
-	
-	public void fillBack1D() {
-		for (String variety : Constants.VARIETY_LIST) {
-			List<String> tradeDateList = timeseriesRepository.findMaxTradeDate(variety);
-			fillBack1D(variety, tradeDateList);
-		}
-	}
-	
-	public void fillBack1D(String variety, List<String> tradeDateList) {
-		log.info("Start to clean [" + variety + "] data.");
-		tradeDateList.stream().forEach(tradeDate -> {
-			List<String> securites = timeseriesRepository.findSecurities(variety, tradeDate);
-			securites.stream().forEach(security -> {
-				List<Timeseries> eodList = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, "1D");
-				if(eodList.isEmpty()) {
-					List<Timeseries> tickList = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, "TICK");
-					Timeseries latest = null;
-					if(!tickList.isEmpty()) {
-						latest = tickList.get(tickList.size() - 1).copy();
-					} else {
-						List<Timeseries> miList = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, "1MI");
-						latest = miList.get(miList.size() - 1).copy();
-					}
-					latest.setFreq("1D");
-					List<Timeseries> min15List = timeseriesRepository.findByTradeDateWithPeriod(security, tradeDate, FreqEnum._15MI.getValue());
-					if(!min15List.isEmpty()) {
-						BigDecimal bd = new BigDecimal(0);
-						for (Timeseries ts : min15List) {
-							bd.add(ts.getVolume());
-						}
-						latest.setVolume(bd);
-					}
-					timeseriesRepository.save(latest);
-					log.info("Update for security[" + security + "," + tradeDate + "]");
-				}
-			});
-		});
-		log.info("complete to update[" + variety + "].");
 	}
 
 }

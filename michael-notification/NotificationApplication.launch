@@ -16,4 +16,5 @@
     <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="michael-notification"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="michael-notification"/>
     <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dtrading.debug=false&#13;&#10;-Dhttps.protocols=TLSv1.2,TLSv1.3&#13;&#10;-Dhttp.proxyHost=127.0.0.1&#13;&#10;-Dhttp.proxyPort=7897&#13;&#10;-Dhttps.proxyHost=127.0.0.1&#13;&#10;-Dhttps.proxyPort=7897"/>
 </launchConfiguration>

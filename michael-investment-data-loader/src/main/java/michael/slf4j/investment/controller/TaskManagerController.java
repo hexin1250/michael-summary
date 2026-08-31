@@ -4,11 +4,13 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import michael.slf4j.investment.etl.DataLoaderClient;
 import michael.slf4j.investment.taskmanager.TaskManager;
 import michael.slf4j.investment.util.TradeUtil;
 
@@ -18,6 +20,10 @@ public class TaskManagerController {
 	private static final Logger log = Logger.getLogger(TaskManagerController.class);
 	@Autowired
 	private TaskManager taskManager;
+	
+	@Autowired
+	@Qualifier(value="dataLoaderClient")
+	private DataLoaderClient dataLoaderClient;
 	
 	@GetMapping(path = "/subscribeAll")
 	public @ResponseBody String subscribeAll() {
@@ -57,7 +63,7 @@ public class TaskManagerController {
 	 */
 	@GetMapping(path = "/fillBack")
 	public @ResponseBody boolean fillBack() {
-		taskManager.fillBack1D();
+		dataLoaderClient.fillBack1D();
 		return true;
 	}
 }

@@ -52,22 +52,28 @@ public interface TimeseriesRepository extends CrudRepository<Timeseries, Integer
 	@Query(value = "select * from timeseries where security = :security and trade_date = :tradeDate and freq = :freq order by trade_ts desc", nativeQuery = true)
 	List<Timeseries> findLatestSecurityByTradeDate(@Param("security") String security, @Param("tradeDate") String tradeDate, @Param("freq") String freq);
 	
-	@Query(value = "select distinct security from timeseries where variety = :variety and trade_date = :tradeDate and freq = '1MI'", nativeQuery = true)
+	@Query(value = "select distinct security from timeseries where variety = :variety and trade_date = :tradeDate and freq = '1M'", nativeQuery = true)
 	List<String> getSecurityList(@Param("variety") String variety, @Param("tradeDate") String tradeDate);
 	
 	@Query(value = "select distinct trade_date from timeseries where variety = :variety and freq = :freq and trade_ts <= :tradeTs order by trade_date desc limit 5", nativeQuery = true)
 	List<String> getLast5TradeDate(@Param("variety") String variety, @Param("freq") String freq, @Param("tradeTs") Timestamp tradeTs);
 	
-	@Query(value = "select open_interest from timeseries where security = :security and freq = '1MI' and trade_ts <= :tradeTs order by trade_ts desc limit 1", nativeQuery = true)
+	@Query(value = "select open_interest from timeseries where security = :security and freq = '1M' and trade_ts <= :tradeTs order by trade_ts desc limit 1", nativeQuery = true)
 	Double getLastOpenInterest(@Param("security") String security, @Param("tradeTs") Timestamp tradeTs);
 	
 	@Query(value = "select * from timeseries where security = :security and trade_date <= :tradeDate and freq = :freq order by trade_ts asc", nativeQuery = true)
 	List<Timeseries> getAllDataByPeriod(@Param("security") String security, @Param("tradeDate") String tradeDate, @Param("freq") String freq);
 	
+	@Query(value = "select * from timeseries where security = :security and trade_date <= :tradeDate and freq = :freq and volume > 0 order by trade_ts asc", nativeQuery = true)
+	List<Timeseries> getAllDataByPeriodFilterEmpty(@Param("security") String security, @Param("tradeDate") String tradeDate, @Param("freq") String freq);
+	
+	@Query(value = "select * from timeseries where security = :security and trade_date <= :tradeDate and freq = :freq and volume > 0 and trade_ts > :start and trade_ts <= :end order by trade_ts asc", nativeQuery = true)
+	List<Timeseries> getAllDataDuringTS(@Param("security") String security, @Param("tradeDate") String tradeDate, @Param("freq") String freq, @Param("start") Timestamp startTs, @Param("end") Timestamp endTs);
+	
 	@Query(value = "select * from timeseries where security = :security and trade_date >= :tradeDate and freq = :freq order by trade_ts asc", nativeQuery = true)
 	List<Timeseries> getDataByPeriod(@Param("security") String security, @Param("tradeDate") String tradeDate, @Param("freq") String freq);
 	
-	@Query(value = "select * from timeseries where security = :security and freq = '1MI' and trade_ts <= :tradeTs order by trade_ts desc limit 20", nativeQuery = true)
+	@Query(value = "select * from timeseries where security = :security and freq = '1M' and trade_ts <= :tradeTs order by trade_ts desc limit 20", nativeQuery = true)
 	List<Timeseries> getTimeseries(@Param("security") String security, @Param("tradeTs") Timestamp tradeTs);
 	
 	@Query(value = "select * from timeseries where security = :security and freq = :freq", nativeQuery = true)

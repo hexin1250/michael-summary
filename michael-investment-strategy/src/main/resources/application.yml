@@ -43,3 +43,9 @@ chat:
     folder: "src/main/data/point"
   research:
     folder: "src/main/data/research"
+  flag:
+    folder: "src/main/data/flag"
+  user:
+    folder: "src/main/data/user"
+  position:
+    folder: "src/main/data/position"

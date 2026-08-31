@@ -5,8 +5,10 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -26,7 +28,7 @@ public class AliParser implements IParser {
 		List<Timeseries> ret = new ArrayList<>();
 		JSONObject obj = new JSONObject(content);
 		JSONArray arr = obj.getJSONArray("Obj");
-		Map<Timestamp, Timeseries> map = new HashMap<>();
+		Map<String, Map<Timestamp, Timeseries>> map = new HashMap<>();
 		for (Object securityObj : arr) {
 			JSONObject security = (JSONObject) securityObj;
 			
@@ -56,17 +58,27 @@ public class AliParser implements IParser {
 			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 			m.setTradeTs(timestamp);
 			LocalDateTime ldt = LocalDateTime.now();
-			if(ldt.getHour() == 15) {
+			if(ldt.getHour() >= 15 && ldt.getHour() <= 20) {
 				LocalDateTime newLdt = LocalDateTime.of(ldt.getYear(), ldt.getMonth(), ldt.getDayOfMonth(), 15, 0, 0);
 				timestamp = new Timestamp(TradeUtil.getLong(newLdt));
 				m.setTradeTs(timestamp);
-				map.put(timestamp, m);
+				
+				Map<Timestamp, Timeseries> tsMap = map.get(m.getSecurity());
+				if(tsMap == null) {
+					tsMap = new HashMap<>();
+					map.put(m.getSecurity(), tsMap);
+				}
+				tsMap.put(timestamp, m);
 			} else {
 				ret.add(m);
 			}
 		}
 		if(!map.isEmpty()) {
-			map.values().stream().forEach(ts -> ret.add(ts));
+			map.values().stream().forEach(ts -> {
+				for (Entry<Timestamp, Timeseries> entry : ts.entrySet()) {
+					ret.add(entry.getValue());
+				}
+			});
 		}
 		return ret;
 	}
@@ -74,6 +86,11 @@ public class AliParser implements IParser {
 	@Override
 	public List<Timeseries> parse(Security security, String content, FreqEnum freq) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<Timeseries> parseAll(Security security, String content, FreqEnum freq) {
+		throw new RuntimeException("Doesn't support this");
 	}
 
 }

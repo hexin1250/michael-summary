@@ -102,7 +102,7 @@ public class AdvancedLoader {
 										}
 										securityMap.putIfAbsent(security, new ArrayList<>());
 										List<TimeseriesModel> list = securityMap.get(security);
-										TimeseriesModel tm = generateTM(tradeTs, tradeDate, futureParts, security, "1MI");
+										TimeseriesModel tm = generateTM(tradeTs, tradeDate, futureParts, security, "1M");
 										list.add(tm);
 									}
 								}
@@ -182,7 +182,7 @@ public class AdvancedLoader {
 	}
 	
 	private static Set<String> getTradeDates(Connection conn, String variety) throws SQLException{
-		try(PreparedStatement ps = conn.prepareStatement("select distinct trade_date from timeseries where variety = ? and freq='1D'")) {
+		try(PreparedStatement ps = conn.prepareStatement("select distinct trade_date from timeseries where variety = ? and freq='D'")) {
 			Set<String> ret = new HashSet<>();
 			ps.setString(1, variety);
 			ResultSet rs = ps.executeQuery();
@@ -256,7 +256,7 @@ public class AdvancedLoader {
 					}
 					if(tm1d == null) {
 						tm1d = tm;
-						tm1d.setFreq("1D");
+						tm1d.setFreq("D");
 						tm1d.setVolume(new BigDecimal(0));
 					}
 					tm1d.setTradeTs(tm.getTradeTs());

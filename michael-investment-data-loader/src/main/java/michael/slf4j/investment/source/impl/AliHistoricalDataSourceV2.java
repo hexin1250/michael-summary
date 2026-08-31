@@ -91,6 +91,49 @@ public class AliHistoricalDataSourceV2 implements ISource, Closeable {
 		}
 	}
 	
+	public String getContent(String security, FreqEnum freq, String pageNum, String pageSize) throws IOException {
+		String symbol = null;
+		if(security.startsWith("I") || security.startsWith("J")) {
+			symbol = "DCE" + security;
+		} else if(security.startsWith("RB")) {
+			symbol = "SHFE" + security;
+		} else {
+			symbol = security;
+		}
+		
+	    Map<String, String> querys = new HashMap<String, String>();
+	    querys.put("period", freq.getValue());
+	    querys.put("pidx", pageNum);
+	    querys.put("psize", pageSize);
+	    querys.put("symbol", symbol);
+	    querys.put("withlast", "1");
+	    String params = querys.entrySet().stream()
+	    		.map(entry -> entry.getKey() + "=" + entry.getValue())
+	    		.collect(Collectors.joining("&"));
+		
+	    String url = "https://alirmcom2.market.alicloudapi.com/query/comkm?" + params;
+		HttpGet httpGet = new HttpGet(url);
+		Map<String, String> headers = new HashMap<String, String>();
+	    //最后在header中的格式(中间是英文空格)为Authorization:APPCODE 83359fd73fe94948385f570e3c139105
+	    headers.put("Authorization", "APPCODE dbf34af5855347bd81e71d077d932522");
+	    for (Entry<String, String> entry : headers.entrySet()) {
+	    	httpGet.setHeader(entry.getKey(), entry.getValue());
+		}
+	    CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+		try(CloseableHttpResponse response = httpClient.execute(httpGet)){
+			String content = null;
+			int status = response.getStatusLine().getStatusCode();
+			if(status >= 400) {
+				log.error("[" + symbol + "] status:" + status);
+			}
+			HttpEntity responseEntity = response.getEntity();
+			if (responseEntity != null) {
+				content = EntityUtils.toString(responseEntity).trim();
+			}
+			return content;
+		}
+	}
+	
 	public String getContent(String security, String freqStr, String pageNum) throws IOException {
 		String symbol = null;
 		if(security.startsWith("I") || security.startsWith("J")) {
@@ -139,7 +182,7 @@ public class AliHistoricalDataSourceV2 implements ISource, Closeable {
 		String freq = args[0];
 		int len = Integer.valueOf(args[1]);
 		try(AliHistoricalDataSourceV2 source = new AliHistoricalDataSourceV2();) {
-			for (int i = 1; i <= len; i++) {
+			for (int i = 6; i <= len; i++) {
 				String ret = source.getContent(security, freq, i + "");
 				log.info(ret);
 				String fileName = "src/test/data/XAUUSD/" + freq + "/" + i + ".txt";

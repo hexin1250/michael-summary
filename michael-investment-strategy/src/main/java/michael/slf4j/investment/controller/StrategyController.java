@@ -1,18 +1,25 @@
 package michael.slf4j.investment.controller;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +43,8 @@ import michael.slf4j.investment.quant.mockup.MockupProcess;
 import michael.slf4j.investment.quant.strategy.IStrategy;
 import michael.slf4j.investment.repo.RealRunRepository;
 import michael.slf4j.investment.research.DataResearchV2;
+import michael.slf4j.investment.research.MyChatBot;
+import michael.slf4j.investment.research.XAUDataResearch;
 import michael.slf4j.investment.service.FileService;
 import michael.slf4j.investment.service.StatelessChatService;
 import michael.slf4j.investment.util.MarkdownUtil;
@@ -58,6 +67,9 @@ public class StrategyController {
 	@Value("${chat.point.folder}")
 	private String pointFolderName;
 
+	@Value("${chat.position.folder}")
+	private String positionFolderName;
+
 	@Autowired
 	private MockupProcess process;
 
@@ -78,7 +90,19 @@ public class StrategyController {
 	
 	@Autowired
 	private FileService fileService;
+	
+	@Autowired
+	private XAUDataResearch xauDataResearch;
+	
+	@Value(value = "${chat.research.folder}")
+	private String researchFolder;
 
+	@Value(value = "${chat.user.folder}")
+	private String userFolder;
+	
+	@Autowired
+	private MyChatBot chat;
+	
 	/**
 	 * http://localhost:1702/apps/strategy/mockup?strategy=test&variety=I&startDate=2023-04-17&endDate=2023-05-25
 	 * 
@@ -181,24 +205,6 @@ public class StrategyController {
 		log.info("Do research");
 		return sb.toString();
 	}
-	
-	/**
-	 * http://localhost:1702/apps/strategy/researchFull?variety=RB
-	 * 
-	 * @param full
-	 * @return
-	 */
-	@GetMapping(path = "/researchFull")
-	public @ResponseBody String researchFull(
-			@RequestParam(name = "variety", required = true) String varietyStr) {
-		Variety variety = Variety.of(varietyStr);
-		String researchFileName = pointFolderName + "/" + varietyStr + ".researchAll.txt";
-		dataResearchV2.summarize(variety, true, researchFileName);
-		StringBuffer sb = new StringBuffer();
-		sb.append(new Date()).append("<br>").append("research is done.");
-		log.info("Do research");
-		return sb.toString();
-	}
 
 	/**
 	 * http://localhost:1702/apps/strategy/savePosition?direction=-1&price=3330&position=25&variety=RB
@@ -212,11 +218,28 @@ public class StrategyController {
 	public @ResponseBody String savePosition(
 			@RequestParam(name = "variety", required = true) String variety,
 			@RequestParam(name = "direction", required = false, defaultValue = "0") int direction,
-			@RequestParam(name = "price", required = false, defaultValue = "0") int price,
+			@RequestParam(name = "price", required = false, defaultValue = "0") String price,
 			@RequestParam(name = "position", required = false, defaultValue = "0") int positionPer) {
 		PositionFileUtil.savePositionData(variety, direction, price, positionPer);
 		StringBuffer sb = new StringBuffer();
 		sb.append(new Date()).append("<br>").append("Done to save data.");
+		
+		String positionFileName = positionFolderName + "/" + variety + "/record.txt";
+		StringBuffer appendSb = new StringBuffer();
+		appendSb.append(variety).append(",");
+		appendSb.append(direction).append(",");
+		appendSb.append(price).append(",");
+		appendSb.append(positionPer).append(",");
+		appendSb.append(LocalDateTime.now());
+        String content = appendSb.toString();
+        
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(positionFileName, true))) {
+            bw.write(content);
+            bw.newLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+		
 		log.info("Save position data");
 		return sb.toString();
 	}
@@ -280,6 +303,58 @@ public class StrategyController {
 	}
 	
 	/**
+	 * http://localhost:1702/apps/strategy/realtime?variety=RB
+	 * 
+	 * @return
+	 * @throws IOException
+	 * @throws FileNotFoundException
+	 */
+	@GetMapping(path = "/realtime")
+	public String deepseekXAUHistory(Model model, @RequestParam(name = "variety", required = true) String variety) throws Exception {
+		log.info("Check new deepseek history page");
+		File historyFolder = new File(researchFolder + "/" + variety);
+		File[] fileArray = historyFolder.listFiles();
+		if(fileArray.length == 0) {
+			return "empty";
+		}
+		File[] files = null;
+		if(fileArray[0].isDirectory()) {
+			File dir = Arrays.stream(fileArray).max((a, b) -> a.compareTo(b)).get();
+			files = dir.listFiles();
+		} else {
+			files = fileArray;
+		}
+		File file = Arrays.stream(files).filter(a -> a.getName().contains("answer.txt")).filter(a -> !a.getName().contains("-1-")).max((a, b) -> {
+			String[] partsA = a.getName().split("[-]");
+			String[] partsB = b.getName().split("[-]");
+			int numberA = Integer.valueOf(partsA[1]);
+			int numberB = Integer.valueOf(partsB[1]);
+			return numberA - numberB;
+		}).get();
+		try (InputStream is = new FileInputStream(file)) {
+			long timestamp = file.lastModified(); // 获取时间戳（毫秒）
+			Date date = new Date(timestamp);
+			StringBuffer sb = new StringBuffer();
+			sb.append("## ");
+			sb.append(date);
+			sb.append("\n");
+			byte[] a = sb.toString().getBytes();
+			byte[] b = FileCopyUtils.copyToByteArray(is);
+			byte[] bytes = new byte[a.length + b.length];
+			System.arraycopy(a, 0, bytes, 0, a.length);
+			System.arraycopy(b, 0, bytes, a.length, b.length);
+
+			String markdown = new String(bytes, "UTF-8");
+
+			// 转换为HTML
+			String htmlContent = MarkdownUtil.convertToHtml(markdown);
+			model.addAttribute("content", htmlContent);
+
+			return "markdown-page";
+		}
+	}
+	
+	/**
 	 * http://localhost:1702/apps/strategy/question?variety=I
 	 * 
 	 * @return
@@ -293,17 +368,18 @@ public class StrategyController {
 	}
 	
 	/**
-	 * http://localhost:1702/apps/strategy/questionFull?variety=I
+	 * http://localhost:1702/apps/strategy/cleanupXAU
 	 * 
 	 * @return
+	 * @throws IOException 
+	 * @throws FileNotFoundException 
 	 */
-	@GetMapping(path = "/questionFull")
-	public @ResponseBody String questionFull(@RequestParam(name = "variety", required = true) String variety) {
-		log.info("Get question");
-		StringBuffer sb = new StringBuffer();
-		String researchFileName = pointFolderName + "/" + variety + ".researchAll.txt";
-		sb.append(PositionFileUtil.readFile(researchFileName));
-		return sb.toString();
+	@GetMapping(path = "/cleanupXAU")
+	public @ResponseBody String cleanupXAUUSD() throws FileNotFoundException, IOException {
+		log.info("Cleanup XAUUSD");
+		xauDataResearch.cleanup();
+		log.info("Done to cleanup XAUUSD");
+		return "cleanup XAUUSD";
 	}
 	
 	/**
@@ -318,6 +394,70 @@ public class StrategyController {
 		File file = new File("C:/Users/HP/python-workspace/myproject/data/convert.txt");
 		try (InputStream is = new FileInputStream(file)) {
 			StringBuffer sb = new StringBuffer();
+			byte[] a = sb.toString().getBytes();
+			byte[] b = FileCopyUtils.copyToByteArray(is);
+			byte[] bytes = new byte[a.length + b.length];
+			System.arraycopy(a, 0, bytes, 0, a.length);
+			System.arraycopy(b, 0, bytes, a.length, b.length);
+
+			String markdown = new String(bytes, "UTF-8");
+
+			// 转换为HTML
+			String htmlContent = MarkdownUtil.convertToHtml(markdown);
+			model.addAttribute("content", htmlContent);
+
+			return "markdown-page";
+		}
+	}
+	
+	/**
+	 * http://localhost:1702/apps/strategy/input?variety=XAUUSD
+	 * 
+	 * @return
+	 * @throws FileNotFoundException 
+	 * @throws IOException 
+	 */
+	@GetMapping(path = "/input")
+	public @ResponseBody String userInput(@RequestParam(name = "variety", required = true) String variety,
+			@RequestParam(name = "input", required = true) String input) throws FileNotFoundException, IOException {
+		log.info("User input:" + input);
+		String userInputFileName = userFolder + "/" + variety + "-input.txt";
+		writeFile(userInputFileName, input);
+		return "complete to write[" + input + "]";
+	}
+	
+	private void writeFile(String fileName, String content) throws FileNotFoundException, IOException {
+		try(BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName)))){
+			bw.write(content);
+			bw.newLine();
+			bw.flush();
+		}
+	}
+	
+	/**
+	 * http://localhost:1702/apps/strategy/position?variety=XAUUSD
+	 */
+	@GetMapping(path = "/position")
+	public @ResponseBody String getPosition(@RequestParam(name = "variety", required = true) String variety) throws FileNotFoundException, IOException {
+		BigDecimal bd = xauDataResearch.getCurrentPosition();
+		BigDecimal ret = bd.setScale(4, RoundingMode.HALF_UP);
+		log.info("Current Position Status:[" + ret + "]");
+		StringBuffer sb = new StringBuffer();
+		sb.append(xauDataResearch.getCurrentPositionStatus().stream().map(v -> "<br>" + v).collect(Collectors.joining()));
+		return "Current Position Status:[" + ret + "]" + sb.toString();
+	}
+	
+	@GetMapping(path = "/chat")
+	public String myChat(Model model) throws Exception {
+		log.info("Start chat");
+		File file = new File(chat.resultPath());
+		try (InputStream is = new FileInputStream(file)) {
+			long timestamp = file.lastModified(); // 获取时间戳（毫秒）
+			Date date = new Date(timestamp);
+			StringBuffer sb = new StringBuffer();
+			sb.append("## ");
+			sb.append(date);
+			sb.append("\n");
 			byte[] a = sb.toString().getBytes();
 			byte[] b = FileCopyUtils.copyToByteArray(is);
 			byte[] bytes = new byte[a.length + b.length];

@@ -94,6 +94,11 @@
 	        <artifactId>langchain4j-spring-boot-starter</artifactId>
 	        <version>0.29.0</version>
 	    </dependency>
+	    <dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20220320</version>
+		</dependency>
 	</dependencies>
 
 	<build>

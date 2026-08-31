@@ -37,9 +37,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import javax.jms.JMSException;
+
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -121,6 +124,7 @@ public class CoinDataResearch {
 	private TimeseriesRepository timeseriesRepository;
 
 	@Autowired
+	@Qualifier("deepSeekProModel")
 	private ChatLanguageModel chatModel;
 
 	@Value("${chat.flag.folder}")
@@ -202,6 +206,11 @@ public class CoinDataResearch {
 				writeFile(fileNamePrefix + "1-question.txt", questionSb.toString());
 				writeFile(fileNamePrefix + "1-answer.txt", contextReply);
 				
+				JSONObject jsonObj = new JSONObject();
+				jsonObj.put("receiver", "! ( L｜P )");
+				jsonObj.put("variety", variety.name());
+				messageService.send(TopicConstants.NOTIFICATION_TOPIC, jsonObj.toString());
+
 				countMap.put(variety, 2);
 				log.info("Done to initialize realtime strategy for " + variety.name());
 			} else {
@@ -256,7 +265,7 @@ public class CoinDataResearch {
 				}
 				countMap.put(variety, index);
 			}
-		} catch (IOException e) {
+		} catch (IOException | JMSException e) {
 			e.printStackTrace();
 		}
 		log.info("RealTime is ready for " + variety.name());
@@ -348,10 +357,14 @@ public class CoinDataResearch {
 		}
 		
 		LocalDateTime lastCheckPoint = readLocalDateTime(flagFileName);
-		last1HTs = realTime1HList.get(realTime1HList.size() - 1);
-		LocalDateTime latestCheckPoint = TradeUtil.getLocalDateTime(last1HTs.getTradeTs()).plusHours(1);
+		List<Timeseries> realTime1MinuteList = timeseriesRepository.getAllDataByPeriodFilterEmpty(mainSecurity, latestTradeDate,
+				FreqEnum._1MI.getValue());
+		Timeseries latestHTs = realTime1MinuteList.get(realTime1MinuteList.size() - 1);
+		LocalDateTime tmp = LocalDateTime.now();
+		int currentMinute = tmp.getMinute() - (tmp.getMinute() % 30);
+		LocalDateTime latestCheckPoint = LocalDateTime.of(tmp.toLocalDate(), LocalTime.of(tmp.getHour(), currentMinute));
 		
-		generateHeader(formatList, mainSecurity, current, last1HTs);
+		generateHeader(formatList, mainSecurity, current, latestHTs);
 		
 		StringBuffer sb = new StringBuffer();
 		sb.append("下面表格包括了不同周期指标的数据:");
@@ -410,7 +423,7 @@ public class CoinDataResearch {
 			generateTrail(variety.name(), latestTradeDate, formatList, mainSecurity, current, realTime1HList.get(realTime1HList.size() - 1));
 			StringBuffer positionSb = new StringBuffer();
 			positionSb.append("第四步:");
-			StringBuffer strategySb = getPosition(variety, last1HTs);
+			StringBuffer strategySb = getPosition(variety, latestHTs);
 			positionSb.append(strategySb);
 			formatList.add(positionSb);
 		} else {
@@ -433,7 +446,8 @@ public class CoinDataResearch {
 			/**
 			 * 1H frequence data
 			 */
-			Queue<StringBuffer> queue1H = summarizeDataByFreq(FreqEnum._1H, realTime1HList, lastCheckPoint, latestCheckPoint, startHour);
+			Queue<StringBuffer> queue1H = summarizeDataByFreq(FreqEnum._1H, realTime1HList, lastCheckPoint.minusMinutes(30L), latestCheckPoint, startHour);
+			
 			queue1H.stream().forEach(currentSb -> formatList.add(currentSb));
 			
 			/**
@@ -473,7 +487,7 @@ public class CoinDataResearch {
 					""");
 			formatList.add(latestSb);
 			
-			StringBuffer strategySb = getPosition(variety, last1HTs);
+			StringBuffer strategySb = getPosition(variety, latestHTs);
 			formatList.add(strategySb);
 		}
 		
@@ -990,7 +1004,8 @@ N型走势
         	sb.append(dateTime.getMonthValue()).append(" ");
         	sb.append(dateTime.getDayOfMonth()).append(" ");
         	sb.append(dateTime.getHour()).append(" ");
-        	sb.append(dateTime.getMinute());
+        	int minute = dateTime.getMinute() - (dateTime.getMinute() % 30);
+        	sb.append(minute);
         	bw.write(sb.toString());
         	bw.flush();
         	log.info("已写入: " + dateTime);

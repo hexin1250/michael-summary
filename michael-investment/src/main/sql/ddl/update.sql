@@ -31,4 +31,4 @@ select
 	trade_date,
 	trade_ts,
 	is_main_future
-from timeseries where trade_date = '2020-10-30' and variety = 'RB' and freq = '1MI' order by trade_ts desc limit 12;
+from timeseries where trade_date = '2020-10-30' and variety = 'RB' and freq = '1M' order by trade_ts desc limit 12;

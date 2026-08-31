@@ -118,7 +118,7 @@ public class MockupProcess {
 	
 	private Map<LocalTime, Map<Security, Contract>> getTradingMap(List<Security> securityList, LocalDate tradeDate){
 		List<String> securities = securityList.stream().map(security -> security.getName()).collect(Collectors.toList());
-		List<Timeseries> models = repo.findSecuritiesBySecurities(securities, tradeDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), "1MI");
+		List<Timeseries> models = repo.findSecuritiesBySecurities(securities, tradeDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), "1M");
 		Map<LocalTime, Map<Security, Contract>> map = new HashMap<>();
 		models.stream().forEach(model -> {
 			Timestamp ts = model.getTradeTs();

@@ -9,5 +9,6 @@ import michael.slf4j.investment.model.Timeseries;
 public interface IParser {
 	public List<Timeseries> parse(String content, FreqEnum freq);
 	public List<Timeseries> parse(Security security, String content, FreqEnum freq);
+	public List<Timeseries> parseAll(Security security, String content, FreqEnum freq);
 
 }

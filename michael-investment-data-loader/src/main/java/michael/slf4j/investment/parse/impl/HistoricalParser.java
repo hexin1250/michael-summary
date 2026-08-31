@@ -52,5 +52,35 @@ public class HistoricalParser implements IParser {
 		}
 		return ret;
 	}
+	
+	@Override
+	public List<Timeseries> parseAll(Security security, String content, FreqEnum freq) {
+		List<Timeseries> ret = new ArrayList<>();
+		JSONObject obj = new JSONObject(content);
+		JSONArray arr = obj.getJSONArray("Obj");
+		for (Object dataObj : arr) {
+			JSONObject data = (JSONObject) dataObj;
+			Timeseries m = new Timeseries();
+			
+			m.setSecurity(security.getName());
+			m.setVariety(security.getVariety().name());
+			m.setSecurityName(security.getName());
+			m.setOpen(data.getBigDecimal("O"));
+			m.setHigh(data.getBigDecimal("H"));
+			m.setLow(data.getBigDecimal("L"));
+			m.setClose(data.getBigDecimal("C"));
+//			BigDecimal oi = data.getBigDecimal("A");
+//			if(oi.intValue() > 0) {
+//				m.setOpenInterest(data.getBigDecimal("A"));
+//			}
+			m.setVolume(data.getBigDecimal("V"));
+			m.setFreq(freq.getValue());
+			
+			m.setTradeDate(TradeUtil.getDateStr(TradeUtil.getTradeDate(new java.util.Date(data.getLong("Tick") * 1000L))));
+			m.setTradeTs(new Timestamp(data.getLong("Tick") * 1000L));
+			ret.add(m);
+		}
+		return ret;
+	}
 
 }

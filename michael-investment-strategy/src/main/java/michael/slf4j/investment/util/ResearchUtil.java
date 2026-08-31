@@ -46,6 +46,11 @@ public class ResearchUtil {
 		sendMessage(variety);
 	}
 	
+	public void doSingleResearch(Variety variety) throws FileNotFoundException, IOException {
+		statelessChatService.doSingleResearch(variety);
+		sendMessage(variety);
+	}
+	
 	private void generateSummary(Variety variety) {
 		long timestamp = TradeUtil.getTradeDate();
 		String tradeDate = TradeUtil.getDateStr(timestamp);

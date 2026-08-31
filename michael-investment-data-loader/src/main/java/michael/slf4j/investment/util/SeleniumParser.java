@@ -27,13 +27,13 @@ public class SeleniumParser implements Closeable {
 		String url = "https://data.eastmoney.com/futures/" + varietyEnum.broker + "/data.html?va=" + varietyEnum.name() + "&ct=" + security;
 		log.info("Trying to access: " + url);
 		driver.get(url);
-		List<WebElement> mylist = driver.findElements(By.xpath("/html/body/div/img"));
-		log.info(mylist);
-		mylist.get(mylist.size() - 2).click();
-		Thread.sleep(1000);
-		List<WebElement> myNextlist = driver.findElements(By.xpath("/html/body/div/img"));
-		myNextlist.get(myNextlist.size() - 1).click();
-		Thread.sleep(1000);
+//		List<WebElement> mylist = driver.findElements(By.xpath("/html/body/div/img"));
+//		log.info(mylist);
+//		mylist.get(mylist.size() - 2).click();
+//		Thread.sleep(1000);
+//		List<WebElement> myNextlist = driver.findElements(By.xpath("/html/body/div/img"));
+//		myNextlist.get(myNextlist.size() - 1).click();
+//		Thread.sleep(1000);
 		
 		WebElement mainBox = driver.findElement(By.className("main-content"));
 		WebElement frameContent = mainBox.findElement(By.className("framecontent"));

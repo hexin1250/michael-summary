@@ -5,7 +5,10 @@ public enum Variety {
 	I{{rate = 0.0006D; dayRate = 0.0024D; unit = 100D; marginRate = 0.12D; cal = 1;}},
 	J{{rate = 0.0006D; dayRate = 0.0024D; unit = 100D; marginRate = 0.11D; cal = 1;}},
 	RB{{rate = 0.0003D; dayRate = 0.004D; unit = 10D; marginRate = 0.1D; cal = 10;}},
-	XAUUSD{{rate = 0.0025D; dayRate = 0.0025D; unit = 1D; marginRate = 1D; cal = 1;}};
+	XAUUSD{{rate = 0.0025D; dayRate = 0.0025D; unit = 1D; marginRate = 1D; cal = 1;}},
+	XAGUSD{{rate = 0.0025D; dayRate = 0.0025D; unit = 1D; marginRate = 1D; cal = 1;}},
+	BTCUSDT{{rate = 0.0025D; dayRate = 0.0025D; unit = 1D; marginRate = 1D; cal = 1;}},
+	ETHUSDT{{rate = 0.0025D; dayRate = 0.0025D; unit = 1D; marginRate = 1D; cal = 1;}};
 	
 	public double rate;
 	public double dayRate;

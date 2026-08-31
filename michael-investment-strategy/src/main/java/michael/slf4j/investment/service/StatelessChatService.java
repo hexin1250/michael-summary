@@ -13,9 +13,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -45,7 +47,7 @@ public class StatelessChatService {
 
 	private final ChatLanguageModel chatModel;
 
-	public StatelessChatService(ChatLanguageModel chatModel) {
+	public StatelessChatService(@Qualifier("deepSeekProModel") ChatLanguageModel chatModel) {
 		this.chatModel = chatModel;
 	}
 
@@ -76,6 +78,27 @@ public class StatelessChatService {
 			}
 			tradeDate = entry.getKey();
 		}
+
+		// 调用模型生成回复
+		Response<AiMessage> aiReply = chatModel.generate(messages);
+		String reply = aiReply.content().text();
+		writeFile(variety.name(), tradeDate, reply);
+		
+		log.info("Done to get answer");
+	}
+	
+	public void doSingleResearch(Variety variety) throws FileNotFoundException, IOException {
+		log.info("Start to do research through Deepseek for " + variety.name());
+		TreeMap<String, Map<String, File>> map = fileService.getFileStatus(variety);
+		Entry<String, Map<String, File>> entry = map.lastEntry();
+		String tradeDate = entry.getKey();
+
+		List<ChatMessage> messages = new ArrayList<>();
+		messages.add(SystemMessage.from("你是一个专业的期货投资顾问,擅长技术分析和解释市场趋势.我是专业的激进投资者,我只会100%仓位操作.用中文回答.在你的回答中,尽量避免不专业的词汇以保持简介"));
+		Map<String, File> typeMap = entry.getValue();
+		File questionFile = typeMap.get(QUESTION_TYPE);
+		String question = getContent(questionFile);
+		messages.add(UserMessage.from(question));
 
 		// 调用模型生成回复
 		Response<AiMessage> aiReply = chatModel.generate(messages);

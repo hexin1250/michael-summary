@@ -3,6 +3,7 @@ package michael.slf4j.investment.etl;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -28,6 +29,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import michael.slf4j.investment.configuration.FreqEnum;
+import michael.slf4j.investment.constant.Constants;
 import michael.slf4j.investment.message.service.MessageService;
 import michael.slf4j.investment.model.FutureSecurityEnum;
 import michael.slf4j.investment.model.Security;
@@ -37,9 +39,9 @@ import michael.slf4j.investment.model.Variety;
 import michael.slf4j.investment.parse.IParser;
 import michael.slf4j.investment.repo.TimeseriesRepository;
 import michael.slf4j.investment.repo.TopDealRepository;
-import michael.slf4j.investment.source.ISource;
-import michael.slf4j.investment.source.impl.AliHistoricalDataSource;
 import michael.slf4j.investment.source.impl.AliHistoricalDataSourceV2;
+import michael.slf4j.investment.source.impl.AliSourceV2;
+import michael.slf4j.investment.source.impl.BinanceSource;
 import michael.slf4j.investment.taskmanager.TaskManager;
 import michael.slf4j.investment.util.DataLoaderUtil;
 import michael.slf4j.investment.util.MyFileUtil;
@@ -61,24 +63,28 @@ public class DataLoaderClient {
 	private TimeseriesRepository timeseriesRepository;
 	
 	@Autowired
-	@Qualifier(value="aliSource")
-	private ISource aliSource;
+	@Qualifier(value="aliSourceV2")
+	private AliSourceV2 aliSource;
 	
 	@Autowired
 	@Qualifier(value="aliParser")
 	private IParser aliParser;
 	
 	@Autowired
-	@Qualifier(value="aliHistoricalSource")
-	private AliHistoricalDataSource aliHistoricalSource;
-	
-	@Autowired
 	@Qualifier(value="aliHistoricalSourceV2")
 	private AliHistoricalDataSourceV2 aliHistoricalSourceV2;
 	
 	@Autowired
+	@Qualifier(value="binanceSource")
+	private BinanceSource binanceSource;
+	
+	@Autowired
 	@Qualifier(value="aliHistoricalParser")
 	private IParser aliHistoricalParser;
+	
+	@Autowired
+	@Qualifier(value="binanceParser")
+	private IParser binanceParser;
 	
 	@Autowired
 	@Qualifier(value="currentSecurities")
@@ -144,10 +150,17 @@ public class DataLoaderClient {
 		log.info("Current security list:" + securitiesOrderMap);
 	}
 	
+//	private boolean debug = true;
 	public void update1MinData() {
 		if(!TradeUtil.isTradingTime()) {
 			return;
 		}
+//		if(!debug) {
+//			return;
+//		}
+//		if(debug) {
+//			debug = false;
+//		}
 		taskManager.subscribeSecurities();
 		List<Timeseries> series = null;
 		try {
@@ -155,6 +168,13 @@ public class DataLoaderClient {
 			FreqEnum freq = FreqEnum._1MI;
 			series = aliParser.parse(content, freq);
 			futureLoader.loadMultiSecurities(series, freq);
+			
+			LocalTime lt = LocalTime.now();
+			if(lt.getMinute() % 15 == 0) {
+				if(!(lt.getHour() == 21 && lt.getMinute() == 0) && !(lt.getHour() == 9 && lt.getMinute() == 0) && !(lt.getHour() == 13 && lt.getMinute() == 30)) {
+					updateHistory1M();
+				}
+			}
 		} catch (IOException e) {
 			log.error("Error message when reading data from Ali", e);
 			/**
@@ -188,17 +208,113 @@ public class DataLoaderClient {
 			throw new RuntimeException(e);
 		}
 	}
+
+	public void updateHistory1M() throws IOException {
+		log.info("Retrieve history data for 1M freq");
+		for (Entry<FutureSecurityEnum, String> entry : mainSecurityMap.entrySet()) {
+			FutureSecurityEnum securityEnum = entry.getKey();
+			String mainSecurityStr = entry.getValue();
+			Variety variety = Variety.of(securityEnum.name());
+			Security mainSecurity = new Security(mainSecurityStr, variety);
+			FreqEnum _1MiFreq = FreqEnum._1MI;
+			String _1MiContent = aliHistoricalSourceV2.getContent(mainSecurityStr, _1MiFreq, "1", "31");
+			List<Timeseries> _1MiSeries = aliHistoricalParser.parseAll(mainSecurity, _1MiContent, _1MiFreq);
+			futureLoader.loadSecurity(mainSecurity, _1MiFreq, _1MiSeries);
+		}
+	}
 	
-	public void update1D() throws IOException, JMSException {
+	public void updateHistory1MbyEOD() throws IOException {
+		log.info("Retrieve history data for 1M freq");
+		for (Entry<FutureSecurityEnum, String> entry : mainSecurityMap.entrySet()) {
+			FutureSecurityEnum securityEnum = entry.getKey();
+			String mainSecurityStr = entry.getValue();
+			Variety variety = Variety.of(securityEnum.name());
+			Security mainSecurity = new Security(mainSecurityStr, variety);
+			FreqEnum _1MiFreq = FreqEnum._1MI;
+			String _1MiContent = aliHistoricalSourceV2.getContent(mainSecurityStr, _1MiFreq, "1", "500");
+			List<Timeseries> _1MiSeries = aliHistoricalParser.parseAll(mainSecurity, _1MiContent, _1MiFreq);
+			futureLoader.loadSecurity(mainSecurity, _1MiFreq, _1MiSeries, 500);
+		}
+	}
+	
+	public void updateMetal() throws IOException, JMSException {
 		Set<String> set = new HashSet<>();
 		set.add("XAUUSD");
+//		set.add("XAGUSD");
 		for (String securityStr : set) {
 			Security security = new Security(securityStr, Variety.of(securityStr));
+			FreqEnum[] freqs = new FreqEnum[] { FreqEnum._1H, FreqEnum._1D, FreqEnum._15MI, FreqEnum._1MI };
+//			FreqEnum[] freqs = new FreqEnum[] { FreqEnum._1MI };
+			for (FreqEnum freq : freqs) {
+				String content = aliHistoricalSourceV2.getContent(securityStr, freq, "1", "100");
+				List<Timeseries> series = aliHistoricalParser.parseAll(security, content, freq);
+				for (Timeseries ts : series) {
+					ts.setOpenInterest(new BigDecimal(0));
+				}
+				futureLoader.loadSecurity(security, freq, series);
+				sendMessage(freq, series);
+			}
+//			for (int i = 1; i <= 10; i++) {
+//				for (FreqEnum freq : freqs) {
+//					String content = aliHistoricalSourceV2.getContent(securityStr, freq, i + "", "500");
+//					try {
+//						List<Timeseries> series = aliHistoricalParser.parseAll(security, content, freq);
+//						for (Timeseries ts : series) {
+//							ts.setOpenInterest(new BigDecimal(0));
+//						}
+//						futureLoader.loadSecurity(security, freq, series);
+//						sendMessage(freq, series);
+//					}catch(Exception e) {
+//						log.error("error for freq[" + freq.getValue() + "]", e);
+//					}
+//				}
+//			}
+		}
+	}
+	
+	public void updateCoin() throws IOException, JMSException {
+		Set<String> set = new HashSet<>();
+		set.add("ETHUSDT");
+		for (String securityStr : set) {
+			Security security = new Security(securityStr, Variety.of(securityStr));
+			FreqEnum[] freqs = new FreqEnum[] { FreqEnum._1H, FreqEnum._15MI, FreqEnum._5MI, FreqEnum._1MI, FreqEnum._1D };
+			for (FreqEnum freq : freqs) {
+				String content = binanceSource.getContent(securityStr, freq);
+				List<Timeseries> series = binanceParser.parseAll(security, content, freq);
+				for (Timeseries ts : series) {
+					ts.setOpenInterest(new BigDecimal(0));
+				}
+				futureLoader.loadSecurity(security, freq, series);
+				sendMessage(freq, series);
+			}
+		}
+	}
+	
+	public void fillBack1D() {
+		for (String variety : Constants.VARIETY_LIST) {
+			List<String> tradeDateList = timeseriesRepository.findMaxTradeDate(variety);
 			FreqEnum freq = FreqEnum._1D;
-			String content = aliHistoricalSourceV2.getContent(securityStr, freq, "1");
-			List<Timeseries> series = aliHistoricalParser.parse(security, content, freq);
-			futureLoader.loadSecurity(security, freq, series);
-			sendMessage(freq, series);
+			String tradeDate = tradeDateList.get(0);
+			for (Entry<String, FutureSecurityEnum> entry : securitiesOrderMap.entrySet()) {
+				if(!entry.getValue().name().equals(variety)) {
+					continue;
+				}
+				String securityStr = entry.getKey();
+				List<Timeseries> miList = timeseriesRepository.findByTradeDateWithPeriod(securityStr, tradeDate, "1M");
+				Timeseries latest = miList.get(miList.size() - 1);
+				Security security = new Security(securityStr, Variety.of(variety));
+				String content;
+				try {
+					content = aliHistoricalSourceV2.getContent(securityStr, freq, "1", "1");
+					List<Timeseries> series = aliHistoricalParser.parseAll(security, content, freq);
+					for (Timeseries ts : series) {
+						ts.setOpenInterest(latest.getOpenInterest());
+					}
+					futureLoader.loadSecurity(security, freq, series);
+				} catch (IOException e) {
+					log.error("Error when loading 1D freq for[" + securityStr + "]", e);
+				}
+			}
 		}
 	}
 	
@@ -206,7 +322,7 @@ public class DataLoaderClient {
 		try {
 			FreqEnum freq = FreqEnum._15MI;
 			for (int i = 9; i >= 1; i--) {
-				String content = aliHistoricalSource.getContent(securityStr, freq, i + "");
+				String content = aliHistoricalSourceV2.getContent(securityStr, freq, i + "");
 				Security security = new Security(securityStr, Variety.of(securityStr.substring(0, securityStr.length() - 4)));
 				List<Timeseries> series = aliHistoricalParser.parse(security, content, freq);
 				futureLoader.loadSecurity(security, freq, series);
@@ -290,7 +406,7 @@ public class DataLoaderClient {
 
 	public List<Timeseries> load15MiData(String securityStr, Security security) throws IOException, JMSException {
 		FreqEnum freq = FreqEnum._15MI;
-		String content = aliHistoricalSource.getContent(securityStr, freq);
+		String content = aliHistoricalSourceV2.getContent(securityStr, freq);
 		List<Timeseries> series = aliHistoricalParser.parse(security, content, freq);
 		for (int i = 1; i <= series.size(); i++) {
 			Timeseries ts = series.get(i - 1);
